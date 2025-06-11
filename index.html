@@ -227,7 +227,7 @@
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-3xl font-bold text-white">Relatórios de Partida</h2>
                 <div>
-                     <button id="csv-export-button" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg mr-2" onclick="exportActionsToCSV()">Exportar Ações (CSV)</button>
+                     <button id="txt-export-button" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg mr-2" onclick="exportActionsToTXT()">Exportar Ações (TXT)</button>
                      <button id="pdf-export-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center" onclick="exportReportToPDF()">
                         <span id="pdf-export-text">Exportar Relatório (PDF)</span>
                         <div id="pdf-export-loader" class="hidden ml-2 w-5 h-5 border-4 border-gray-400 border-solid rounded-full animate-spin"></div>
@@ -833,11 +833,6 @@
                 <h2 class="text-3xl font-bold text-white mb-6">Dashboard</h2>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div id="team-stats-card" class="lg:col-span-3 dashboard-card p-6 rounded-lg">
-                        <div class="export-btn-group">
-                            <button class="export-btn" onclick="exportDashboardToPDF('team-stats-card', 'estatisticas_equipe')" title="Exportar para PDF">
-                                <svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4zm0 2h12v12H4V4zm2 2a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"></path></svg>
-                            </button>
-                        </div>
                         <h3 class="font-bold text-xl mb-4 text-white">Estatísticas Gerais</h3>
                         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-center">
                             <div><p class="text-4xl font-extrabold">${totalGames}</p><p class="text-gray-400">Jogos</p></div>
@@ -851,10 +846,7 @@
                     <div class="dashboard-card p-6 rounded-lg lg:col-span-1"><h3 class="font-bold text-lg mb-4">Últimos 5 Resultados</h3><div class="flex gap-3">${last5Matches || '<p class="text-gray-400">Nenhuma partida finalizada.</p>'}</div></div>
                     <div id="performance-history-card" class="dashboard-card p-6 rounded-lg lg:col-span-2">
                          <div class="export-btn-group">
-                             <button class="export-btn" onclick="exportPerformancesToPDF()" title="Exportar para PDF">
-                                <svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4zm0 2h12v12H4V4zm2 2a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"></path></svg>
-                             </button>
-                             <button class="export-btn" onclick="exportPerformancesToCSV()" title="Exportar para CSV">
+                             <button class="export-btn" onclick="exportPerformancesToTXT()" title="Exportar para TXT">
                                <svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
                             </button>
                         </div>
@@ -871,7 +863,7 @@
         
         function hideReportContent() {
             document.getElementById('report-content').classList.add('hidden');
-            document.getElementById('csv-export-button').style.display = 'none';
+            document.getElementById('txt-export-button').style.display = 'none';
             document.getElementById('pdf-export-button').style.display = 'none';
         }
         
@@ -884,7 +876,7 @@
             const reportContentEl = document.getElementById('report-content');
             if (!matchId) { hideReportContent(); return; }
             reportContentEl.classList.remove('hidden');
-            document.getElementById('csv-export-button').style.display = 'inline-flex';
+            document.getElementById('txt-export-button').style.display = 'inline-flex';
             document.getElementById('pdf-export-button').style.display = 'inline-flex';
             const match = appState.matches.find(m => m.id === matchId);
             if (!match) return;
@@ -1015,26 +1007,14 @@
             container.innerHTML = formationHTML;
         }
         
-        function downloadCSV(csvContent, fileName) {
-            const encodedUri = encodeURI(csvContent);
+        function downloadFile(content, fileName, mimeType) {
+            const encodedUri = encodeURI(content);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `${fileName}.csv`);
+            link.setAttribute("download", fileName);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-        }
-
-        window.exportDashboardToPDF = function(elementId, fileName) {
-            const card = document.getElementById(elementId);
-            if (!card) return;
-            showErrorMessage("A exportar PDF...", false);
-            html2canvas(card, { backgroundColor: '#1f2937' }).then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF({ orientation: 'l', unit: 'px', format: [canvas.width, canvas.height] });
-                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-                pdf.save(`${fileName}.pdf`);
-            });
         }
         
         window.exportReportToPDF = function() {
@@ -1055,24 +1035,24 @@
             });
         }
 
-        window.exportActionsToCSV = function() {
+        window.exportActionsToTXT = function() {
             const matchId = document.getElementById('report-match-select').value;
             if (!matchId) return showErrorMessage("Por favor, selecione uma partida primeiro.");
             const match = appState.matches.find(m => m.id === matchId);
             if (!match || !match.events) return;
             const headers = ["Tempo", "Periodo", "Setor", "Acao", "Detalhe", "Jogador", "Equipa"];
-            let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\r\n";
+            let txtContent = headers.join("\t") + "\r\n";
             [...match.events].reverse().forEach(ev => {
                 const teamName = (ev.action.endsWith('_adv') || ev.scoringTeam === 'opponent') ? match.opponentName : match.myTeamName;
                 const row = [formatTime(ev.time), `${ev.period}T`, ev.zone, ev.action, ev.detail, ev.playerName, teamName];
-                csvContent += row.map(d => `"${d}"`).join(",") + "\r\n";
+                txtContent += row.join("\t") + "\r\n";
             });
-            downloadCSV(csvContent, `historico_acoes_${match.myTeamName}_vs_${match.opponentName}`);
+            downloadFile("data:text/plain;charset=utf-8," + txtContent, `historico_acoes_${match.myTeamName}_vs_${match.opponentName}.txt`);
         }
 
-        window.exportPerformancesToCSV = function() {
+        window.exportPerformancesToTXT = function() {
             const headers = ["Jogador", "Data", "Nota Media", "Tecnico", "Tatico", "Fisico", "Comportamental"];
-            let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\r\n";
+            let txtContent = headers.join("\t") + "\r\n";
             const finishedMatches = appState.matches.filter(m => m.status === 'finished' && m.ratings);
             finishedMatches.forEach(match => {
                 const matchDate = new Date(match.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'});
@@ -1081,15 +1061,11 @@
                      if (player) {
                          const avg = ((+rates.tecnico + +rates.tatico + +rates.fisico + +rates.comportamental) / 4).toFixed(1);
                          const row = [player.name, matchDate, avg, rates.tecnico, rates.tatico, rates.fisico, rates.comportamental];
-                         csvContent += row.join(",") + "\r\n";
+                         txtContent += row.join("\t") + "\r\n";
                      }
                 });
             });
-            downloadCSV(csvContent, 'historico_desempenho_jogadores');
-        }
-
-        window.exportPerformancesToPDF = function() {
-            exportDashboardToPDF('performance-history-card', 'historico_desempenho');
+            downloadFile("data:text/plain;charset=utf-8," + txtContent, 'historico_desempenho_jogadores.txt');
         }
 
         // --- INITIALIZATION ---
