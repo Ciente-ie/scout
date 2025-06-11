@@ -621,6 +621,10 @@
                     <button class="bg-green-600 px-3 py-1 rounded" onclick="timerControl('start2')">▶ 2ºT</button>
                     <button class="bg-red-600 px-3 py-1 rounded" onclick="timerControl('end')">⏹ Fim de Jogo</button>
                 </div>
+                 <div class="flex gap-2 mt-4">
+                    <button class="w-1/2 bg-green-700 hover:bg-green-800 p-3 rounded-lg text-white font-bold" onclick="prepareGoalModal('myTeam')">GOL PRÓ</button>
+                    <button class="w-1/2 bg-red-800 hover:bg-red-900 p-3 rounded-lg text-white font-bold" onclick="logGoal('opponent')">GOL CONTRA</button>
+                </div>
                  <div class="bg-gray-900 p-3 rounded-lg mt-4">
                     <h3 class="text-center text-base font-bold text-white mb-2">Controle de Posse de Bola</h3>
                     <div class="flex justify-center gap-4">
@@ -629,12 +633,7 @@
                         <button id="possession-stopped" class="possession-btn bg-gray-500 text-white rounded" onclick="togglePossession('stopped')">Bola Parada</button>
                     </div>
                     <div class="text-center text-white mt-2" id="possession-display"></div>
-                </div>
-                <div class="flex gap-2 mt-4">
-                    <button class="w-1/2 bg-green-700 hover:bg-green-800 p-3 rounded-lg text-white font-bold" onclick="prepareGoalModal('myTeam')">GOL PRÓ</button>
-                    <button class="w-1/2 bg-red-800 hover:bg-red-900 p-3 rounded-lg text-white font-bold" onclick="logGoal('opponent')">GOL CONTRA</button>
-                </div>
-            `;
+                </div>`;
             updatePossessionDisplay();
         }
 
@@ -751,7 +750,7 @@
             const playerId = select.value;
             
             if (form.querySelector('#event-action-player').value === 'finalizacao' && !playerId) {
-                return; // Do nothing if a placeholder is selected for finalizacao
+                return; 
             }
 
             finalizeEvent(
@@ -936,10 +935,16 @@
                         <div class="bg-gray-50 p-4 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Posse de Bola</h3><div class="chart-container h-24"><canvas id="possessionChart"></canvas></div></div>
                         <div class="bg-gray-50 p-4 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Destaque da Partida</h3><div id="report-motm" class="text-center"></div></div>
                     </div>
-                    <div class="bg-gray-50 p-4 rounded-lg border mb-8 report-section">
-                        <h3 class="text-xl font-bold text-center mb-4">Volume de Ações (Total)</h3><div class="chart-container" style="background-color: #166534;"><canvas id="actionMapChart"></canvas></div>
-                        <div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Zona de Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Zona de Ataque</span></div>
-                        <p class="text-center text-sm text-gray-500 mt-1">Contagem total das ações por zona.</p>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 report-section">
+                        <div class="bg-gray-50 p-4 rounded-lg border">
+                            <h3 class="text-xl font-bold text-center mb-4">Volume de Ações (Total)</h3>
+                            <div class="chart-container" style="background-color: #166534;"><canvas id="actionMapChart"></canvas></div>
+                            <div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg border">
+                           <h3 class="text-xl font-bold text-center mb-2">Destaques Individuais</h3>
+                           <div id="report-top-stats"></div>
+                        </div>
                     </div>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 report-section">
                         <div class="bg-gray-50 p-4 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Resumo de Ações (Total)</h3><div id="report-summary-table"></div></div>
@@ -967,6 +972,7 @@
             renderActionMapChart(match, 'actionMapChart_1T', 1);
             renderActionMapChart(match, 'actionMapChart_2T', 2);
             renderManOfTheMatch(match);
+            renderTopStatsTable(match);
             renderReportSummaryTable(match, 'report-summary-table', null);
             renderReportSummaryTable(match, 'report-summary-table-1T', 1);
             renderReportSummaryTable(match, 'report-summary-table-2T', 2);
@@ -987,7 +993,7 @@
         
         function renderPossessionChart(match) {
             const ctx = document.getElementById('possessionChart').getContext('2d');
-            charts.possession = new Chart(ctx, { type: 'bar', data: { labels: ['Posse'], datasets: [ { label: match.myTeamName, data: [match.possession.myTeam], backgroundColor: '#3b82f6' }, { label: match.opponentName, data: [match.possession.opponent], backgroundColor: '#ef4444' } ]}, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true, display: false }, y: { stacked: true, display: false } }, plugins: { legend: { display: true, position: 'top', labels: {color: '#374151'} }, datalabels: { color: 'white', font: { weight: 'bold' }, formatter: (v,c) => { const t = c.chart.data.datasets.reduce((s, ds) => s + (ds.data[0]||0), 0); return t > 0 ? (v/t*100).toFixed(0)+'%' : '0%'; }}}}});
+            charts.possession = new Chart(ctx, { type: 'bar', data: { labels: ['Posse'], datasets: [ { label: match.myTeamName, data: [match.possession.myTeam], backgroundColor: '#ef4444' }, { label: match.opponentName, data: [match.possession.opponent], backgroundColor: '#3b82f6' } ]}, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true, display: false }, y: { stacked: true, display: false } }, plugins: { legend: { display: true, position: 'top', labels: {color: '#374151'} }, datalabels: { color: 'white', font: { weight: 'bold' }, formatter: (v,c) => { const t = c.chart.data.datasets.reduce((s, ds) => s + (ds.data[0]||0), 0); return t > 0 ? (v/t*100).toFixed(0)+'%' : '0%'; }}}}});
         }
 
         function renderActionMapChart(match, canvasId, period) {
@@ -1069,6 +1075,42 @@
                     </div>
                 </div>`;
             }
+        }
+        
+        function renderTopStatsTable(match) {
+            const container = document.getElementById('report-top-stats');
+            const myEvents = match.events.filter(e => e.scoringTeam !== 'opponent' && !e.action.endsWith('_adv'));
+            
+            const getTopStats = (action, detail, key) => {
+                const counts = myEvents.filter(e => e.action === action && (detail ? e.detail === detail : true) && e[key])
+                                     .reduce((acc, e) => { acc[e[key]] = (acc[e[key]] || 0) + 1; return acc; }, {});
+                return Object.entries(counts).sort(([,a],[,b]) => b-a).slice(0,3);
+            };
+
+            const goals = getTopStats('gol', null, 'playerId');
+            const assists = getTopStats('gol', null, 'assistId');
+            const shots = getTopStats('finalizacao', null, 'playerId');
+
+            const renderList = (title, data) => {
+                let listHTML = `<h4 class="font-semibold text-gray-800 mb-1">${title}</h4><ul class="text-sm text-gray-600 space-y-1">`;
+                if (data.length === 0) {
+                    listHTML += '<li>Nenhum registro.</li>';
+                } else {
+                    data.forEach(([id, count]) => {
+                        const player = appState.players.find(p => p.id === id);
+                        listHTML += `<li class="flex justify-between"><span>${player?.name || 'Desconhecido'}</span> <strong>${count}</strong></li>`;
+                    });
+                }
+                return listHTML + '</ul>';
+            };
+
+            container.innerHTML = `
+                <div class="space-y-4">
+                    ${renderList('Gols', goals)}
+                    ${renderList('Assistências', assists)}
+                    ${renderList('Finalizações', shots)}
+                </div>
+            `;
         }
 
         function renderFormation(match) {
