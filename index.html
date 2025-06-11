@@ -352,7 +352,11 @@
             const matchesRef = collection(db, "artifacts", appId, "users", userId, "matches");
             onSnapshot(query(matchesRef), (snapshot) => {
                 appState.matches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                 if(appState.currentView === 'matches' || appState.currentView === 'dashboard' || appState.currentView === 'reports') {
+                
+                if (appState.currentView === 'live-match') {
+                    renderLiveScore();
+                    renderLiveLog();
+                } else if (appState.currentView === 'matches' || appState.currentView === 'dashboard' || appState.currentView === 'reports') {
                     renderMatchList();
                     renderDashboard();
                     renderReportMatchSelect();
@@ -380,6 +384,7 @@
         window.exportActionsToCSV = exportActionsToCSV;
         window.exportPerformancesToCSV = exportPerformancesToCSV;
         window.exportPerformancesToPDF = exportPerformancesToPDF;
+        window.deleteMatch = deleteMatch; // Expose deleteMatch globally
 
         // --- UI ELEMENTS ---
         const ui = {
