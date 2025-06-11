@@ -356,7 +356,7 @@
             onSnapshot(query(matchesRef), (snapshot) => {
                 appState.matches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 
-                if (appState.currentView === 'live-match') {
+                if (appState.currentView === 'live-match' && appState.activeMatchId) {
                     renderLiveScore();
                     renderLiveLog();
                 } else if (appState.currentView === 'matches' || appState.currentView === 'dashboard' || appState.currentView === 'reports') {
@@ -387,7 +387,7 @@
         window.exportActionsToCSV = exportActionsToCSV;
         window.exportPerformancesToCSV = exportPerformancesToCSV;
         window.exportPerformancesToPDF = exportPerformancesToPDF;
-        window.deleteMatch = deleteMatch; // Expose deleteMatch globally
+        window.deleteMatch = deleteMatch;
 
         // --- UI ELEMENTS ---
         const ui = {
@@ -405,12 +405,6 @@
                 form: document.getElementById('event-detail-form'), title: document.getElementById('event-modal-title'),
                 zone: document.getElementById('event-zone'), action: document.getElementById('event-action'),
                 subActionGroup: document.getElementById('event-sub-action-group'), playerGroup: document.getElementById('event-player-group')
-            },
-            goalModal: {
-                form: document.getElementById('goal-form'), title: document.getElementById('goal-modal-title'),
-                teamType: document.getElementById('goal-team-type'), details: document.getElementById('my-team-goal-details'), 
-                player: document.getElementById('goal-player'), assist: document.getElementById('goal-assist'), 
-                type: document.getElementById('goal-type')
             },
             ratingModal: { list: document.getElementById('rating-player-list') }
         };
@@ -765,7 +759,7 @@
                     time: liveState.seconds, period: liveState.currentPeriod, zone: 'ataque', action: 'gol', detail: 'N/A',
                     playerId: null, playerName: 'Adversário', scoringTeam: 'opponent'
                 };
-                update.events = [newEvent, ...match.events];
+                update.events = [newEvent, ...(match.events || [])];
             }
             await updateMatchData(appState.activeMatchId, update);
         }
