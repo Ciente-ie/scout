@@ -56,7 +56,9 @@
         input, select { background-color: #1f2937; color: white; border-color: #4b5563; border-radius: 0.375rem; }
         input:focus, select:focus { background-color: #374151; border-color: #60a5fa; box-shadow: none; outline: none;}
         #report-content-wrapper { background-color: #ffffff; color: #111827; }
-        #report-content-wrapper th, #report-content-wrapper td { border-color: #e5e7eb; }
+        .report-page { page-break-after: always; }
+        .report-page:last-child { page-break-after: auto; }
+        .report-section { page-break-inside: avoid; }
         .report-table { border: 1px solid #e5e7eb; border-radius: 0.5rem; overflow: hidden; }
         .report-table th, .report-table td { padding: 0.5rem 1rem; }
         .report-table thead { background-color: #f3f4f6; }
@@ -95,6 +97,7 @@
 </head>
 <body class="flex h-screen antialiased">
 
+    <!-- Sidebar Navigation -->
     <nav class="w-64 bg-gray-900 p-4 flex flex-col flex-shrink-0">
         <div class="flex items-center gap-3 mb-10 pl-2">
             <svg class="h-8 w-8 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -112,10 +115,14 @@
         </div>
     </nav>
 
+    <!-- Main Content Area -->
     <main class="flex-1 p-8 overflow-y-auto">
+        <!-- Dashboard View -->
         <div id="dashboard" class="view active">
-            </div>
+            <!-- Content will be rendered by JS -->
+        </div>
 
+        <!-- Management View -->
         <div id="management" class="view">
             <h2 class="text-3xl font-bold text-white mb-6">Gerenciamento de Jogadores</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -149,6 +156,7 @@
             </div>
         </div>
 
+        <!-- Matches View -->
         <div id="matches" class="view">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-3xl font-bold text-white">Partidas</h2>
@@ -157,12 +165,15 @@
             <div id="match-list" class="space-y-4"></div>
         </div>
         
+        <!-- Live Match View -->
         <div id="live-match" class="view">
             <div class="bg-gray-800 p-4 rounded-lg mb-4">
-                </div>
+                <!-- Score and Timer -->
+            </div>
             
             <div class="field rounded-lg mb-4">
                 <div class="grid grid-cols-3 gap-4">
+                    <!-- Defensive Zone -->
                     <div class="zone rounded-lg">
                         <h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">DEFESA</h4>
                         <div class="grid grid-cols-2 gap-2">
@@ -177,6 +188,7 @@
                             <button class="action-btn pass-btn-errado" onclick="logEvent(event, 'defesa', 'passe_errado')">Passe Errado</button>
                         </div>
                     </div>
+                    <!-- Midfield Zone -->
                     <div class="zone rounded-lg">
                         <h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">MEIO-CAMPO</h4>
                          <div class="grid grid-cols-2 gap-2">
@@ -189,6 +201,7 @@
                              <button class="action-btn pass-btn-errado" onclick="logEvent(event, 'meio', 'passe_errado')">Passe Errado</button>
                         </div>
                     </div>
+                    <!-- Attack Zone -->
                     <div class="zone rounded-lg">
                         <h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">ATAQUE</h4>
                         <div class="grid grid-cols-2 gap-2">
@@ -206,7 +219,8 @@
                         </div>
                     </div>
                 </div>
-                 <div id="sub-action-container" class="mt-3"></div>
+                 <!-- Container for sub-action buttons -->
+                <div id="sub-action-container" class="mt-3"></div>
             </div>
 
             <div class="bg-gray-800 p-2 rounded-lg h-56 overflow-y-auto">
@@ -214,6 +228,7 @@
             </div>
         </div>
 
+        <!-- Reports View -->
         <div id="reports" class="view">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-3xl font-bold text-white">Relatórios de Partida</h2>
@@ -232,39 +247,54 @@
 
             <div id="report-content-wrapper" class="p-8 rounded-lg mt-6">
                 <div id="report-content" class="hidden space-y-8">
-                    </div>
+                    <!-- Match Report Content -->
+                </div>
             </div>
         </div>
     </main>
     
+    <!-- Modals -->
     <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-50 hidden" onclick="closeAllModals(event)">
-        <div id="new-match-modal" class="modal-content bg-gray-800 text-white rounded-lg p-6 w-full max-w-3xl hidden">
-            <h3 class="text-2xl font-bold mb-6 text-center">Criar Nova Partida</h3>
-            <form id="new-match-form" class="space-y-6">
-                <div class="bg-gray-900 p-4 rounded-lg">
-                    <h4 class="font-semibold text-lg mb-3">Detalhes da Partida</h4>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><label>Nome da sua equipe:</label><input type="text" id="match-my-team-name" placeholder="Ex: Principal, Sub-20" class="w-full p-2.5 mt-1" required></div>
-                        <div><label>Adversário:</label><input type="text" id="match-opponent-name" placeholder="Nome do Adversário" class="w-full p-2.5 mt-1" required></div>
-                        <div><label>Data:</label><input type="date" id="match-date" class="w-full p-2.5 mt-1" required></div>
-                        <div><label>Local:</label><input type="text" id="match-location" placeholder="Local da Partida" class="w-full p-2.5 mt-1" required></div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8">
+        <!-- New Match Modal -->
+        <div id="new-match-modal" class="modal-content bg-gray-800 text-white rounded-lg w-full max-w-3xl hidden flex flex-col max-h-[90vh]">
+             <!-- Header -->
+            <div class="p-6 pb-4">
+                <h3 class="text-2xl font-bold text-center">Criar Nova Partida</h3>
+            </div>
+            
+            <!-- Scrollable Body -->
+            <div class="overflow-y-auto px-6 pb-6 flex-grow">
+                <form id="new-match-form" class="space-y-6">
                     <div class="bg-gray-900 p-4 rounded-lg">
-                        <h4 class="font-semibold text-lg mb-2">Jogadores Convocados</h4>
-                        <div id="match-squad-list" class="h-64 overflow-y-auto border border-gray-700 p-3 rounded space-y-2"></div>
+                        <h4 class="font-semibold text-lg mb-3">Detalhes da Partida</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label>Nome da sua equipe:</label><input type="text" id="match-my-team-name" placeholder="Ex: Principal, Sub-20" class="w-full p-2.5 mt-1" required></div>
+                            <div><label>Adversário:</label><input type="text" id="match-opponent-name" placeholder="Nome do Adversário" class="w-full p-2.5 mt-1" required></div>
+                            <div><label>Data:</label><input type="date" id="match-date" class="w-full p-2.5 mt-1" required></div>
+                            <div><label>Local:</label><input type="text" id="match-location" placeholder="Local da Partida" class="w-full p-2.5 mt-1" required></div>
+                        </div>
                     </div>
-                     <div class="bg-gray-900 p-4 rounded-lg">
-                        <h4 class="font-semibold text-lg mb-2">Escalação Tática (4-3-3)</h4>
-                        <div id="match-lineup-selection" class="h-64 overflow-y-auto border border-gray-700 p-3 rounded space-y-3"></div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8">
+                        <div class="bg-gray-900 p-4 rounded-lg">
+                            <h4 class="font-semibold text-lg mb-2">Jogadores Convocados</h4>
+                            <div id="match-squad-list" class="h-64 overflow-y-auto border border-gray-700 p-3 rounded space-y-2"></div>
+                        </div>
+                         <div class="bg-gray-900 p-4 rounded-lg">
+                            <h4 class="font-semibold text-lg mb-2">Escalação Tática (4-3-3)</h4>
+                            <div id="match-lineup-selection" class="h-64 overflow-y-auto border border-gray-700 p-3 rounded space-y-3"></div>
+                        </div>
                     </div>
-                </div>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded text-lg font-bold">Criar Partida</button>
-            </form>
+                </form>
+            </div>
+            
+            <!-- Footer -->
+            <div class="p-6 pt-4">
+                <button type="submit" form="new-match-form" class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded text-lg font-bold">Criar Partida</button>
+            </div>
         </div>
         
+        <!-- Player Selection Modal for Events -->
         <div id="player-selection-modal" class="modal-content bg-gray-800 text-white rounded-lg p-6 w-full max-w-sm hidden">
              <h3 id="player-selection-modal-title" class="text-2xl font-bold mb-4">Selecionar Jogador</h3>
              <form id="player-selection-form">
@@ -276,9 +306,11 @@
             </form>
         </div>
         
+        <!-- Goal Modal -->
         <div id="goal-modal" class="modal-content bg-gray-800 text-white rounded-lg p-6 w-full max-w-lg hidden">
         </div>
         
+        <!-- Post-Match Rating Modal -->
         <div id="rating-modal" class="modal-content bg-gray-800 text-white rounded-lg p-6 w-full max-w-4xl hidden">
             <h3 class="text-2xl font-bold mb-4">Avaliação de Desempenho Pós-Jogo</h3>
             <div id="rating-player-list" class="space-y-6 max-h-[60vh] overflow-y-auto p-2"></div>
@@ -405,7 +437,7 @@
             appState.currentView = viewId;
             ui.views.forEach(v => v.classList.remove('active'));
             document.getElementById(viewId)?.classList.add('active');
-            ui.navLinks.forEach(l => l.classList.toggle('active', l.getAttribute('onclick') === `MapsTo('${viewId}')`));
+            ui.navLinks.forEach(l => l.classList.toggle('active', l.getAttribute('onclick') === `navigateTo('${viewId}')`));
             refreshCurrentView();
         }
 
@@ -879,25 +911,46 @@
             if (!match) return;
 
             reportContentEl.innerHTML = `
-                <div class="text-center mb-8"><h1 class="text-4xl font-bold">${match.myTeamName} ${match.myTeamScore} x ${match.opponentScore} ${match.opponentName}</h1><p class="text-lg text-gray-600">${new Date(match.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})} - ${match.location}</p></div>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                    <div class="bg-gray-50 p-4 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Posse de Bola</h3><div class="chart-container h-24"><canvas id="possessionChart"></canvas></div></div>
-                    <div class="bg-gray-50 p-4 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Destaque da Partida</h3><div id="report-motm" class="text-center"></div></div>
+                <div class="report-page">
+                    <div class="text-center mb-8"><h1 class="text-4xl font-bold">${match.myTeamName} ${match.myTeamScore} x ${match.opponentScore} ${match.opponentName}</h1><p class="text-lg text-gray-600">${new Date(match.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})} - ${match.location}</p></div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 report-section">
+                        <div class="bg-gray-50 p-4 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Posse de Bola</h3><div class="chart-container h-24"><canvas id="possessionChart"></canvas></div></div>
+                        <div class="bg-gray-50 p-4 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Destaque da Partida</h3><div id="report-motm" class="text-center"></div></div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg border mb-8 report-section">
+                        <h3 class="text-xl font-bold text-center mb-4">Volume de Ações (Total)</h3><div class="chart-container" style="background-color: #166534;"><canvas id="actionMapChart"></canvas></div>
+                        <div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Zona de Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Zona de Ataque</span></div>
+                        <p class="text-center text-sm text-gray-500 mt-1">Contagem total das ações por zona.</p>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 report-section">
+                        <div class="bg-gray-50 p-4 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Resumo de Ações (Total)</h3><div id="report-summary-table"></div></div>
+                        <div class="bg-gray-50 p-4 rounded-lg border"><div id="report-formation" class="h-full"></div></div>
+                    </div>
                 </div>
-                <div class="bg-gray-50 p-4 rounded-lg border mb-8">
-                    <h3 class="text-xl font-bold text-center mb-4">Volume de Ações por Setor</h3><div class="chart-container" style="background-color: #166534;"><canvas id="actionMapChart"></canvas></div>
-                    <div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Zona de Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Zona de Ataque</span></div>
-                    <p class="text-center text-sm text-gray-500 mt-1">Contagem total das ações por zona.</p>
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div class="bg-gray-50 p-4 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Resumo de Ações</h3><div id="report-summary-table"></div></div>
-                    <div class="bg-gray-50 p-4 rounded-lg border"><div id="report-formation" class="h-full"></div></div>
+                <div class="report-page">
+                     <div class="text-center mb-8"><h1 class="text-3xl font-bold">Análise por Tempo</h1></div>
+                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 report-section">
+                        <div class="bg-gray-50 p-4 rounded-lg border">
+                           <h3 class="text-xl font-bold text-center mb-4">1º Tempo</h3>
+                           <div class="chart-container" style="background-color: #166534;"><canvas id="actionMapChart_1T"></canvas></div>
+                           <div id="report-summary-table-1T" class="mt-4"></div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg border">
+                           <h3 class="text-xl font-bold text-center mb-4">2º Tempo</h3>
+                           <div class="chart-container" style="background-color: #166534;"><canvas id="actionMapChart_2T"></canvas></div>
+                           <div id="report-summary-table-2T" class="mt-4"></div>
+                        </div>
+                     </div>
                 </div>`;
             
             renderPossessionChart(match);
-            renderActionMapChart(match);
+            renderActionMapChart(match, 'actionMapChart', null);
+            renderActionMapChart(match, 'actionMapChart_1T', 1);
+            renderActionMapChart(match, 'actionMapChart_2T', 2);
             renderManOfTheMatch(match);
-            renderReportSummaryTable(match);
+            renderReportSummaryTable(match, 'report-summary-table', null);
+            renderReportSummaryTable(match, 'report-summary-table-1T', 1);
+            renderReportSummaryTable(match, 'report-summary-table-2T', 2);
             renderFormation(match);
         }
 
@@ -918,22 +971,25 @@
             charts.possession = new Chart(ctx, { type: 'bar', data: { labels: ['Posse'], datasets: [ { label: match.myTeamName, data: [match.possession.myTeam], backgroundColor: '#3b82f6' }, { label: match.opponentName, data: [match.possession.opponent], backgroundColor: '#ef4444' } ]}, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true, display: false }, y: { stacked: true, display: false } }, plugins: { legend: { display: true, position: 'top', labels: {color: '#374151'} }, datalabels: { color: 'white', font: { weight: 'bold' }, formatter: (v,c) => { const t = c.chart.data.datasets.reduce((s, ds) => s + (ds.data[0]||0), 0); return t > 0 ? (v/t*100).toFixed(0)+'%' : '0%'; }}}}});
         }
 
-        function renderActionMapChart(match) {
+        function renderActionMapChart(match, canvasId, period) {
+            const events = period ? match.events.filter(e => e.period === period) : match.events;
             const sectorCounts = { defesa: 0, meio: 0, ataque: 0 };
-            (match.events || []).forEach(e => { if (sectorCounts.hasOwnProperty(e.zone)) sectorCounts[e.zone]++; });
+            (events || []).forEach(e => { if (sectorCounts.hasOwnProperty(e.zone)) sectorCounts[e.zone]++; });
             const maxActions = Math.max(...Object.values(sectorCounts), 1);
             const getColor = (count) => `rgba(220, 38, 38, ${Math.min(0.2 + (count / maxActions) * 0.8, 1)})`;
-            const ctx = document.getElementById('actionMapChart').getContext('2d');
-            charts.actionMap = new Chart(ctx, { type: 'bubble', plugins: [fieldLinesPlugin], data: {
-                datasets: [{ label: 'Volume', data: [{ x: 0.5, y: 5, r: 15 + sectorCounts.defesa * 3 }, { x: 1.5, y: 5, r: 15 + sectorCounts.meio * 3 }, { x: 2.5, y: 5, r: 15 + sectorCounts.ataque * 3 }],
+            const getRadius = (count) => 10 + Math.sqrt(count) * 4;
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            charts[canvasId] = new Chart(ctx, { type: 'bubble', plugins: [fieldLinesPlugin], data: {
+                datasets: [{ label: 'Volume', data: [{ x: 0.5, y: 5, r: getRadius(sectorCounts.defesa) }, { x: 1.5, y: 5, r: getRadius(sectorCounts.meio) }, { x: 2.5, y: 5, r: getRadius(sectorCounts.ataque) }],
                 backgroundColor: [getColor(sectorCounts.defesa), getColor(sectorCounts.meio), getColor(sectorCounts.ataque)], borderColor: 'rgba(153, 27, 27, 1)', borderWidth: 1 }]
             }, options: { responsive: true, maintainAspectRatio: false, layout: { padding: 10 }, scales: { x: { min: 0, max: 3, grid: { display: false }, ticks: { display: false } }, y: { display: false, min: 0, max: 10 } }, plugins: { legend: { display: false }, datalabels: { color: 'white', font: { weight: 'bold', size: 16 }, formatter: (v, c) => Object.values(sectorCounts)[c.dataIndex] }}}});
         }
         
-        function renderReportSummaryTable(match) {
-            const container = document.getElementById('report-summary-table');
-            const myEvents = match.events.filter(e => e.scoringTeam !== 'opponent' && !e.action.endsWith('_adv'));
-            const oppEvents = match.events.filter(e => e.scoringTeam === 'opponent' || e.action.endsWith('_adv'));
+        function renderReportSummaryTable(match, containerId, period) {
+            const container = document.getElementById(containerId);
+            const allEvents = period ? match.events.filter(e => e.period === period) : match.events;
+            const myEvents = allEvents.filter(e => e.scoringTeam !== 'opponent' && !e.action.endsWith('_adv'));
+            const oppEvents = allEvents.filter(e => e.scoringTeam === 'opponent' || e.action.endsWith('_adv'));
             const count = (arr, action, detail) => arr.filter(e => e.action === action && (detail ? e.detail === detail : true)).length;
 
             const passesCerto = count(myEvents, 'passe_certo');
