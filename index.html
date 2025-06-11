@@ -281,18 +281,14 @@
             </form>
         </div>
         
-        <!-- Goal Modal -->
-        <div id="goal-modal" class="modal-content bg-gray-800 text-white rounded-lg p-6 w-full max-w-lg hidden">
-            <h3 id="goal-modal-title" class="text-2xl font-bold mb-4">Registrar Gol</h3>
-            <form id="goal-form">
-                 <input type="hidden" id="goal-team-type">
-                 <div id="my-team-goal-details">
-                     <label>Jogador:</label><select id="goal-player" class="w-full p-2 rounded mb-2"></select>
-                     <label>Assistência:</label><select id="goal-assist" class="w-full p-2 rounded mb-2"></select>
-                 </div>
-                 <label>Tipo de Gol:</label><select id="goal-type" class="w-full p-2 rounded mb-2"><option>Bola Parada</option><option>Pênalti</option><option>Cabeça</option><option>Chute Dentro da Área</option><option>Chute Fora da Área</option></select>
-                 <button type="submit" class="w-full bg-green-600 p-2 rounded mt-4">Confirmar Gol</button>
-            </form>
+        <!-- Confirmation Modal -->
+        <div id="confirmation-modal" class="modal-content bg-gray-800 text-white rounded-lg p-6 w-full max-w-md hidden">
+            <h3 class="text-xl font-bold mb-4">Confirmar Ação</h3>
+            <p id="confirmation-message" class="mb-6"></p>
+            <div class="flex justify-end gap-4">
+                <button id="confirm-cancel-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Cancelar</button>
+                <button id="confirm-ok-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Confirmar</button>
+            </div>
         </div>
         
         <!-- Post-Match Rating Modal -->
@@ -436,6 +432,26 @@
         }
 
         // --- MODAL HANDLING ---
+        let confirmCallback = null;
+
+        function showConfirmationModal(message, onConfirm) {
+            document.getElementById('confirmation-message').textContent = message;
+            confirmCallback = onConfirm;
+            openModal('confirmation-modal');
+        }
+
+        document.getElementById('confirm-ok-btn').addEventListener('click', () => {
+            if (confirmCallback) {
+                confirmCallback();
+            }
+            closeModal('confirmation-modal');
+        });
+
+        document.getElementById('confirm-cancel-btn').addEventListener('click', () => {
+            confirmCallback = null;
+            closeModal('confirmation-modal');
+        });
+
         function openModal(modalId) {
             if (modalId === 'new-match-modal') prepareNewMatchModal();
             ui.modalContainer.classList.remove('hidden');
@@ -507,13 +523,17 @@
             document.getElementById('player-position').value = player.position;
         }
         async function deletePlayer(id) {
-            if (confirm('Tem certeza?')) {
+            const player = appState.players.find(p => p.id === id);
+            if (!player) return;
+
+            showConfirmationModal(`Tem certeza que deseja excluir o jogador "${player.name}"?`, async () => {
                 try {
+                    if (!userId) { return showErrorMessage("Usuário não autenticado. Tente recarregar a página.", {}); }
                     await deleteDoc(doc(db, "artifacts", appId, "users", userId, "players", id));
                 } catch (error) {
                     showErrorMessage("Não foi possível excluir o jogador", error);
                 }
-            }
+            });
         }
         
         // --- MATCH MANAGEMENT ---
@@ -583,14 +603,14 @@
             const match = appState.matches.find(m => m.id === matchId);
             if (!match) return; 
 
-            if (confirm(`Tem certeza que deseja excluir a partida "${match.myTeamName} vs ${match.opponentName}"? Essa ação não pode ser desfeita.`)) {
+            showConfirmationModal(`Tem certeza que deseja excluir a partida "${match.myTeamName} vs ${match.opponentName}"? Essa ação não pode ser desfeita.`, async () => {
                 try {
                     if (!userId) { return showErrorMessage("Usuário não autenticado. Tente recarregar a página.", {}); }
                     await deleteDoc(doc(db, "artifacts", appId, "users", userId, "matches", matchId));
                 } catch (error) {
                     showErrorMessage("Não foi possível excluir a partida.", error);
                 }
-            }
+            });
         }
         
         // --- LIVE MATCH ---
@@ -613,7 +633,14 @@
             
             updateMatchData(matchId, { status: 'live' });
             
-            liveState = { timerInterval: null, possessionInterval: null, seconds: match.events && match.events.length > 0 ? match.events[0].time : 0, currentPeriod: match.events && match.events.length > 0 ? match.events[0].period : 0, possession: match.possession, current: null };
+            liveState = { 
+                timerInterval: null, 
+                possessionInterval: null, 
+                seconds: (match.events && match.events.length > 0) ? match.events[0].time : 0, 
+                currentPeriod: (match.events && match.events.length > 0) ? match.events[0].period : 0, 
+                possession: match.possession || { myTeam: 0, opponent: 0, stopped: 0 }, 
+                current: null 
+            };
             ui.live.myTeam.textContent = match.myTeamName; ui.live.opponent.textContent = match.opponentName;
             renderLiveScore(); renderLiveLog(); updatePossessionDisplay(); navigateTo('live-match');
         }
