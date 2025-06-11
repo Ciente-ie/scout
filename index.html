@@ -50,6 +50,8 @@
         .pass-btn-errado { background-color: #991b1b; }
         .pass-btn-errado:hover { background-color: #b91c1c; }
 
+        .possession-btn { padding: 0.5rem; }
+        .possession-btn.main-team { flex-grow: 1; font-size: 1.125rem; }
         .possession-btn.active { box-shadow: 0 0 0 3px #fbbf24; background-color: #d97706; }
         input, select { background-color: #1f2937; color: white; border-color: #4b5563; border-radius: 0.375rem; }
         input:focus, select:focus { background-color: #374151; border-color: #60a5fa; box-shadow: none; outline: none;}
@@ -93,7 +95,6 @@
 </head>
 <body class="flex h-screen antialiased">
 
-    <!-- Sidebar Navigation -->
     <nav class="w-64 bg-gray-900 p-4 flex flex-col flex-shrink-0">
         <div class="flex items-center gap-3 mb-10 pl-2">
             <svg class="h-8 w-8 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -111,14 +112,10 @@
         </div>
     </nav>
 
-    <!-- Main Content Area -->
     <main class="flex-1 p-8 overflow-y-auto">
-        <!-- Dashboard View -->
         <div id="dashboard" class="view active">
-            <!-- Content will be rendered by JS -->
-        </div>
+            </div>
 
-        <!-- Management View -->
         <div id="management" class="view">
             <h2 class="text-3xl font-bold text-white mb-6">Gerenciamento de Jogadores</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -144,13 +141,14 @@
                  <div class="md:col-span-2">
                      <div class="bg-gray-800 p-6 rounded-lg">
                          <h3 class="text-2xl font-semibold text-white mb-4">Jogadores Cadastrados</h3>
-                         <table class="w-full text-left"><thead class="text-gray-400"><tr><th class="p-3">Nome</th><th class="p-3">Posição</th><th class="p-3">Ações</th></tr></thead><tbody id="players-table" class="divide-y divide-gray-700"></tbody></table>
+                         <div class="overflow-x-auto">
+                             <table class="w-full text-left"><thead class="text-gray-400"><tr><th class="p-3">Nome</th><th class="p-3">Posição</th><th class="p-3">Ações</th></tr></thead><tbody id="players-table" class="divide-y divide-gray-700"></tbody></table>
+                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Matches View -->
         <div id="matches" class="view">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-3xl font-bold text-white">Partidas</h2>
@@ -159,15 +157,12 @@
             <div id="match-list" class="space-y-4"></div>
         </div>
         
-        <!-- Live Match View -->
         <div id="live-match" class="view">
             <div class="bg-gray-800 p-4 rounded-lg mb-4">
-                <!-- Score and Timer -->
-            </div>
+                </div>
             
             <div class="field rounded-lg mb-4">
                 <div class="grid grid-cols-3 gap-4">
-                    <!-- Defensive Zone -->
                     <div class="zone rounded-lg">
                         <h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">DEFESA</h4>
                         <div class="grid grid-cols-2 gap-2">
@@ -182,7 +177,6 @@
                             <button class="action-btn pass-btn-errado" onclick="logEvent(event, 'defesa', 'passe_errado')">Passe Errado</button>
                         </div>
                     </div>
-                    <!-- Midfield Zone -->
                     <div class="zone rounded-lg">
                         <h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">MEIO-CAMPO</h4>
                          <div class="grid grid-cols-2 gap-2">
@@ -195,7 +189,6 @@
                              <button class="action-btn pass-btn-errado" onclick="logEvent(event, 'meio', 'passe_errado')">Passe Errado</button>
                         </div>
                     </div>
-                    <!-- Attack Zone -->
                     <div class="zone rounded-lg">
                         <h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">ATAQUE</h4>
                         <div class="grid grid-cols-2 gap-2">
@@ -213,8 +206,7 @@
                         </div>
                     </div>
                 </div>
-                 <!-- Container for sub-action buttons -->
-                <div id="sub-action-container" class="mt-3"></div>
+                 <div id="sub-action-container" class="mt-3"></div>
             </div>
 
             <div class="bg-gray-800 p-2 rounded-lg h-56 overflow-y-auto">
@@ -222,7 +214,6 @@
             </div>
         </div>
 
-        <!-- Reports View -->
         <div id="reports" class="view">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-3xl font-bold text-white">Relatórios de Partida</h2>
@@ -241,37 +232,39 @@
 
             <div id="report-content-wrapper" class="p-8 rounded-lg mt-6">
                 <div id="report-content" class="hidden space-y-8">
-                    <!-- Match Report Content -->
-                </div>
+                    </div>
             </div>
         </div>
     </main>
     
-    <!-- Modals -->
     <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-50 hidden" onclick="closeAllModals(event)">
-        <!-- New Match Modal -->
         <div id="new-match-modal" class="modal-content bg-gray-800 text-white rounded-lg p-6 w-full max-w-3xl hidden">
-            <h3 class="text-2xl font-bold mb-6">Criar Nova Partida</h3>
-            <form id="new-match-form" class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                <div class="md:col-span-2 grid grid-cols-2 gap-4">
-                    <div><label>Nome da sua equipe:</label><input type="text" id="match-my-team-name" placeholder="Ex: Principal, Sub-20" class="w-full p-2.5 mt-1" required></div>
-                    <div><label>Adversário:</label><input type="text" id="match-opponent-name" placeholder="Nome do Adversário" class="w-full p-2.5 mt-1" required></div>
-                    <div><label>Data:</label><input type="date" id="match-date" class="w-full p-2.5 mt-1" required></div>
-                    <div><label>Local:</label><input type="text" id="match-location" placeholder="Local da Partida" class="w-full p-2.5 mt-1" required></div>
+            <h3 class="text-2xl font-bold mb-6 text-center">Criar Nova Partida</h3>
+            <form id="new-match-form" class="space-y-6">
+                <div class="bg-gray-900 p-4 rounded-lg">
+                    <h4 class="font-semibold text-lg mb-3">Detalhes da Partida</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label>Nome da sua equipe:</label><input type="text" id="match-my-team-name" placeholder="Ex: Principal, Sub-20" class="w-full p-2.5 mt-1" required></div>
+                        <div><label>Adversário:</label><input type="text" id="match-opponent-name" placeholder="Nome do Adversário" class="w-full p-2.5 mt-1" required></div>
+                        <div><label>Data:</label><input type="date" id="match-date" class="w-full p-2.5 mt-1" required></div>
+                        <div><label>Local:</label><input type="text" id="match-location" placeholder="Local da Partida" class="w-full p-2.5 mt-1" required></div>
+                    </div>
                 </div>
-                <div class="md:col-span-1">
-                    <h4 class="font-bold mb-2">Jogadores Convocados:</h4>
-                    <div id="match-squad-list" class="h-64 overflow-y-auto border border-gray-600 p-3 rounded space-y-2"></div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8">
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <h4 class="font-semibold text-lg mb-2">Jogadores Convocados</h4>
+                        <div id="match-squad-list" class="h-64 overflow-y-auto border border-gray-700 p-3 rounded space-y-2"></div>
+                    </div>
+                     <div class="bg-gray-900 p-4 rounded-lg">
+                        <h4 class="font-semibold text-lg mb-2">Escalação Tática (4-3-3)</h4>
+                        <div id="match-lineup-selection" class="h-64 overflow-y-auto border border-gray-700 p-3 rounded space-y-3"></div>
+                    </div>
                 </div>
-                 <div class="md:col-span-1">
-                    <h4 class="font-bold mb-2">Escalação Tática (4-3-3):</h4>
-                    <div id="match-lineup-selection" class="h-64 overflow-y-auto border border-gray-600 p-3 rounded space-y-3"></div>
-                </div>
-                <button type="submit" class="md:col-span-2 w-full bg-blue-600 p-3 rounded text-lg">Criar Partida</button>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded text-lg font-bold">Criar Partida</button>
             </form>
         </div>
         
-        <!-- Player Selection Modal for Events -->
         <div id="player-selection-modal" class="modal-content bg-gray-800 text-white rounded-lg p-6 w-full max-w-sm hidden">
              <h3 id="player-selection-modal-title" class="text-2xl font-bold mb-4">Selecionar Jogador</h3>
              <form id="player-selection-form">
@@ -280,16 +273,12 @@
                 <input type="hidden" id="event-detail-player">
                 <label>Jogador:</label>
                 <select id="event-player-select" class="w-full p-2.5 mt-1"></select>
-                <!-- The button was removed for immediate action on select 'change' -->
             </form>
         </div>
         
-        <!-- Goal Modal -->
         <div id="goal-modal" class="modal-content bg-gray-800 text-white rounded-lg p-6 w-full max-w-lg hidden">
-            <!-- Goal modal content will be populated by JS -->
         </div>
         
-        <!-- Post-Match Rating Modal -->
         <div id="rating-modal" class="modal-content bg-gray-800 text-white rounded-lg p-6 w-full max-w-4xl hidden">
             <h3 class="text-2xl font-bold mb-4">Avaliação de Desempenho Pós-Jogo</h3>
             <div id="rating-player-list" class="space-y-6 max-h-[60vh] overflow-y-auto p-2"></div>
@@ -416,7 +405,7 @@
             appState.currentView = viewId;
             ui.views.forEach(v => v.classList.remove('active'));
             document.getElementById(viewId)?.classList.add('active');
-            ui.navLinks.forEach(l => l.classList.toggle('active', l.getAttribute('onclick') === `navigateTo('${viewId}')`));
+            ui.navLinks.forEach(l => l.classList.toggle('active', l.getAttribute('onclick') === `MapsTo('${viewId}')`));
             refreshCurrentView();
         }
 
@@ -588,9 +577,9 @@
                  <div class="bg-gray-900 p-3 rounded-lg mt-4">
                     <h3 class="text-center text-base font-bold text-white mb-2">Controle de Posse de Bola</h3>
                     <div class="flex justify-center gap-4">
-                        <button id="possession-myTeam" class="possession-btn bg-blue-600 text-white p-2 rounded" onclick="togglePossession('myTeam')">${match.myTeamName}</button>
-                        <button id="possession-opponent" class="possession-btn bg-red-600 text-white p-2 rounded" onclick="togglePossession('opponent')">${match.opponentName}</button>
-                        <button id="possession-stopped" class="possession-btn bg-gray-500 text-white p-2 rounded" onclick="togglePossession('stopped')">Bola Parada</button>
+                        <button id="possession-myTeam" class="possession-btn main-team bg-blue-600 text-white rounded" onclick="togglePossession('myTeam')">${match.myTeamName}</button>
+                        <button id="possession-opponent" class="possession-btn main-team bg-red-600 text-white rounded" onclick="togglePossession('opponent')">${match.opponentName}</button>
+                        <button id="possession-stopped" class="possession-btn bg-gray-500 text-white rounded" onclick="togglePossession('stopped')">Bola Parada</button>
                     </div>
                     <div class="text-center text-white mt-2" id="possession-display"></div>
                 </div>
@@ -807,8 +796,12 @@
             const totalGames = finishedMatches.length;
             const totalGoalsScored = finishedMatches.reduce((acc, m) => acc + (m.myTeamScore || 0), 0);
             const totalGoalsConceded = finishedMatches.reduce((acc, m) => acc + (m.opponentScore || 0), 0);
-            let wins = 0, draws = 0;
-            finishedMatches.forEach(m => { if (m.myTeamScore > m.opponentScore) wins++; else if (m.myTeamScore === m.opponentScore) draws++; });
+            let wins = 0, draws = 0, losses = 0;
+            finishedMatches.forEach(m => { 
+                if (m.myTeamScore > m.opponentScore) wins++; 
+                else if (m.myTeamScore < m.opponentScore) losses++;
+                else draws++; 
+            });
             const aproveitamento = totalGames > 0 ? (((wins * 3 + draws) / (totalGames * 3)) * 100).toFixed(0) : 0;
             const last5Matches = [...finishedMatches].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0,5).map(m => {
                 let result = 'E', color = 'bg-yellow-500';
@@ -835,11 +828,14 @@
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div id="team-stats-card" class="lg:col-span-3 dashboard-card p-6 rounded-lg">
                         <h3 class="font-bold text-xl mb-4 text-white">Estatísticas Gerais</h3>
-                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-center">
+                        <div class="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-4 text-center">
                             <div><p class="text-4xl font-extrabold">${totalGames}</p><p class="text-gray-400">Jogos</p></div>
+                            <div class="text-green-400"><p class="text-4xl font-extrabold">${wins}</p><p class="text-gray-400">Vitórias</p></div>
+                            <div class="text-yellow-400"><p class="text-4xl font-extrabold">${draws}</p><p class="text-gray-400">Empates</p></div>
+                            <div class="text-red-400"><p class="text-4xl font-extrabold">${losses}</p><p class="text-gray-400">Derrotas</p></div>
+                            <div class="text-blue-400"><p class="text-4xl font-extrabold">${aproveitamento}%</p><p class="text-gray-400">Aproveitamento</p></div>
                             <div><p class="text-4xl font-extrabold text-green-400">${totalGoalsScored}</p><p class="text-gray-400">Gols Marcados</p></div>
                             <div><p class="text-4xl font-extrabold text-red-400">${totalGoalsConceded}</p><p class="text-gray-400">Gols Sofridos</p></div>
-                            <div><p class="text-4xl font-extrabold text-blue-400">${aproveitamento}%</p><p class="text-gray-400">Aproveitamento</p></div>
                             <div><p class="text-4xl font-extrabold">${(totalGames > 0 ? (totalGoalsScored/totalGames).toFixed(2) : '0.00')}</p><p class="text-gray-400">Gols p/ Jogo</p></div>
                             <div><p class="text-4xl font-extrabold">${(totalGames > 0 ? (totalGoalsConceded/totalGames).toFixed(2) : '0.00')}</p><p class="text-gray-400">Sofridos p/ Jogo</p></div>
                         </div>
