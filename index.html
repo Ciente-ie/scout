@@ -330,14 +330,12 @@
                     document.getElementById('user-id-display').textContent = userId;
                     setupListeners();
                     navigateTo('dashboard');
+                } else {
+                    signInAnonymously(auth).catch(error => {
+                        showErrorMessage("Falha na autenticação anônima.", error);
+                    });
                 }
             });
-            
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
-            }
         }
         
         function setupListeners() {
@@ -347,6 +345,8 @@
                 if(appState.currentView === 'management') {
                     renderPlayersTable();
                 }
+            }, (error) => {
+                showErrorMessage("Erro ao carregar jogadores.", error);
             });
 
             const matchesRef = collection(db, "artifacts", appId, "users", userId, "matches");
@@ -357,10 +357,12 @@
                     renderDashboard();
                     renderReportMatchSelect();
                 }
+            }, (error) => {
+                showErrorMessage("Erro ao carregar partidas.", error);
             });
         }
         
-        // Make functions globally accessible
+        // --- GLOBAL FUNCTIONS ---
         window.navigateTo = navigateTo;
         window.openModal = openModal;
         window.closeModal = closeModal;
@@ -434,6 +436,25 @@
         }
         function closeAllModals(event) { if (event.target === ui.modalContainer) { closeModal(); }}
         
+        function showErrorMessage(message, error) {
+            console.error(message, error);
+            const errorBar = document.createElement('div');
+            errorBar.style.position = 'fixed';
+            errorBar.style.top = '0';
+            errorBar.style.left = '0';
+            errorBar.style.width = '100%';
+            errorBar.style.backgroundColor = '#ef4444'; // red-500
+            errorBar.style.color = 'white';
+            errorBar.style.padding = '1rem';
+            errorBar.style.textAlign = 'center';
+            errorBar.style.zIndex = '1000';
+            errorBar.textContent = `Erro: ${message}. Verifique o console (F12) para detalhes.`;
+            document.body.appendChild(errorBar);
+            setTimeout(() => {
+                document.body.removeChild(errorBar);
+            }, 5000);
+        }
+
         // --- PLAYER MANAGEMENT ---
         ui.playerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -453,7 +474,7 @@
                 ui.playerForm.reset(); 
                 document.getElementById('player-id').value = '';
             } catch (error) {
-                console.error("Error saving player: ", error);
+                showErrorMessage("Não foi possível salvar o jogador", error);
             }
         });
         function renderPlayersTable() {
@@ -476,7 +497,7 @@
                 try {
                     await deleteDoc(doc(db, "artifacts", appId, "users", userId, "players", id));
                 } catch (error) {
-                    console.error("Error deleting player: ", error);
+                    showErrorMessage("Não foi possível excluir o jogador", error);
                 }
             }
         }
@@ -510,7 +531,7 @@
                 ui.newMatchForm.reset(); 
                 closeModal('new-match-modal'); 
             } catch (error) {
-                console.error("Error creating match: ", error);
+                showErrorMessage("Não foi possível criar a partida", error);
             }
         });
         function renderMatchList() {
@@ -528,8 +549,12 @@
         function formatTime(s) { const min = Math.floor(s / 60).toString().padStart(2, '0'); const sec = (s % 60).toString().padStart(2, '0'); return `${min}:${sec}`; }
         
         async function updateMatchData(matchId, data) {
-            const matchRef = doc(db, "artifacts", appId, "users", userId, "matches", matchId);
-            await updateDoc(matchRef, data);
+            try {
+                const matchRef = doc(db, "artifacts", appId, "users", userId, "matches", matchId);
+                await updateDoc(matchRef, data);
+            } catch (error) {
+                showErrorMessage("Não foi possível atualizar os dados da partida.", error);
+            }
         }
 
         function startLiveMatch(matchId) {
@@ -755,7 +780,7 @@
             
             // Card 2: Top Performers
             const allPerformances = [];
-            finishedMatches.filter(m => Object.keys(m.ratings).length > 0).forEach(m => {
+            finishedMatches.filter(m => m.ratings && Object.keys(m.ratings).length > 0).forEach(m => {
                 Object.entries(m.ratings).forEach(([pid, rates]) => {
                     const avg = (parseFloat(rates.tecnico) + parseFloat(rates.tatico) + parseFloat(rates.fisico) + parseFloat(rates.comportamental)) / 4;
                     const player = appState.players.find(p => p.id === pid);
@@ -980,7 +1005,7 @@
         function renderManOfTheMatch(match) {
             const container = document.getElementById('report-motm');
             const performers = {};
-            if(Object.keys(match.ratings).length === 0) {
+            if(!match.ratings || Object.keys(match.ratings).length === 0) {
                  container.innerHTML = '<p class="text-gray-500 text-center">Nenhuma avaliação registrada.</p>'; return;
             }
              Object.entries(match.ratings).forEach(([pid, rates]) => {
