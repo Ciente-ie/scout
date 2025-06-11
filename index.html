@@ -719,11 +719,17 @@
             display.textContent = `Posse: ${match.myTeamName} ${myTeamPerc}% | ${match.opponentName} ${opponentPerc}%`;
         }
         
-        // --- EVENT LOGGING V2 (SUB-ACTIONS) ---
+        // --- EVENT LOGGING V3 (Simplified) ---
         const eventConfig = {
-            finalizacao: { title: "Finalização", player: true, sub: [{label: "No Gol", value: "no_gol"},{label: "Fora", value: "fora"}, {label:"Bloqueada", value:"bloqueada"}] },
-            duelo: { title: "Duelo", player: true, sub: [{label: "Ganho", value: "ganho"}, {label:"Perdido", value:"perdido"}] },
-            // Simple events do not need configuration
+            finalizacao: { 
+                title: "Finalização", 
+                player: true, 
+                sub: [
+                    {label: "Dentro da área", value: "dentro_da_area"},
+                    {label: "Fora da área", value: "fora_da_area"},
+                    {label: "Cabeceio", value: "cabeceio"}
+                ] 
+            }
         };
         
         window.logEvent = (event, zone, action) => {
@@ -732,18 +738,10 @@
 
             const config = eventConfig[action];
             if (config && config.sub) {
-                // Show sub-actions
                 liveState.activeSubAction = { zone, action, config };
                 renderSubActions();
             } else {
-                // For simple events, decide if player selection is needed
-                const simpleEventNeedsPlayer = ['passe_certo', 'passe_errado', 'falta_cometida', 'falta_sofrida', 'cruzamento_dir', 'cruzamento_esq'];
-                if(simpleEventNeedsPlayer.includes(action)) {
-                     showPlayerSelectionModal(zone, action, 'N/A');
-                } else {
-                    // Log event with no player
-                    finalizeEvent(zone, action, 'N/A', null);
-                }
+                finalizeEvent(zone, action, 'N/A', null);
             }
         };
 
@@ -769,7 +767,7 @@
         function handleSubActionClick(detail) {
             const { zone, action, config } = liveState.activeSubAction;
             liveState.activeSubAction = null;
-            renderSubActions(); // Clear sub-actions from UI
+            renderSubActions(); 
             
             if (config.player) {
                 showPlayerSelectionModal(zone, action, detail);
@@ -830,7 +828,7 @@
             logBody.innerHTML = '';
             match.events.forEach(ev => {
                 const row = logBody.insertRow(0); // Insert at the top
-                row.innerHTML = `<td class="p-2 text-xs">${formatTime(ev.time)}</td><td class="p-2 text-xs">${ev.period}ºT</td><td class="p-2 text-xs">${ev.zone}</td><td class="p-2 text-xs">${(ev.action || '').replace(/_/g, ' ')}</td><td class="p-2 text-xs">${ev.detail}</td><td class="p-2 text-xs">${ev.playerName}</td>`;
+                row.innerHTML = `<td class="p-2 text-xs">${formatTime(ev.time)}</td><td class="p-2 text-xs">${ev.period}ºT</td><td class="p-2 text-xs">${ev.zone}</td><td class="p-2 text-xs">${(ev.action || '').replace(/_/g, ' ')}</td><td class="p-2 text-xs">${(ev.detail || '').replace(/_/g, ' ')}</td><td class="p-2 text-xs">${ev.playerName}</td>`;
             });
         }
         
