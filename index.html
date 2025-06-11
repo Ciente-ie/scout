@@ -59,16 +59,17 @@
         .report-table th, .report-table td { padding: 0.5rem 1rem; }
         .report-table thead { background-color: #f3f4f6; }
         .chart-container { position: relative; width: 100%; min-height: 300px; background-color: #f9fafb; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e5e7eb;}
-        .dashboard-card { background-color: #1f2937; border: 1px solid #374151; }
+        .dashboard-card { background-color: #1f2937; border: 1px solid #374151; position: relative;}
+        .export-btn-group { position: absolute; top: 0.5rem; right: 0.5rem; display: flex; gap: 0.5rem; }
+        .export-btn { background-color: rgba(255,255,255,0.1); border: none; padding: 0.4rem; border-radius: 9999px; cursor: pointer; }
+        .export-btn:hover { background-color: rgba(255,255,255,0.2); }
         
         /* Tactical Formation Styles - TV Broadcast style */
         .formation-container {
             background-color: #105a32;
-            background-image: 
-                linear-gradient(to bottom, #105a32, #166534 50%, #105a32),
-                linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px),
-                radial-gradient(circle at center, rgba(255,255,255,0.15) 0, rgba(255,255,255,0.15) 1px, transparent 1px);
-            background-size: 100% 100%, 50px 50px, 150px 150px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 68 105'%3E%3Crect width='68' height='105' fill='%23166534'/%3E%3Cpath d='M34 52.5 a10 10 0 0 1 0 -0.01' stroke='rgba(255,255,255,0.2)' stroke-width='0.5' fill='none' /%3E%3Cline x1='0' y1='52.5' x2='68' y2='52.5' stroke='rgba(255,255,255,0.2)' stroke-width='0.5' /%3E%3Crect x='13' y='0' width='42' height='16.5' stroke='rgba(255,255,255,0.2)' stroke-width='0.5' fill='none' /%3E%3Crect x='24' y='0' width='20' height='5.5' stroke='rgba(255,255,255,0.2)' stroke-width='0.5' fill='none' /%3E%3Crect x='13' y='88.5' width='42' height='16.5' stroke='rgba(255,255,255,0.2)' stroke-width='0.5' fill='none' /%3E%3Crect x='24' y='99.5' width='20' height='5.5' stroke='rgba(255,255,255,0.2)' stroke-width='0.5' fill='none' /%3E%3C/svg%3E");
+            background-size: cover;
+            background-position: center;
             border: 2px solid #a0aec0;
             padding: 1rem;
             aspect-ratio: 7 / 10;
@@ -76,17 +77,8 @@
             margin: auto;
             border-radius: 0.5rem;
         }
-        .formation-grid-tv {
-            display: grid;
-            grid-template-rows: repeat(10, 1fr);
-            height: 100%;
-        }
-        .player-position {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
+        .formation-grid-tv { display: grid; grid-template-rows: repeat(10, 1fr); height: 100%; }
+        .player-position { display: flex; justify-content: center; align-items: center; text-align: center; }
         .player-tag { background: rgba(0,0,0,0.6); padding: 0.2rem 0.6rem; border-radius: 0.375rem; }
         .pos-label { font-size: 0.65rem; font-weight: bold; color: #a0aec0; text-transform: uppercase; line-height: 1; }
         .player-name { font-weight: 600; font-size: 0.8rem; color: white; line-height: 1.2; }
@@ -298,9 +290,19 @@
         </div>
         
         <!-- Post-Match Rating Modal -->
-        <div id="rating-modal" class="modal-content bg-gray-800 text-white rounded-lg p-6 w-full max-w-3xl hidden">
+        <div id="rating-modal" class="modal-content bg-gray-800 text-white rounded-lg p-6 w-full max-w-4xl hidden">
             <h3 class="text-2xl font-bold mb-4">Avaliação de Desempenho Pós-Jogo</h3>
             <div id="rating-player-list" class="space-y-6 max-h-[60vh] overflow-y-auto p-2"></div>
+            <div class="mt-4 p-4 bg-gray-900 rounded-lg text-sm">
+                <h4 class="font-bold mb-2 text-white">Legenda de Notas:</h4>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-2 text-gray-300">
+                    <p><span class="font-bold">1-2:</span> Muito abaixo</p>
+                    <p><span class="font-bold">3-4:</span> Abaixo</p>
+                    <p><span class="font-bold">5-6:</span> Dentro do Esperado</p>
+                    <p><span class="font-bold">7-8:</span> Acima do Esperado</p>
+                    <p><span class="font-bold">9-10:</span> Muito Acima</p>
+                </div>
+            </div>
             <button class="w-full bg-blue-600 p-2.5 rounded mt-4" onclick="saveRatings()">Salvar Avaliações e Finalizar Partida</button>
         </div>
     </div>
@@ -707,7 +709,6 @@
             const form = ui.playerSelectionModal.form;
             const playerId = select.value;
             
-            // For duel, it's ok to not select a player. For finalizacao, it's mandatory.
             if (form.querySelector('#event-action-player').value === 'finalizacao' && !playerId) {
                 return; 
             }
@@ -831,7 +832,12 @@
             container.innerHTML = `
                 <h2 class="text-3xl font-bold text-white mb-6">Dashboard</h2>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="lg:col-span-3 dashboard-card p-6 rounded-lg">
+                    <div id="team-stats-card" class="lg:col-span-3 dashboard-card p-6 rounded-lg">
+                        <div class="export-btn-group">
+                            <button class="export-btn" onclick="exportDashboardToPDF('team-stats-card', 'estatisticas_equipe')" title="Exportar para PDF">
+                                <svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4zm0 2h12v12H4V4zm2 2a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"></path></svg>
+                            </button>
+                        </div>
                         <h3 class="font-bold text-xl mb-4 text-white">Estatísticas Gerais</h3>
                         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-center">
                             <div><p class="text-4xl font-extrabold">${totalGames}</p><p class="text-gray-400">Jogos</p></div>
@@ -843,7 +849,17 @@
                         </div>
                     </div>
                     <div class="dashboard-card p-6 rounded-lg lg:col-span-1"><h3 class="font-bold text-lg mb-4">Últimos 5 Resultados</h3><div class="flex gap-3">${last5Matches || '<p class="text-gray-400">Nenhuma partida finalizada.</p>'}</div></div>
-                    <div class="dashboard-card p-6 rounded-lg lg:col-span-2"><h3 class="font-bold text-lg mb-4">Melhores Desempenhos</h3><ul class="space-y-2">${topPerformances || '<p class="text-gray-400">Nenhuma avaliação registrada.</p>'}</ul></div>
+                    <div id="performance-history-card" class="dashboard-card p-6 rounded-lg lg:col-span-2">
+                         <div class="export-btn-group">
+                             <button class="export-btn" onclick="exportPerformancesToPDF()" title="Exportar para PDF">
+                                <svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4zm0 2h12v12H4V4zm2 2a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"></path></svg>
+                             </button>
+                             <button class="export-btn" onclick="exportPerformancesToCSV()" title="Exportar para CSV">
+                               <svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+                            </button>
+                        </div>
+                        <h3 class="font-bold text-lg mb-4">Melhores Desempenhos</h3><ul class="space-y-2">${topPerformances || '<p class="text-gray-400">Nenhuma avaliação registrada.</p>'}</ul>
+                    </div>
                 </div>`;
         }
 
@@ -945,8 +961,8 @@
                 { label: '• Cabeceio', action: 'finalizacao', detail: 'cabeceio', oppAction: 'finalizacao_adv', oppDetail: 'cabeceio', isSub: true },
                 { label: 'Chances Claras', action: 'chance_clara', oppAction: 'chance_clara_adv' },
                 { label: 'Duelos Ganhos', action: 'duelo', detail: 'ganhou', oppAction: 'duelo', oppDetail: 'perdeu'},
-                { label: 'Passes Certos', my: `${passesCerto} ${percCerto}`, opp: '–'},
-                { label: 'Passes Errados', my: `${passesErrado} ${percErrado}`, opp: '–' },
+                { label: 'Passes Certos', my: `${passesCerto} <span class="text-xs">${percCerto}</span>`, opp: '–'},
+                { label: 'Passes Errados', my: `${passesErrado} <span class="text-xs">${percErrado}</span>`, opp: '–' },
                 { label: 'Faltas Cometidas', action: 'falta_cometida', oppAction: 'falta_sofrida'},
                 { label: 'Cruzamentos (Dir)', action: 'cruzamento_dir', opp: '–' },
                 { label: 'Cruzamentos (Esq)', action: 'cruzamento_esq', opp: '–' },
@@ -965,7 +981,7 @@
         function renderManOfTheMatch(match) {
             const container = document.getElementById('report-motm');
             if(!match.ratings || Object.keys(match.ratings).length === 0) { container.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhuma avaliação registrada.</p>'; return; }
-            const performers = Object.entries(match.ratings).map(([pid, r]) => ({ pid, avg: (Object.values(r).reduce((a,b) => a + parseFloat(b), 0)) / 4 }));
+            const performers = Object.entries(match.ratings).map(([pid, r]) => ({ pid, avg: (Object.values(r).reduce((a,b) => a + parseFloat(b), 0)) / 4, rates: r }));
             const topPlayer = performers.reduce((a, b) => a.avg > b.avg ? a : b);
             const player = appState.players.find(p => p.id === topPlayer.pid);
             if(player) {
@@ -973,6 +989,12 @@
                     <svg class="h-12 w-12 text-yellow-400 mb-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
                     <p class="text-2xl font-bold text-gray-800">${player.name}</p>
                     <p class="text-lg text-gray-600">Nota Média: <span class="font-bold text-blue-600">${topPlayer.avg.toFixed(1)}</span></p>
+                    <div class="w-full grid grid-cols-2 gap-x-4 gap-y-1 mt-3 text-xs text-left">
+                        <span class="font-semibold text-gray-500">Técnico:</span><span class="font-bold text-gray-700 text-right">${topPlayer.rates.tecnico}</span>
+                        <span class="font-semibold text-gray-500">Tático:</span><span class="font-bold text-gray-700 text-right">${topPlayer.rates.tatico}</span>
+                        <span class="font-semibold text-gray-500">Físico:</span><span class="font-bold text-gray-700 text-right">${topPlayer.rates.fisico}</span>
+                        <span class="font-semibold text-gray-500">Comport.:</span><span class="font-bold text-gray-700 text-right">${topPlayer.rates.comportamental}</span>
+                    </div>
                 </div>`;
             }
         }
@@ -993,10 +1015,82 @@
             container.innerHTML = formationHTML;
         }
         
-        window.exportReportToPDF = function() { /* ... */ }
-        window.exportActionsToCSV = function() { /* ... */ }
-        window.exportPerformancesToCSV = function() { /* ... */ }
-        window.exportPerformancesToPDF = function() { /* ... */ }
+        function downloadCSV(csvContent, fileName) {
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `${fileName}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        window.exportDashboardToPDF = function(elementId, fileName) {
+            const card = document.getElementById(elementId);
+            if (!card) return;
+            showErrorMessage("A exportar PDF...", false);
+            html2canvas(card, { backgroundColor: '#1f2937' }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF({ orientation: 'l', unit: 'px', format: [canvas.width, canvas.height] });
+                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                pdf.save(`${fileName}.pdf`);
+            });
+        }
+        
+        window.exportReportToPDF = function() {
+            const reportContent = document.getElementById('report-content-wrapper');
+            const button = document.getElementById('pdf-export-button');
+            const text = document.getElementById('pdf-export-text');
+            const loader = document.getElementById('pdf-export-loader');
+
+            text.classList.add('hidden'); loader.classList.remove('hidden'); button.disabled = true;
+            html2canvas(reportContent, { scale: 2 }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: [canvas.width, canvas.height] });
+                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                const matchSelect = document.getElementById('report-match-select');
+                const match = appState.matches.find(m => m.id === matchSelect.value);
+                pdf.save(`Relatorio_${match?.myTeamName || 'Equipe'}_vs_${match?.opponentName || 'Adversario'}.pdf`);
+                text.classList.remove('hidden'); loader.classList.add('hidden'); button.disabled = false;
+            });
+        }
+
+        window.exportActionsToCSV = function() {
+            const matchId = document.getElementById('report-match-select').value;
+            if (!matchId) return showErrorMessage("Por favor, selecione uma partida primeiro.");
+            const match = appState.matches.find(m => m.id === matchId);
+            if (!match || !match.events) return;
+            const headers = ["Tempo", "Periodo", "Setor", "Acao", "Detalhe", "Jogador", "Equipa"];
+            let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\r\n";
+            [...match.events].reverse().forEach(ev => {
+                const teamName = (ev.action.endsWith('_adv') || ev.scoringTeam === 'opponent') ? match.opponentName : match.myTeamName;
+                const row = [formatTime(ev.time), `${ev.period}T`, ev.zone, ev.action, ev.detail, ev.playerName, teamName];
+                csvContent += row.map(d => `"${d}"`).join(",") + "\r\n";
+            });
+            downloadCSV(csvContent, `historico_acoes_${match.myTeamName}_vs_${match.opponentName}`);
+        }
+
+        window.exportPerformancesToCSV = function() {
+            const headers = ["Jogador", "Data", "Nota Media", "Tecnico", "Tatico", "Fisico", "Comportamental"];
+            let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\r\n";
+            const finishedMatches = appState.matches.filter(m => m.status === 'finished' && m.ratings);
+            finishedMatches.forEach(match => {
+                const matchDate = new Date(match.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'});
+                Object.entries(match.ratings).forEach(([playerId, rates]) => {
+                     const player = appState.players.find(p => p.id === playerId);
+                     if (player) {
+                         const avg = ((+rates.tecnico + +rates.tatico + +rates.fisico + +rates.comportamental) / 4).toFixed(1);
+                         const row = [player.name, matchDate, avg, rates.tecnico, rates.tatico, rates.fisico, rates.comportamental];
+                         csvContent += row.join(",") + "\r\n";
+                     }
+                });
+            });
+            downloadCSV(csvContent, 'historico_desempenho_jogadores');
+        }
+
+        window.exportPerformancesToPDF = function() {
+            exportDashboardToPDF('performance-history-card', 'historico_desempenho');
+        }
 
         // --- INITIALIZATION ---
         window.addEventListener('DOMContentLoaded', firebaseAuth);
