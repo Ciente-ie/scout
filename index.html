@@ -280,7 +280,7 @@
                 <input type="hidden" id="event-detail-player">
                 <label>Jogador:</label>
                 <select id="event-player-select" class="w-full p-2.5 mt-1"></select>
-                <!-- O botão foi removido para ação imediata no 'change' do select -->
+                <!-- The button was removed for immediate action on select 'change' -->
             </form>
         </div>
         
@@ -699,7 +699,12 @@
             modal.action.value = action;
             modal.detail.value = detail;
             const players = match.squadPlayerIds.map(pid => appState.players.find(p => p.id === pid)).filter(Boolean);
-            const playerOptions = (action === 'duelo') ? '<option value="">(Sem Jogador)</option>' : '';
+            
+            let playerOptions = '<option value="" disabled selected>Selecione um jogador...</option>';
+            if (action === 'duelo') {
+                playerOptions += '<option value="">(Sem Jogador)</option>';
+            }
+            
             modal.select.innerHTML = playerOptions + [...players].sort((a,b) => a.name.localeCompare(b.name)).map(p => `<option value="${p.id}">${p.name}</option>`).join('');
             openModal('player-selection-modal');
         }
@@ -709,10 +714,6 @@
             const form = ui.playerSelectionModal.form;
             const playerId = select.value;
             
-            if (form.querySelector('#event-action-player').value === 'finalizacao' && !playerId) {
-                return; 
-            }
-
             finalizeEvent(
                 form.querySelector('#event-zone-player').value,
                 form.querySelector('#event-action-player').value,
@@ -1007,10 +1008,11 @@
             container.innerHTML = formationHTML;
         }
         
-        function downloadFile(content, fileName, mimeType) {
-            const encodedUri = encodeURI(content);
+        function downloadFile(content, fileName) {
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
+            link.setAttribute("href", url);
             link.setAttribute("download", fileName);
             document.body.appendChild(link);
             link.click();
@@ -1047,7 +1049,7 @@
                 const row = [formatTime(ev.time), `${ev.period}T`, ev.zone, ev.action, ev.detail, ev.playerName, teamName];
                 txtContent += row.join("\t") + "\r\n";
             });
-            downloadFile("data:text/plain;charset=utf-8," + txtContent, `historico_acoes_${match.myTeamName}_vs_${match.opponentName}.txt`);
+            downloadFile(txtContent, `historico_acoes_${match.myTeamName}_vs_${match.opponentName}.txt`);
         }
 
         window.exportPerformancesToTXT = function() {
@@ -1065,7 +1067,7 @@
                      }
                 });
             });
-            downloadFile("data:text/plain;charset=utf-8," + txtContent, 'historico_desempenho_jogadores.txt');
+            downloadFile(txtContent, 'historico_desempenho_jogadores.txt');
         }
 
         // --- INITIALIZATION ---
