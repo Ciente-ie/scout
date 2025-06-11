@@ -20,7 +20,14 @@
         .nav-link.active { background-color: #374151; color: white; }
         .field { background-color: #1e6b42; background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 20px 20px; border: 2px solid white; }
         .zone { border: 1px dashed rgba(255,255,255,0.5); }
-        .action-btn { transition: all 0.2s; padding: 0.3rem; font-size: 0.7rem; line-height: 1; }
+        .action-btn { 
+            transition: all 0.2s; 
+            padding: 0.75rem 0.5rem;
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+            font-weight: 500;
+            text-align: center;
+        }
         .action-btn:hover { transform: scale(1.05); }
         .action-btn.clicked { background-color: #f59e0b !important; transform: scale(1.05); transition: all 0.1s; }
         .possession-btn.active { box-shadow: 0 0 0 3px #fbbf24; }
@@ -114,7 +121,7 @@
         
         <!-- Live Match View -->
         <div id="live-match" class="view">
-            <div class="bg-gray-800 p-4 rounded-lg mb-4">
+            <div class="bg-gray-800 p-4 rounded-lg mb-4 flex-shrink-0">
                 <div class="flex justify-between items-center text-white">
                     <div id="live-my-team" class="text-2xl font-bold">Minha Equipe</div>
                     <div id="live-score" class="text-4xl font-black">0 - 0</div>
@@ -138,10 +145,10 @@
                 </div>
             </div>
             
-            <div class="field grid grid-cols-3 gap-1 p-1 rounded-lg mb-2">
-                <div class="zone p-1 rounded bg-black bg-opacity-20 flex-grow">
-                    <h4 class="text-center font-bold text-white mb-1 text-xs">DEFESA</h4>
-                    <div class="grid grid-cols-2 gap-1">
+            <div class="field grid grid-cols-3 gap-2 p-2 rounded-lg mb-4">
+                <div class="zone p-2 rounded bg-black bg-opacity-20 flex-grow">
+                    <h4 class="text-center font-bold text-white mb-2 text-sm">DEFESA</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                          <button class="action-btn bg-purple-500 rounded" onclick="logEvent(event, 'defesa', 'finalizacao_adv')">Fin. Adv.</button>
                         <button class="action-btn bg-purple-500 rounded" onclick="logEvent(event, 'defesa', 'chance_clara_adv')">Chance Adv.</button>
                         <button class="action-btn bg-yellow-500 rounded" onclick="logEvent(event, 'defesa', 'duelo')">Duelo</button>
@@ -151,9 +158,9 @@
                         <button class="action-btn bg-gray-600 rounded" onclick="logEvent(event, 'defesa', 'passe_errado')">Passe Errado</button>
                     </div>
                 </div>
-                <div class="zone p-1 rounded bg-black bg-opacity-20 flex-grow">
-                    <h4 class="text-center font-bold text-white mb-1 text-xs">MEIO-CAMPO</h4>
-                     <div class="grid grid-cols-2 gap-1">
+                <div class="zone p-2 rounded bg-black bg-opacity-20 flex-grow">
+                    <h4 class="text-center font-bold text-white mb-2 text-sm">MEIO-CAMPO</h4>
+                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <button class="action-btn bg-yellow-500 rounded" onclick="logEvent(event, 'meio', 'duelo')">Duelo</button>
                         <button class="action-btn bg-red-600 rounded" onclick="logEvent(event, 'meio', 'falta_sofrida')">F. Sofrida</button>
                         <button class="action-btn bg-red-400 rounded" onclick="logEvent(event, 'meio', 'falta_cometida')">F. Cometida</button>
@@ -161,9 +168,9 @@
                         <button class="action-btn bg-gray-600 rounded" onclick="logEvent(event, 'meio', 'passe_errado')">Passe Errado</button>
                     </div>
                 </div>
-                <div class="zone p-1 rounded bg-black bg-opacity-20 flex-grow">
-                    <h4 class="text-center font-bold text-white mb-1 text-xs">ATAQUE</h4>
-                    <div class="grid grid-cols-2 gap-1">
+                <div class="zone p-2 rounded bg-black bg-opacity-20 flex-grow">
+                    <h4 class="text-center font-bold text-white mb-2 text-sm">ATAQUE</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <button class="action-btn bg-green-500 rounded" onclick="logEvent(event, 'ataque', 'finalizacao')">Finalização</button>
                         <button class="action-btn bg-green-500 rounded" onclick="logEvent(event, 'ataque', 'chance_clara')">Chance Clara</button>
                         <button class="action-btn bg-yellow-500 rounded" onclick="logEvent(event, 'ataque', 'duelo')">Duelo</button>
@@ -463,6 +470,8 @@
         // --- PLAYER MANAGEMENT ---
         ui.playerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!userId) { return showErrorMessage("Usuário não autenticado. Tente recarregar a página.", {}); }
+
             const id = document.getElementById('player-id').value;
             const playerData = {
                 name: document.getElementById('player-name').value,
@@ -514,6 +523,8 @@
         }
         ui.newMatchForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!userId) { return showErrorMessage("Usuário não autenticado. Tente recarregar a página.", {}); }
+
             const squadPlayerIds = Array.from(document.querySelectorAll('#match-squad-list input:checked')).map(i => i.value);
             if (squadPlayerIds.length === 0) return alert('Selecione pelo menos um jogador.');
             
@@ -574,6 +585,7 @@
 
             if (confirm(`Tem certeza que deseja excluir a partida "${match.myTeamName} vs ${match.opponentName}"? Essa ação não pode ser desfeita.`)) {
                 try {
+                    if (!userId) { return showErrorMessage("Usuário não autenticado. Tente recarregar a página.", {}); }
                     await deleteDoc(doc(db, "artifacts", appId, "users", userId, "matches", matchId));
                 } catch (error) {
                     showErrorMessage("Não foi possível excluir a partida.", error);
@@ -586,6 +598,7 @@
         
         async function updateMatchData(matchId, data) {
             try {
+                if (!userId) { return showErrorMessage("Usuário não autenticado. Tente recarregar a página.", {}); }
                 const matchRef = doc(db, "artifacts", appId, "users", userId, "matches", matchId);
                 await updateDoc(matchRef, data);
             } catch (error) {
@@ -600,7 +613,7 @@
             
             updateMatchData(matchId, { status: 'live' });
             
-            liveState = { timerInterval: null, possessionInterval: null, seconds: match.events[0]?.time || 0, currentPeriod: match.events[0]?.period || 0, possession: match.possession, current: null };
+            liveState = { timerInterval: null, possessionInterval: null, seconds: match.events && match.events.length > 0 ? match.events[0].time : 0, currentPeriod: match.events && match.events.length > 0 ? match.events[0].period : 0, possession: match.possession, current: null };
             ui.live.myTeam.textContent = match.myTeamName; ui.live.opponent.textContent = match.opponentName;
             renderLiveScore(); renderLiveLog(); updatePossessionDisplay(); navigateTo('live-match');
         }
@@ -700,7 +713,7 @@
         });
         function renderLiveLog() {
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
-            if(!match) return;
+            if(!match || !match.events) return;
             ui.live.logBody.innerHTML = '';
             match.events.forEach(ev => {
                 const row = document.createElement('tr');
@@ -713,61 +726,21 @@
         async function prepareGoalModal(teamType) {
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
             if(!match || liveState.currentPeriod === 0) { return alert("Inicie a partida para registrar um gol."); }
-            ui.goalModal.teamType.value = teamType;
+            
+            const currentScore = teamType === 'myTeam' ? (match.myTeamScore || 0) : (match.opponentScore || 0);
+            const update = {};
+            
             if (teamType === 'myTeam') {
-                ui.goalModal.title.textContent = "Registrar Gol Pró";
-                ui.goalModal.details.style.display = 'block';
-                const players = match.squadPlayerIds.map(pid => appState.players.find(p => p.id === pid));
-                const playerOptions = players.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-                ui.goalModal.player.innerHTML = playerOptions;
-                ui.goalModal.assist.innerHTML = `<option value="">Nenhuma</option>${playerOptions}`;
-                openModal('goal-modal');
+                update.myTeamScore = currentScore + 1;
             } else { // opponent
+                update.opponentScore = currentScore + 1;
                 const newEvent = {
                     time: liveState.seconds, period: liveState.currentPeriod, zone: 'ataque', action: 'gol', detail: 'N/A',
                     playerId: null, playerName: 'Adversário', scoringTeam: 'opponent'
                 };
-                const updatedEvents = [newEvent, ...match.events];
-                await updateMatchData(appState.activeMatchId, { events: updatedEvents, opponentScore: match.opponentScore + 1 });
+                update.events = [newEvent, ...match.events];
             }
-        }
-        ui.goalModal.form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const match = appState.matches.find(m => m.id === appState.activeMatchId);
-            if(!match) return;
-            const data = new FormData(e.target);
-            
-            const goalPlayerId = data.get('goal-player');
-            const assistPlayerId = data.get('goal-assist');
-
-            const goalPlayer = appState.players.find(p => p.id === goalPlayerId);
-            const assistPlayer = assistPlayerId ? appState.players.find(p => p.id === assistPlayerId) : null;
-            
-            const newEvent = {
-                time: liveState.seconds, 
-                period: liveState.currentPeriod, 
-                zone: 'ataque', 
-                action: 'gol', 
-                detail: data.get('goal-type') || 'Não especificado',
-                playerId: goalPlayerId, 
-                playerName: goalPlayer ? goalPlayer.name : 'Desconhecido',
-                assistId: assistPlayerId || null, 
-                assistName: assistPlayer ? assistPlayer.name : null, 
-                scoringTeam: 'myTeam'
-            };
-
-            const updatedEvents = [newEvent, ...match.events];
-            
-            await updateMatchData(appState.activeMatchId, {
-                events: updatedEvents,
-                myTeamScore: match.myTeamScore + 1
-            });
-            
-            closeModal('goal-modal');
-        });
-        function renderLiveScore() { 
-            const match = appState.matches.find(m => m.id === appState.activeMatchId); 
-            if(match) ui.live.score.textContent = `${match.myTeamScore} - ${match.opponentScore}`; 
+            await updateMatchData(appState.activeMatchId, update);
         }
         
         // --- POST-MATCH RATING ---
@@ -812,8 +785,8 @@
             const maxPoints = totalMatches * 3;
             const aproveitamento = maxPoints > 0 ? ((points / maxPoints) * 100).toFixed(0) + '%' : '0%';
 
-            const totalGoalsScored = appState.matches.reduce((acc, m) => acc + m.myTeamScore, 0);
-            const totalGoalsConceded = appState.matches.reduce((acc, m) => acc + m.opponentScore, 0);
+            const totalGoalsScored = appState.matches.reduce((acc, m) => acc + (m.myTeamScore || 0), 0);
+            const totalGoalsConceded = appState.matches.reduce((acc, m) => acc + (m.opponentScore || 0), 0);
 
             let statsCardHTML = `
                 <div class="dashboard-card p-4 rounded-lg col-span-1 md:col-span-1 xl:col-span-1">
