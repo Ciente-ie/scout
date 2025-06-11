@@ -301,18 +301,14 @@
         let db, auth;
 
         // --- FIREBASE SETUP ---
-        let firebaseConfig = {};
-        try {
-            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-                firebaseConfig = JSON.parse(__firebase_config);
-            } else {
-                console.warn("Variável global __firebase_config não encontrada. A inicialização pode falhar.");
-                firebaseConfig = { apiKey: "PLACEHOLDER", authDomain: "PLACEHOLDER", projectId: "PLACEHOLDER" };
-            }
-        } catch (e) {
-            console.error("Falha ao analisar __firebase_config JSON:", e);
-            firebaseConfig = { apiKey: "PARSE_ERROR", authDomain: "PARSE_ERROR", projectId: "PARSE_ERROR" };
-        }
+        const firebaseConfig = {
+          apiKey: "AIzaSyCSxaH-QFQbhrCttS-J8KmVN1MXmjXqY1s",
+          authDomain: "meu-scout-pro.firebaseapp.com",
+          projectId: "meu-scout-pro",
+          storageBucket: "meu-scout-pro.appspot.com",
+          messagingSenderId: "303977649743",
+          appId: "1:303977649743:web:4e81e55c7180390ec97c3a"
+        };
         
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'scout-pro-futebol-v2';
         
