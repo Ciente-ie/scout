@@ -301,6 +301,20 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        const firebaseConfig = {
+          apiKey: "AIzaSyCSxaH-QFQbhrCttS-J8KmVN1MXmjXqY1s",
+          authDomain: "meu-scout-pro.firebaseapp.com",
+          projectId: "meu-scout-pro",
+          storageBucket: "meu-scout-pro.firebasestorage.app",
+          messagingSenderId: "303977649743",
+          appId: "1:303977649743:web:4e81e55c7180390ec97c3a"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+        //   ...
+        // };
+
         // --- GLOBAL STATE ---
         let appState = { players: [], matches: [], activeMatchId: null, currentView: 'dashboard' };
         let liveState = { timerInterval: null, possessionInterval: null, seconds: 0, currentPeriod: 0, possession: { myTeam: 0, opponent: 0, stopped: 0 }, current: null };
@@ -309,10 +323,13 @@
         
         // --- FIREBASE SETUP ---
         let db, auth, userId;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-scout-pro';
+        const appId = 'scout-pro-futebol'; // Unique ID for this application
         
         async function firebaseInit() {
-            const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+            if (typeof firebaseConfig === 'undefined') {
+                 document.body.innerHTML = '<div class="text-white text-center p-8">Erro: as credenciais do Firebase não foram encontradas. Siga o guia de configuração.</div>';
+                 return;
+            }
             try {
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
@@ -326,7 +343,8 @@
                         navigateTo('dashboard');
                     }
                 });
-
+                
+                // This logic is for the development environment. For your deployment, it will use anonymous sign-in.
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
