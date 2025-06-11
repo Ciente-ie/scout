@@ -310,11 +310,6 @@
           appId: "1:303977649743:web:4e81e55c7180390ec97c3a"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-        //   ...
-        // };
-
         // --- GLOBAL STATE ---
         let appState = { players: [], matches: [], activeMatchId: null, currentView: 'dashboard' };
         let liveState = { timerInterval: null, possessionInterval: null, seconds: 0, currentPeriod: 0, possession: { myTeam: 0, opponent: 0, stopped: 0 }, current: null };
