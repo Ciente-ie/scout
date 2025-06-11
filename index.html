@@ -305,50 +305,38 @@
           apiKey: "AIzaSyCSxaH-QFQbhrCttS-J8KmVN1MXmjXqY1s",
           authDomain: "meu-scout-pro.firebaseapp.com",
           projectId: "meu-scout-pro",
-          storageBucket: "meu-scout-pro.firebasestorage.app",
+          storageBucket: "meu-scout-pro.appspot.com",
           messagingSenderId: "303977649743",
           appId: "1:303977649743:web:4e81e55c7180390ec97c3a"
-};
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
 
         // --- GLOBAL STATE ---
         let appState = { players: [], matches: [], activeMatchId: null, currentView: 'dashboard' };
         let liveState = { timerInterval: null, possessionInterval: null, seconds: 0, currentPeriod: 0, possession: { myTeam: 0, opponent: 0, stopped: 0 }, current: null };
         let charts = {};
         const { jsPDF } = window.jspdf;
+        let userId;
         
         // --- FIREBASE SETUP ---
-        let db, auth, userId;
         const appId = 'scout-pro-futebol'; // Unique ID for this application
         
-        async function firebaseInit() {
-            if (typeof firebaseConfig === 'undefined') {
-                 document.body.innerHTML = '<div class="text-white text-center p-8">Erro: as credenciais do Firebase não foram encontradas. Siga o guia de configuração.</div>';
-                 return;
-            }
-            try {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        document.getElementById('user-id-display').textContent = userId;
-                        setupListeners();
-                        navigateTo('dashboard');
-                    }
-                });
-                
-                // This logic is for the development environment. For your deployment, it will use anonymous sign-in.
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
+        async function firebaseAuth() {
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    userId = user.uid;
+                    document.getElementById('user-id-display').textContent = userId;
+                    setupListeners();
+                    navigateTo('dashboard');
                 }
-
-            } catch (error) {
-                console.error("Firebase Init Error:", error);
-                document.body.innerHTML = '<div class="text-white text-center p-8">Erro ao conectar ao banco de dados. Verifique a configuração do Firebase.</div>';
+            });
+            
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
             }
         }
         
@@ -1226,7 +1214,7 @@
 
         // --- INITIALIZATION ---
         window.addEventListener('DOMContentLoaded', () => { 
-            firebaseInit();
+            firebaseAuth();
         });
     </script>
 </body>
