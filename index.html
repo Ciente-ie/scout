@@ -301,7 +301,20 @@
         let db, auth;
 
         // --- FIREBASE SETUP ---
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "YOUR_API_KEY", authDomain: "YOUR_AUTH_DOMAIN", projectId: "YOUR_PROJECT_ID" };
+        // More robust Firebase config initialization
+        let firebaseConfig = {};
+        try {
+            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                firebaseConfig = JSON.parse(__firebase_config);
+            } else {
+                console.warn("Variável global __firebase_config não encontrada. A inicialização pode falhar.");
+                firebaseConfig = { apiKey: "PLACEHOLDER", authDomain: "PLACEHOLDER", projectId: "PLACEHOLDER" };
+            }
+        } catch (e) {
+            console.error("Falha ao analisar __firebase_config JSON:", e);
+            firebaseConfig = { apiKey: "PARSE_ERROR", authDomain: "PARSE_ERROR", projectId: "PARSE_ERROR" };
+        }
+        
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'scout-pro-futebol-v2';
         
         async function firebaseAuth() {
@@ -319,7 +332,11 @@
                         navigateTo(appState.currentView || 'dashboard');
                     }
                 });
-            } catch (error) { showErrorMessage("Falha na inicialização do Firebase.", error); }
+            } catch (error) {
+                console.error("ERRO DE INICIALIZAÇÃO DO FIREBASE:", error);
+                console.error("Configuração do Firebase utilizada:", firebaseConfig);
+                showErrorMessage("Falha na inicialização do Firebase. Verifique o console para mais detalhes (F12).", false);
+            }
         }
         
         function setupListeners() {
@@ -407,8 +424,26 @@
         
         function showErrorMessage(message, error) {
             if (error) console.error(message, error);
-            // Implement a more robust notification system if needed
-            alert(`Erro: ${message}`);
+            const errorBar = document.createElement('div');
+            errorBar.textContent = `⚠️ Erro: ${message}`;
+            errorBar.style.position = 'fixed';
+            errorBar.style.top = '1rem';
+            errorBar.style.left = '50%';
+            errorBar.style.transform = 'translateX(-50%)';
+            errorBar.style.backgroundColor = '#ef4444'; // red-500
+            errorBar.style.color = 'white';
+            errorBar.style.padding = '0.75rem 1.5rem';
+            errorBar.style.borderRadius = '0.5rem';
+            errorBar.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+            errorBar.style.zIndex = '1000';
+            errorBar.style.fontWeight = '600';
+            document.body.appendChild(errorBar);
+
+            setTimeout(() => {
+                errorBar.style.transition = 'opacity 0.5s';
+                errorBar.style.opacity = '0';
+                setTimeout(() => document.body.removeChild(errorBar), 500);
+            }, 5000);
         }
 
         // --- PLAYER MANAGEMENT ---
@@ -637,7 +672,8 @@
             if (shouldStartTimer) {
                 liveState.timerInterval = setInterval(() => { 
                     liveState.seconds++; 
-                    document.getElementById('live-timer').textContent = formatTime(liveState.seconds);
+                    const timerEl = document.getElementById('live-timer');
+                    if (timerEl) timerEl.textContent = formatTime(liveState.seconds);
                     if (liveState.seconds % 10 === 0) {
                         updateMatchData(appState.activeMatchId, { timerSeconds: liveState.seconds, timerPeriod: liveState.currentPeriod });
                     }
