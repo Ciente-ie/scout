@@ -301,7 +301,6 @@
         let db, auth;
 
         // --- FIREBASE SETUP ---
-        // More robust Firebase config initialization
         let firebaseConfig = {};
         try {
             if (typeof __firebase_config !== 'undefined' && __firebase_config) {
@@ -334,8 +333,21 @@
                 });
             } catch (error) {
                 console.error("ERRO DE INICIALIZAÇÃO DO FIREBASE:", error);
-                console.error("Configuração do Firebase utilizada:", firebaseConfig);
-                showErrorMessage("Falha na inicialização do Firebase. Verifique o console para mais detalhes (F12).", false);
+                console.error("Configuração do Firebase utilizada:", JSON.stringify(firebaseConfig));
+                const mainContent = document.querySelector('main');
+                if (mainContent) {
+                    mainContent.innerHTML = `
+                        <div class="p-8 text-center text-red-300 bg-red-900 bg-opacity-50 rounded-lg">
+                            <h1 class="text-3xl font-bold mb-4">Erro Crítico</h1>
+                            <p class="text-lg mb-2">A aplicação não conseguiu conectar-se à base de dados (Firebase).</p>
+                            <p class="text-sm mb-6">Isto acontece geralmente por um problema de configuração. Por favor, verifique o console do navegador (F12) para ver os detalhes técnicos.</p>
+                            <div class="text-left bg-gray-900 p-4 rounded-md font-mono text-xs overflow-x-auto">
+                                <p><strong class="text-red-400">Mensagem:</strong> ${error.message}</p>
+                                <p class="mt-2"><strong class="text-red-400">Configuração Utilizada:</strong> ${JSON.stringify(firebaseConfig)}</p>
+                            </div>
+                        </div>
+                    `;
+                }
             }
         }
         
@@ -422,8 +434,8 @@
         }
         window.closeAllModals = function(event) { if (event.target === ui.modalContainer) { closeModal(); }}
         
-        function showErrorMessage(message, error) {
-            if (error) console.error(message, error);
+        function showErrorMessage(message, logError = true) {
+            if (logError) console.error("Erro na Aplicação:", message);
             const errorBar = document.createElement('div');
             errorBar.textContent = `⚠️ Erro: ${message}`;
             errorBar.style.position = 'fixed';
