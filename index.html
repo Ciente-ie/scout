@@ -61,34 +61,42 @@
         .chart-container { position: relative; width: 100%; min-height: 300px; background-color: #f9fafb; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e5e7eb;}
         .dashboard-card { background-color: #1f2937; border: 1px solid #374151; }
         
-        /* Tactical Formation Styles */
-        .formation-grid {
-            background-color: #166534;
-            background-image: linear-gradient(rgba(255,255,255,0.1) 2px, transparent 2px), linear-gradient(90deg, rgba(255,255,255,0.1) 2px, transparent 2px);
-            background-size: 50px 50px;
-            border: 2px solid #4ade80;
+        /* Tactical Formation Styles - TV Broadcast style */
+        .formation-container {
+            background-color: #105a32;
+            background-image: 
+                linear-gradient(to bottom, #105a32, #166534 50%, #105a32),
+                linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px),
+                radial-gradient(circle at center, rgba(255,255,255,0.15) 0, rgba(255,255,255,0.15) 1px, transparent 1px);
+            background-size: 100% 100%, 50px 50px, 150px 150px;
+            border: 2px solid #a0aec0;
             padding: 1rem;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(4, 1fr);
-            gap: 1rem;
-            height: 100%;
+            aspect-ratio: 7 / 10;
+            max-width: 400px;
+            margin: auto;
             border-radius: 0.5rem;
         }
-        .player-position { text-align: center; }
-        .player-position .pos-label { font-size: 0.7rem; font-weight: bold; color: #a0aec0; text-transform: uppercase; }
-        .player-position .player-name { font-weight: 600; font-size: 0.875rem; color: white; background: rgba(0,0,0,0.4); padding: 0.25rem; border-radius: 0.25rem; }
-        .gk { grid-row: 4; grid-column: 2; }
-        .lb { grid-row: 3; grid-column: 1; }
-        .lcb { grid-row: 3; grid-column: 2; transform: translateX(-30%);}
-        .rcb { grid-row: 3; grid-column: 2; transform: translateX(30%);}
-        .rb { grid-row: 3; grid-column: 3; }
-        .dm { grid-row: 2; grid-column: 2; }
-        .lcm { grid-row: 2; grid-column: 1; transform: translateY(50%); }
-        .rcm { grid-row: 2; grid-column: 3; transform: translateY(50%); }
-        .lw { grid-row: 1; grid-column: 1; }
-        .st { grid-row: 1; grid-column: 2; }
-        .rw { grid-row: 1; grid-column: 3; }
+        .formation-grid-tv {
+            display: grid;
+            grid-template-rows: repeat(10, 1fr);
+            height: 100%;
+        }
+        .player-position {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .player-tag { background: rgba(0,0,0,0.6); padding: 0.2rem 0.6rem; border-radius: 0.375rem; }
+        .pos-label { font-size: 0.65rem; font-weight: bold; color: #a0aec0; text-transform: uppercase; line-height: 1; }
+        .player-name { font-weight: 600; font-size: 0.8rem; color: white; line-height: 1.2; }
+        .gk-pos { grid-row: 10 / 11; }
+        .def-pos { grid-row: 8 / 9; }
+        .mid-pos { grid-row: 5 / 6; }
+        .att-pos { grid-row: 2 / 3; }
+        .pos-4-player { display: grid; grid-template-columns: repeat(4, 1fr); width: 100%; }
+        .pos-3-player { display: grid; grid-template-columns: repeat(3, 1fr); width: 80%; margin: auto; }
+        .pos-1-player { display: grid; grid-template-columns: 1fr; width: 100%; }
     </style>
 </head>
 <body class="flex h-screen antialiased">
@@ -280,7 +288,7 @@
                 <input type="hidden" id="event-detail-player">
                 <label>Jogador:</label>
                 <select id="event-player-select" class="w-full p-2.5 mt-1"></select>
-                <button type="submit" class="w-full bg-blue-600 p-2.5 rounded mt-4">Confirmar</button>
+                <!-- O botão foi removido para ação imediata no 'change' do select -->
             </form>
         </div>
         
@@ -689,14 +697,21 @@
             modal.action.value = action;
             modal.detail.value = detail;
             const players = match.squadPlayerIds.map(pid => appState.players.find(p => p.id === pid)).filter(Boolean);
-            modal.select.innerHTML = '<option value="">(Sem Jogador)</option>' + [...players].sort((a,b) => a.name.localeCompare(b.name)).map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            const playerOptions = (action === 'duelo') ? '<option value="">(Sem Jogador)</option>' : '';
+            modal.select.innerHTML = playerOptions + [...players].sort((a,b) => a.name.localeCompare(b.name)).map(p => `<option value="${p.id}">${p.name}</option>`).join('');
             openModal('player-selection-modal');
         }
 
-        ui.playerSelectionModal.form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const form = e.target;
-            const playerId = form.querySelector('#event-player-select').value;
+        ui.playerSelectionModal.select.addEventListener('change', (e) => {
+            const select = e.target;
+            const form = ui.playerSelectionModal.form;
+            const playerId = select.value;
+            
+            // For duel, it's ok to not select a player. For finalizacao, it's mandatory.
+            if (form.querySelector('#event-action-player').value === 'finalizacao' && !playerId) {
+                return; 
+            }
+
             finalizeEvent(
                 form.querySelector('#event-zone-player').value,
                 form.querySelector('#event-action-player').value,
@@ -705,6 +720,7 @@
             );
             closeModal('player-selection-modal');
         });
+
 
         async function finalizeEvent(zone, action, detail, playerId) {
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
@@ -822,8 +838,8 @@
                             <div><p class="text-4xl font-extrabold text-green-400">${totalGoalsScored}</p><p class="text-gray-400">Gols Marcados</p></div>
                             <div><p class="text-4xl font-extrabold text-red-400">${totalGoalsConceded}</p><p class="text-gray-400">Gols Sofridos</p></div>
                             <div><p class="text-4xl font-extrabold text-blue-400">${aproveitamento}%</p><p class="text-gray-400">Aproveitamento</p></div>
-                            <div><p class="text-4xl font-extrabold">${(totalGames > 0 ? (totalGoalsScored/totalGames).toFixed(2) : 0)}</p><p class="text-gray-400">Gols p/ Jogo</p></div>
-                            <div><p class="text-4xl font-extrabold">${(totalGames > 0 ? (totalGoalsConceded/totalGames).toFixed(2) : 0)}</p><p class="text-gray-400">Sofridos p/ Jogo</p></div>
+                            <div><p class="text-4xl font-extrabold">${(totalGames > 0 ? (totalGoalsScored/totalGames).toFixed(2) : '0.00')}</p><p class="text-gray-400">Gols p/ Jogo</p></div>
+                            <div><p class="text-4xl font-extrabold">${(totalGames > 0 ? (totalGoalsConceded/totalGames).toFixed(2) : '0.00')}</p><p class="text-gray-400">Sofridos p/ Jogo</p></div>
                         </div>
                     </div>
                     <div class="dashboard-card p-6 rounded-lg lg:col-span-1"><h3 class="font-bold text-lg mb-4">Últimos 5 Resultados</h3><div class="flex gap-3">${last5Matches || '<p class="text-gray-400">Nenhuma partida finalizada.</p>'}</div></div>
@@ -883,7 +899,7 @@
         const fieldLinesPlugin = {
             id: 'fieldLines',
             beforeDraw: (chart) => {
-                const { ctx, chartArea: { top, bottom, left, right }, scales: { x, y } } = chart;
+                const { ctx, chartArea: { top, bottom, left, right }, scales: { x } } = chart;
                 ctx.save();
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; ctx.lineWidth = 1;
                 const defenseZoneEnd = x.getPixelForValue(1); const midfieldZoneEnd = x.getPixelForValue(2);
@@ -899,7 +915,7 @@
 
         function renderActionMapChart(match) {
             const sectorCounts = { defesa: 0, meio: 0, ataque: 0 };
-            match.events.forEach(e => { if (sectorCounts.hasOwnProperty(e.zone)) sectorCounts[e.zone]++; });
+            (match.events || []).forEach(e => { if (sectorCounts.hasOwnProperty(e.zone)) sectorCounts[e.zone]++; });
             const maxActions = Math.max(...Object.values(sectorCounts), 1);
             const getColor = (count) => `rgba(220, 38, 38, ${Math.min(0.2 + (count / maxActions) * 0.8, 1)})`;
             const ctx = document.getElementById('actionMapChart').getContext('2d');
@@ -915,22 +931,33 @@
             const oppEvents = match.events.filter(e => e.scoringTeam === 'opponent' || e.action.endsWith('_adv'));
             const count = (arr, action, detail) => arr.filter(e => e.action === action && (detail ? e.detail === detail : true)).length;
 
+            const passesCerto = count(myEvents, 'passe_certo');
+            const passesErrado = count(myEvents, 'passe_errado');
+            const totalPasses = passesCerto + passesErrado;
+            const percCerto = totalPasses > 0 ? `(${(passesCerto/totalPasses*100).toFixed(0)}%)` : '';
+            const percErrado = totalPasses > 0 ? `(${(passesErrado/totalPasses*100).toFixed(0)}%)` : '';
+
             let tableHTML = `<table class="w-full text-sm"><tbody>`;
-            const stats = [
-                { label: 'Finalizações', my: count(myEvents, 'finalizacao'), opp: count(oppEvents, 'finalizacao_adv') },
-                { label: '• Dentro da Área', my: count(myEvents, 'finalizacao', 'dentro_area'), opp: count(oppEvents, 'finalizacao_adv', 'dentro_area'), isSub: true },
-                { label: '• Fora da Área', my: count(myEvents, 'finalizacao', 'fora_area'), opp: count(oppEvents, 'finalizacao_adv', 'fora_area'), isSub: true },
-                { label: '• Cabeceio', my: count(myEvents, 'finalizacao', 'cabeceio'), opp: count(oppEvents, 'finalizacao_adv', 'cabeceio'), isSub: true },
-                { label: 'Duelos Ganhos', my: count(myEvents, 'duelo', 'ganhou'), opp: count(myEvents, 'duelo', 'perdeu') },
-                { label: 'Passes Certos', my: count(myEvents, 'passe_certo'), opp: '–' },
-                { label: 'Passes Errados', my: count(myEvents, 'passe_errado'), opp: '–' },
-                { label: 'Faltas Cometidas', my: count(myEvents, 'falta_cometida'), opp: count(myEvents, 'falta_sofrida') }
+            const statsConfig = [
+                { label: 'Finalizações', action: 'finalizacao', oppAction: 'finalizacao_adv' },
+                { label: '• Dentro da Área', action: 'finalizacao', detail: 'dentro_area', oppAction: 'finalizacao_adv', oppDetail: 'dentro_area', isSub: true },
+                { label: '• Fora da Área', action: 'finalizacao', detail: 'fora_area', oppAction: 'finalizacao_adv', oppDetail: 'fora_area', isSub: true },
+                { label: '• Cabeceio', action: 'finalizacao', detail: 'cabeceio', oppAction: 'finalizacao_adv', oppDetail: 'cabeceio', isSub: true },
+                { label: 'Chances Claras', action: 'chance_clara', oppAction: 'chance_clara_adv' },
+                { label: 'Duelos Ganhos', action: 'duelo', detail: 'ganhou', oppAction: 'duelo', oppDetail: 'perdeu'},
+                { label: 'Passes Certos', my: `${passesCerto} ${percCerto}`, opp: '–'},
+                { label: 'Passes Errados', my: `${passesErrado} ${percErrado}`, opp: '–' },
+                { label: 'Faltas Cometidas', action: 'falta_cometida', oppAction: 'falta_sofrida'},
+                { label: 'Cruzamentos (Dir)', action: 'cruzamento_dir', opp: '–' },
+                { label: 'Cruzamentos (Esq)', action: 'cruzamento_esq', opp: '–' },
             ];
-            for (const stat of stats) {
-                const myVal = stat.my > 0 ? stat.my : '0';
-                const oppVal = stat.opp > 0 ? stat.opp : '0';
-                tableHTML += `<tr class="${stat.isSub ? 'text-gray-600' : 'border-t border-gray-200'}"><td class="p-2 ${stat.isSub ? 'pl-6' : 'font-semibold'}">${stat.label}</td><td class="p-2 text-center font-medium">${myVal}</td><td class="p-2 text-center font-medium">${oppVal === '–' ? oppVal : oppVal}</td></tr>`;
-            }
+
+            statsConfig.forEach(stat => {
+                const myVal = stat.my ?? count(myEvents, stat.action, stat.detail);
+                const oppVal = stat.opp ?? (stat.oppAction ? count(oppEvents, stat.oppAction, stat.oppDetail) : '–');
+                tableHTML += `<tr class="${stat.isSub ? 'text-gray-600' : 'border-t border-gray-200'}"><td class="p-2 ${stat.isSub ? 'pl-6' : 'font-semibold'}">${stat.label}</td><td class="p-2 text-center font-medium">${myVal}</td><td class="p-2 text-center font-medium">${oppVal}</td></tr>`;
+            });
+            
             tableHTML += `</tbody><thead class="text-xs text-gray-500"><tr><th class="p-2 text-left">Estatística</th><th class="p-2 text-center">${match.myTeamName}</th><th class="p-2 text-center">${match.opponentName}</th></tr></thead></table>`;
             container.innerHTML = tableHTML;
         }
@@ -953,15 +980,17 @@
         function renderFormation(match) {
             const container = document.getElementById('report-formation');
             if (!match.lineup) { container.innerHTML = '<p class="text-gray-500 text-center">Escalação não definida.</p>'; return; }
-            container.innerHTML = `<h4 class="text-center font-bold mb-2">Esquema Tático: 4-3-3</h4><div class="formation-grid"></div>`;
-            const grid = container.querySelector('.formation-grid');
-            Object.entries(match.lineup).forEach(([posKey, playerId]) => {
-                 const player = appState.players.find(p => p.id === playerId);
-                 const posEl = document.createElement('div');
-                 posEl.className = `player-position ${posKey}`;
-                 posEl.innerHTML = `<div class="pos-label">${lineupPositions[posKey]}</div><div class="player-name">${player?.name || 'Vazio'}</div>`;
-                 grid.appendChild(posEl);
-            });
+            let formationHTML = `<h4 class="text-center font-bold mb-4">Esquema Tático: 4-3-3</h4><div class="formation-container"><div class="formation-grid-tv">`;
+            const lineup = match.lineup;
+            const getPlayerTag = (posKey) => `<div class="player-position"><div class="player-tag"><div class="player-name">${appState.players.find(p => p.id === lineup[posKey])?.name || 'Vazio'}</div><div class="pos-label">${lineupPositions[posKey]}</div></div></div>`;
+
+            formationHTML += `<div class="att-pos pos-3-player">${getPlayerTag('lw')}${getPlayerTag('st')}${getPlayerTag('rw')}</div>`;
+            formationHTML += `<div class="mid-pos pos-3-player">${getPlayerTag('lcm')}${getPlayerTag('dm')}${getPlayerTag('rcm')}</div>`;
+            formationHTML += `<div class="def-pos pos-4-player">${getPlayerTag('lb')}${getPlayerTag('lcb')}${getPlayerTag('rcb')}${getPlayerTag('rb')}</div>`;
+            formationHTML += `<div class="gk-pos pos-1-player">${getPlayerTag('gk')}</div>`;
+            
+            formationHTML += `</div></div>`;
+            container.innerHTML = formationHTML;
         }
         
         window.exportReportToPDF = function() { /* ... */ }
