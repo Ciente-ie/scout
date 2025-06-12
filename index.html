@@ -98,11 +98,9 @@
 <body class="flex h-screen antialiased">
 
     <!-- Sidebar Navigation -->
-    <nav class="w-64 bg-gray-900 p-4 flex flex-col flex-shrink-0">
+    <nav class="w-64 bg-gray-900 p-4 flex-col flex-shrink-0 hidden md:flex">
         <div class="flex items-center gap-3 mb-10 pl-2">
-            <svg class="h-8 w-8 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
-            </svg>
+            <svg class="h-8 w-8 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.25m11.25 0h8.25M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
             <h1 class="text-white text-2xl font-bold">Scout Pro</h1>
         </div>
         <a href="#" class="nav-link active text-lg p-3 rounded-r-lg mb-2" onclick="navigateTo('dashboard')">Dashboard</a>
@@ -116,7 +114,15 @@
     </nav>
 
     <!-- Main Content Area -->
-    <main class="flex-1 p-8 overflow-y-auto">
+    <main class="flex-1 p-4 md:p-8 overflow-y-auto">
+        <!-- Mobile Menu Button -->
+         <div class="md:hidden flex justify-between items-center mb-4">
+            <h1 class="text-white text-xl font-bold">Scout Pro</h1>
+            <button onclick="document.querySelector('nav').classList.toggle('hidden')" class="p-2 rounded-md text-gray-300 hover:bg-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" /></svg>
+            </button>
+        </div>
+
         <!-- Dashboard View -->
         <div id="dashboard" class="view active">
             <!-- Content will be rendered by JS -->
@@ -125,7 +131,7 @@
         <!-- Management View -->
         <div id="management" class="view">
             <h2 class="text-3xl font-bold text-white mb-6">Gerenciamento de Jogadores</h2>
-            <div class="bg-gray-800 p-6 rounded-lg">
+            <div class="bg-gray-800 p-4 md:p-6 rounded-lg">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <!-- Form Column -->
                     <div class="lg:col-span-1">
@@ -187,7 +193,7 @@
             </div>
             
             <div class="field rounded-lg mb-4">
-                <div class="grid grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <!-- Defensive Zone -->
                     <div class="zone rounded-lg">
                         <h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">DEFESA</h4>
@@ -1093,38 +1099,43 @@
             const container = document.getElementById('report-top-stats');
             const myEvents = match.events.filter(e => e.scoringTeam !== 'opponent' && !e.action.endsWith('_adv'));
             
-            const getTopPlayer = (action, detail, key) => {
+            const getTopStats = (action, detail, key) => {
                 const counts = myEvents.filter(e => e.action === action && (detail ? e.detail === detail : true) && e[key])
                                      .reduce((acc, e) => { acc[e[key]] = (acc[e[key]] || 0) + 1; return acc; }, {});
-                const sorted = Object.entries(counts).sort(([,a],[,b]) => b-a);
-                return sorted.length > 0 ? sorted[0] : [null, 0];
+                return Object.entries(counts).sort(([,a],[,b]) => b-a);
             };
 
-            const [topScorerId, goals] = getTopPlayer('gol', null, 'playerId');
-            const [topAssisterId, assists] = getTopPlayer('gol', null, 'assistId');
-            const [topShooterId, shots] = getTopPlayer('finalizacao', null, 'playerId');
+            const goals = getTopStats('gol', null, 'playerId');
+            const assists = getTopStats('gol', null, 'assistId');
+            const shots = getTopStats('finalizacao', null, 'playerId');
 
-            const renderStatCard = (title, playerId, count, icon) => {
-                const player = appState.players.find(p => p.id === playerId);
-                return `<div class="bg-white p-3 rounded-lg shadow-sm flex items-center gap-3">
-                            <span class="bg-gray-200 p-2 rounded-full">${icon}</span>
-                            <div>
-                                <h4 class="font-semibold text-gray-500 text-sm">${title}</h4>
-                                <p class="font-bold text-gray-800 text-base">${player?.name || 'N/A'}</p>
-                            </div>
-                            <strong class="ml-auto text-xl font-black text-gray-800">${count > 0 ? count : '-'}</strong>
-                        </div>`;
+            const renderList = (title, data, icon) => {
+                let listHTML = `<div class="bg-white p-3 rounded-lg shadow-sm flex items-center gap-3">
+                                <span class="bg-gray-200 p-2 rounded-full">${icon}</span>
+                                <div><h4 class="font-semibold text-gray-500 text-sm">${title}</h4>
+                                <p class="font-bold text-gray-800 text-base">${data.length > 0 ? (appState.players.find(p => p.id === data[0][0])?.name || 'N/A') : 'N/A'}</p></div>
+                                <strong class="ml-auto text-xl font-black text-gray-800">${data.length > 0 ? data[0][1] : '-'}</strong>
+                            </div>`;
+                if (title === 'Gols' && data.length > 1) {
+                    listHTML += '<ul class="text-sm text-gray-600 space-y-1 pl-12 mt-1">';
+                    data.slice(1).forEach(([id, count]) => {
+                        const player = appState.players.find(p => p.id === id);
+                        listHTML += `<li class="flex justify-between"><span>${player?.name || 'Desconhecido'}</span> <strong>${count}</strong></li>`;
+                    });
+                     listHTML += '</ul>';
+                }
+                return listHTML;
             };
             
-            const goalIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>`;
-            const assistIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" fill-rule="evenodd"/></svg>`; // Placeholder for boot
-            const shotIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L9.414 11H13a1 1 0 100-2H9.414l1.293-1.293z" clip-rule="evenodd"/></svg>`; // Placeholder for target
+            const goalIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20"><path d="M8.28 2.22a.75.75 0 0 0-1.06 1.06L8.94 5H5.25a.75.75 0 0 0 0 1.5h3.69l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 7.31l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 6.5h3.69a.75.75 0 0 0 0-1.5h-3.69L12.78 3.28a.75.75 0 0 0-1.06-1.06L10 3.94 8.28 2.22zM10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM9.25 14.25a.75.75 0 0 0 1.5 0v-5a.75.75 0 0 0-1.5 0v5z"/></svg>`;
+            const assistIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 16 16" fill="currentColor"><path d="M8.84 1.44a.75.75 0 0 0-1.68 0L5.72 4.41a.75.75 0 0 0 .53 1.28h1.25v2.53a.75.75 0 0 0 1.5 0V5.69h1.25a.75.75 0 0 0 .53-1.28L8.84 1.44zM4.75 9.75a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5z"/></svg>`;
+            const shotIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12z" clip-rule="evenodd" /><path d="M10 4a1 1 0 011 1v1a1 1 0 11-2 0V5a1 1 0 011-1zM9 15a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1zM4 10a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zM15 9a1 1 0 10-2 0v.01a1 1 0 102 0V9z"/></svg>`;
 
             container.innerHTML = `
                 <div class="space-y-3">
-                    ${renderStatCard('Gols', topScorerId, goals, goalIcon)}
-                    ${renderStatCard('Assistências', topAssisterId, assists, assistIcon)}
-                    ${renderStatCard('Finalizações', topShooterId, shots, shotIcon)}
+                    ${renderList('Gols', goals, goalIcon)}
+                    ${renderList('Assistências', assists, assistIcon)}
+                    ${renderList('Finalizações', shots, shotIcon)}
                 </div>
             `;
         }
@@ -1166,23 +1177,27 @@
 
             const pages = reportContent.querySelectorAll('.report-page');
             const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = pdf.internal.pageSize.getHeight();
-
+            
             for (let i = 0; i < pages.length; i++) {
                 const page = pages[i];
-                const canvas = await html2canvas(page, { scale: 2 });
-                const imgData = canvas.toDataURL('image/jpeg', 0.7);
-                const imgWidth = canvas.width;
-                const imgHeight = canvas.height;
-                const ratio = imgWidth / imgHeight;
-                const widthInPdf = pdfWidth - 20; // 10mm margin on each side
-                const heightInPdf = widthInPdf / ratio;
-                
                 if (i > 0) {
                     pdf.addPage();
                 }
-                pdf.addImage(imgData, 'JPEG', 10, 10, widthInPdf, heightInPdf);
+                const canvas = await html2canvas(page, { scale: 2 });
+                const imgData = canvas.toDataURL('image/jpeg', 0.7);
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                const imgWidth = canvas.width;
+                const imgHeight = canvas.height;
+                const ratio = imgWidth / imgHeight;
+                let widthInPdf = pdfWidth; 
+                let heightInPdf = widthInPdf / ratio;
+                if(heightInPdf > pdfHeight) {
+                    heightInPdf = pdfHeight;
+                    widthInPdf = heightInPdf * ratio;
+                }
+                
+                pdf.addImage(imgData, 'JPEG', (pdfWidth - widthInPdf) / 2, 0, widthInPdf, heightInPdf);
             }
             
             const matchSelect = document.getElementById('report-match-select');
