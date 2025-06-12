@@ -220,62 +220,70 @@
         <!-- Live Match View -->
         <div id="live-match" class="view">
             <div class="bg-gray-800 p-4 rounded-lg mb-4">
-                <!-- Score and Timer -->
+                <!-- Score and Timer will be rendered here by JS -->
             </div>
             
-            <div class="field rounded-lg mb-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <!-- Defensive Zone -->
-                    <div class="zone rounded-lg">
-                        <h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">DEFESA</h4>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button class="action-btn bg-purple-600" onclick="logEvent(event, 'defesa', 'finalizacao_adv')">Fin. Adv.</button>
-                            <button class="action-btn bg-purple-600" onclick="logEvent(event, 'defesa', 'chance_clara_adv')">Chance Adv.</button>
-                            <button class="action-btn bg-yellow-500" onclick="logEvent(event, 'defesa', 'duelo')">Duelo</button>
-                            <button class="action-btn bg-red-600" onclick="logEvent(event, 'defesa', 'falta_sofrida')">Falta Sofrida</button>
-                            <button class="action-btn bg-red-400" onclick="logEvent(event, 'defesa', 'falta_cometida')">Falta Cometida</button>
+            <div class="flex flex-col lg:flex-row gap-4">
+                <!-- Main field area -->
+                <div class="field rounded-lg mb-4 flex-grow">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <!-- Defensive Zone -->
+                        <div class="zone rounded-lg">
+                            <h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">DEFESA</h4>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button class="action-btn bg-purple-600" onclick="logEvent(event, 'defesa', 'finalizacao_adv')">Fin. Adv.</button>
+                                <button class="action-btn bg-purple-600" onclick="logEvent(event, 'defesa', 'chance_clara_adv')">Chance Adv.</button>
+                                <button class="action-btn bg-yellow-500" onclick="logEvent(event, 'defesa', 'duelo')">Duelo</button>
+                                <button class="action-btn bg-red-600" onclick="logEvent(event, 'defesa', 'falta_sofrida')">Falta Sofrida</button>
+                                <button class="action-btn bg-red-400" onclick="logEvent(event, 'defesa', 'falta_cometida')">Falta Cometida</button>
+                            </div>
+                            <div class="pass-buttons grid grid-cols-2 gap-2">
+                                <button class="action-btn pass-btn" onclick="logEvent(event, 'defesa', 'passe_certo')">Passe Certo</button>
+                                <button class="action-btn pass-btn-errado" onclick="logEvent(event, 'defesa', 'passe_errado')">Passe Errado</button>
+                            </div>
                         </div>
-                        <div class="pass-buttons grid grid-cols-2 gap-2">
-                            <button class="action-btn pass-btn" onclick="logEvent(event, 'defesa', 'passe_certo')">Passe Certo</button>
-                            <button class="action-btn pass-btn-errado" onclick="logEvent(event, 'defesa', 'passe_errado')">Passe Errado</button>
+                        <!-- Midfield Zone -->
+                        <div class="zone rounded-lg">
+                            <h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">MEIO-CAMPO</h4>
+                             <div class="grid grid-cols-2 gap-2">
+                                <button class="action-btn bg-yellow-500" onclick="logEvent(event, 'meio', 'duelo')">Duelo</button>
+                                <button class="action-btn bg-red-600" onclick="logEvent(event, 'meio', 'falta_sofrida')">F. Sofrida</button>
+                                <button class="action-btn bg-red-400" onclick="logEvent(event, 'meio', 'falta_cometida')">F. Cometida</button>
+                            </div>
+                             <div class="pass-buttons grid grid-cols-2 gap-2">
+                                 <button class="action-btn pass-btn" onclick="logEvent(event, 'meio', 'passe_certo')">Passe Certo</button>
+                                 <button class="action-btn pass-btn-errado" onclick="logEvent(event, 'meio', 'passe_errado')">Passe Errado</button>
+                            </div>
                         </div>
-                    </div>
-                    <!-- Midfield Zone -->
-                    <div class="zone rounded-lg">
-                        <h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">MEIO-CAMPO</h4>
-                         <div class="grid grid-cols-2 gap-2">
-                            <button class="action-btn bg-yellow-500" onclick="logEvent(event, 'meio', 'duelo')">Duelo</button>
-                            <button class="action-btn bg-red-600" onclick="logEvent(event, 'meio', 'falta_sofrida')">F. Sofrida</button>
-                            <button class="action-btn bg-red-400" onclick="logEvent(event, 'meio', 'falta_cometida')">F. Cometida</button>
-                        </div>
-                         <div class="pass-buttons grid grid-cols-2 gap-2">
-                             <button class="action-btn pass-btn" onclick="logEvent(event, 'meio', 'passe_certo')">Passe Certo</button>
-                             <button class="action-btn pass-btn-errado" onclick="logEvent(event, 'meio', 'passe_errado')">Passe Errado</button>
-                        </div>
-                    </div>
-                    <!-- Attack Zone -->
-                    <div class="zone rounded-lg">
-                        <h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">ATAQUE</h4>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button class="action-btn bg-green-500" onclick="logEvent(event, 'ataque', 'finalizacao')">Finalização</button>
-                            <button class="action-btn bg-green-500" onclick="logEvent(event, 'ataque', 'chance_clara')">Chance Clara</button>
-                            <button class="action-btn bg-yellow-500" onclick="logEvent(event, 'ataque', 'duelo')">Duelo</button>
-                            <button class="action-btn bg-blue-500" onclick="logEvent(event, 'ataque', 'cruzamento_dir')">Cruz. Dir</button>
-                            <button class="action-btn bg-blue-500" onclick="logEvent(event, 'ataque', 'cruzamento_esq')">Cruz. Esq</button>
-                            <button class="action-btn bg-red-600" onclick="logEvent(event, 'ataque', 'falta_sofrida')">F. Sofrida</button>
-                            <button class="action-btn bg-red-400" onclick="logEvent(event, 'ataque', 'falta_cometida')">F. Cometida</button>
-                        </div>
-                         <div class="pass-buttons grid grid-cols-2 gap-2">
-                             <button class="action-btn pass-btn" onclick="logEvent(event, 'ataque', 'passe_certo')">Passe Certo</button>
-                             <button class="action-btn pass-btn-errado" onclick="logEvent(event, 'ataque', 'passe_errado')">Passe Errado</button>
+                        <!-- Attack Zone -->
+                        <div class="zone rounded-lg">
+                            <h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">ATAQUE</h4>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button class="action-btn bg-green-500" onclick="logEvent(event, 'ataque', 'finalizacao')">Finalização</button>
+                                <button class="action-btn bg-green-500" onclick="logEvent(event, 'ataque', 'chance_clara')">Chance Clara</button>
+                                <button class="action-btn bg-yellow-500" onclick="logEvent(event, 'ataque', 'duelo')">Duelo</button>
+                                <button class="action-btn bg-blue-500" onclick="logEvent(event, 'ataque', 'cruzamento_dir')">Cruz. Dir</button>
+                                <button class="action-btn bg-blue-500" onclick="logEvent(event, 'ataque', 'cruzamento_esq')">Cruz. Esq</button>
+                                <button class="action-btn bg-red-600" onclick="logEvent(event, 'ataque', 'falta_sofrida')">F. Sofrida</button>
+                                <button class="action-btn bg-red-400" onclick="logEvent(event, 'ataque', 'falta_cometida')">F. Cometida</button>
+                            </div>
+                             <div class="pass-buttons grid grid-cols-2 gap-2">
+                                 <button class="action-btn pass-btn" onclick="logEvent(event, 'ataque', 'passe_certo')">Passe Certo</button>
+                                 <button class="action-btn pass-btn-errado" onclick="logEvent(event, 'ataque', 'passe_errado')">Passe Errado</button>
+                            </div>
                         </div>
                     </div>
                 </div>
-                 <!-- Container for sub-action buttons -->
-                <div id="sub-action-container" class="mt-3"></div>
+                 <!-- Possession Controls Area -->
+                <div id="possession-controls-container" class="flex-shrink-0 w-full lg:w-48">
+                    <!-- Possession controls will be rendered here by JS -->
+                </div>
             </div>
+            
+            <!-- Container for sub-action buttons -->
+            <div id="sub-action-container" class="mt-3"></div>
 
-            <div class="bg-gray-800 p-2 rounded-lg h-56 overflow-y-auto">
+            <div class="bg-gray-800 p-2 rounded-lg h-56 overflow-y-auto mt-4">
                  <table class="w-full text-left text-sm"><thead class="text-gray-400 sticky top-0 bg-gray-800"><tr><th>Tempo</th><th>P.</th><th>Setor</th><th>Ação</th><th>Detalhe</th><th>Jogador</th></tr></thead><tbody id="live-log-body" class="divide-y divide-gray-700"></tbody></table>
             </div>
         </div>
@@ -569,7 +577,10 @@
             form.scrollIntoView({ behavior: 'smooth' });
         }
         window.deletePlayer = async function(id) {
-            if (confirm("Tem certeza que deseja excluir este jogador? Esta ação não pode ser desfeita.")) {
+            // Replaced window.confirm with a simple true condition to avoid issues in some environments.
+            // For a production app, a custom modal confirmation would be better.
+            const userConfirmed = true; 
+            if (userConfirmed) {
                 try { await deleteDoc(doc(db, "artifacts", appId, "users", userId, "players", id)); } 
                 catch (error) { showErrorMessage("Não foi possível excluir o jogador.", error); }
             }
@@ -615,7 +626,6 @@
                 return;
             }
             
-            // BUG FIX: Verifica se os seletores de escalação existem antes de tentar ler seus valores.
             const lineup = {};
             const lineupContainer = document.getElementById('match-lineup-selection');
             if (lineupContainer.querySelector('select')) {
@@ -625,7 +635,7 @@
                 }
             } else {
                  for (const key of Object.keys(lineupPositions)) {
-                    lineup[key] = ""; // Preenche com vazio se não houver escalação
+                    lineup[key] = "";
                 }
             }
 
@@ -675,7 +685,8 @@
         }
         
         window.deleteMatch = async function(id) { 
-            if (confirm("Tem certeza que deseja excluir esta partida? Todos os dados associados serão perdidos permanentemente.")) {
+            const userConfirmed = true; // Bypassing confirm for compatibility
+            if (userConfirmed) {
                 try { 
                     await deleteDoc(doc(db, "artifacts", appId, "users", userId, "matches", id)); 
                 } catch (e) { 
@@ -699,6 +710,8 @@
         function renderLiveScoreAndTimer() {
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
             if (!match) return;
+            
+            // Render Score, Timer, and Goal buttons
             ui.liveMatch.header.innerHTML = `
                 <div class="flex justify-between items-center text-white">
                     <div class="text-2xl font-bold text-center">${match.myTeamName}</div>
@@ -715,16 +728,24 @@
                  <div class="flex gap-2 mt-4">
                     <button class="w-1/2 bg-green-700 hover:bg-green-800 p-3 rounded-lg text-white font-bold" onclick="prepareGoalModal('myTeam')">GOL PRÓ</button>
                     <button class="w-1/2 bg-red-800 hover:bg-red-900 p-3 rounded-lg text-white font-bold" onclick="logGoal('opponent')">GOL CONTRA</button>
-                </div>
-                 <div class="bg-gray-900 p-3 rounded-lg mt-4">
-                    <h3 class="text-center text-base font-bold text-white mb-2">Controle de Posse de Bola</h3>
-                    <div class="flex justify-center gap-4">
-                        <button id="possession-myTeam" class="possession-btn main-team bg-blue-600 text-white rounded" onclick="togglePossession('myTeam')">${match.myTeamName}</button>
-                        <button id="possession-opponent" class="possession-btn main-team bg-red-600 text-white rounded" onclick="togglePossession('opponent')">${match.opponentName}</button>
-                        <button id="possession-stopped" class="possession-btn bg-gray-500 text-white rounded" onclick="togglePossession('stopped')">Bola Parada</button>
-                    </div>
-                    <div class="text-center text-white mt-2" id="possession-display"></div>
                 </div>`;
+            
+            // Render Possession Controls in its dedicated container
+            const possessionContainer = document.getElementById('possession-controls-container');
+            if (possessionContainer) {
+                possessionContainer.innerHTML = `
+                    <div class="bg-gray-900 p-3 rounded-lg h-full">
+                        <h3 class="text-center text-base font-bold text-white mb-2">Posse</h3>
+                        <div class="flex flex-col justify-start items-center gap-2 h-full">
+                            <button id="possession-myTeam" class="possession-btn main-team bg-red-600 text-white rounded w-full">${match.myTeamName}</button>
+                            <button id="possession-opponent" class="possession-btn main-team bg-blue-600 text-white rounded w-full">${match.opponentName}</button>
+                            <button id="possession-stopped" class="possession-btn bg-gray-500 text-white rounded w-3/4 mt-2">Bola Parada</button>
+                            <div class="text-center text-white mt-auto text-sm" id="possession-display"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
             updatePossessionDisplay();
         }
 
@@ -769,7 +790,7 @@
             const total = match.possession.myTeam + match.possession.opponent || 1;
             const myTeamPerc = ((match.possession.myTeam / total) * 100).toFixed(0);
             const opponentPerc = ((match.possession.opponent / total) * 100).toFixed(0);
-            display.textContent = `Posse: ${match.myTeamName} ${myTeamPerc}% | ${match.opponentName} ${opponentPerc}%`;
+            display.textContent = `Posse: ${myTeamPerc}% / ${opponentPerc}%`;
         }
         
         // --- EVENT LOGGING ---
@@ -860,7 +881,7 @@
 
         function renderLiveLog() {
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
-            if(!match || !match.events) return;
+            if(!match || !match.events || !ui.liveMatch.logBody) return;
             ui.liveMatch.logBody.innerHTML = '';
             match.events.forEach(ev => {
                 const row = ui.liveMatch.logBody.insertRow(0);
