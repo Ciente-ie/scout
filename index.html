@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scout Pro - Análise de Futebol</title>
+    <title>Scout Free - Análise de Futebol</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -111,7 +111,7 @@
 
     <!-- Barra de Navegação Superior -->
     <nav class="w-full bg-gray-900 shadow-md flex items-center justify-between p-3 flex-shrink-0 z-20">
-        <div class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" viewBox="0 0 16 16" fill="currentColor"><path d="M5 3a1 1 0 0 0-1 1v1.28c0 .34.1.67.3.94L8 10.4V14a1 1 0 0 0 1 1h.09a1 1 0 0 0 .71-.29l2-2a1 1 0 0 0 .29-.71V10.4l3.7-4.18c.2-.27.3-.6.3-.94V4a1 1 0 0 0-1-1H5Z"/><path d="M4 2a2 2 0 0 0-2 2v1.28a3 3 0 0 0 .93 2.12L7 11.84v2.41a1 1 0 0 0 .29.71l2 2a1 1 0 0 0 1.42 0l2-2a1 1 0 0 0 .29-.71v-2.4l3.07-3.44A3 3 0 0 0 14 6.28V4a2 2 0 0 0-2-2H4Z"/></svg><h1 class="text-white text-2xl font-bold hidden sm:block">Scout Pro</h1></div>
+        <div class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" viewBox="0 0 16 16" fill="currentColor"><path d="M5 3a1 1 0 0 0-1 1v1.28c0 .34.1.67.3.94L8 10.4V14a1 1 0 0 0 1 1h.09a1 1 0 0 0 .71-.29l2-2a1 1 0 0 0 .29-.71V10.4l3.7-4.18c.2-.27.3-.6.3-.94V4a1 1 0 0 0-1-1H5Z"/><path d="M4 2a2 2 0 0 0-2 2v1.28a3 3 0 0 0 .93 2.12L7 11.84v2.41a1 1 0 0 0 .29.71l2 2a1 1 0 0 0 1.42 0l2-2a1 1 0 0 0 .29-.71v-2.4l3.07-3.44A3 3 0 0 0 14 6.28V4a2 2 0 0 0-2-2H4Z"/></svg><h1 class="text-white text-2xl font-bold hidden sm:block">Scout Free</h1></div>
         <div id="main-nav-links" class="hidden md:flex items-center gap-1">
             <a href="#" class="nav-link-top active" data-view="dashboard" onclick="navigateTo('dashboard')">Dashboard</a>
             <a href="#" class="nav-link-top admin-only" data-view="management" onclick="navigateTo('management')">Jogadores</a>
@@ -188,7 +188,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, writeBatch, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         let appState = { players: [], matches: [], activeMatchId: null, currentView: 'dashboard', listenersAttached: false, isGuestMode: false };
         let liveState = { timerInterval: null, possessionInterval: null, seconds: 0, currentPeriod: 0, currentPossessionHolder: null, activeSubAction: null };
@@ -216,6 +216,18 @@
 
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
+
+                // Enable offline persistence
+                try {
+                    await enableIndexedDbPersistence(db);
+                } catch (err) {
+                    if (err.code == 'failed-precondition') {
+                        console.warn("Firestore persistence failed: multiple tabs open.");
+                    } else if (err.code == 'unimplemented') {
+                        console.warn("Firestore persistence not available in this browser.");
+                    }
+                }
+
                 auth = getAuth(app);
                 
                 if (guestId) {
@@ -325,7 +337,7 @@
                 return; // Prevent navigation for guests
             }
             appState.currentView = viewId;
-            ui.views.forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(viewId)?.classList.add('active');
             const mobileMenu = document.getElementById('mobile-menu');
             if (mobileMenu && !mobileMenu.classList.contains('hidden')) { mobileMenu.classList.add('hidden'); }
