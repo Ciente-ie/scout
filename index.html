@@ -93,6 +93,12 @@
         .pos-4-player { display: grid; grid-template-columns: repeat(4, 1fr); width: 100%; }
         .pos-3-player { display: grid; grid-template-columns: repeat(3, 1fr); width: 80%; margin: auto; }
         .pos-1-player { display: grid; grid-template-columns: 1fr; width: 100%; }
+
+        @media (max-width: 767px) and (orientation: portrait) {
+            body.scout-view-active #rotate-device-overlay {
+                display: flex;
+            }
+        }
     </style>
 </head>
 <body class="flex h-screen antialiased">
@@ -273,11 +279,11 @@
             </div>
         </div>
     </main>
-    
+
     <!-- Modals -->
     <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-50 hidden" onclick="closeAllModals(event)">
         <!-- New Match Modal -->
-        <div id="new-match-modal" class="modal-content bg-gray-800 text-white rounded-lg w-full max-w-3xl hidden flex flex-col max-h-[90vh]">
+        <div id="new-match-modal" class="modal-content bg-gray-800 text-white rounded-lg w-full max-w-4xl hidden flex flex-col max-h-[90vh]">
              <!-- Header -->
             <div class="p-6 pb-4">
                 <h3 class="text-2xl font-bold text-center">Criar Nova Partida</h3>
@@ -288,7 +294,7 @@
                 <form id="new-match-form" class="space-y-6">
                     <div class="bg-gray-900 p-4 rounded-lg">
                         <h4 class="font-semibold text-lg mb-3">Detalhes da Partida</h4>
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div><label>Nome da sua equipe:</label><input type="text" id="match-my-team-name" placeholder="Ex: Principal, Sub-20" class="w-full p-2.5 mt-1" required></div>
                             <div><label>Adversário:</label><input type="text" id="match-opponent-name" placeholder="Nome do Adversário" class="w-full p-2.5 mt-1" required></div>
                             <div><label>Data:</label><input type="date" id="match-date" class="w-full p-2.5 mt-1" required></div>
@@ -299,11 +305,17 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8">
                         <div class="bg-gray-900 p-4 rounded-lg">
                             <h4 class="font-semibold text-lg mb-2">Jogadores Convocados</h4>
-                            <div id="match-squad-list" class="h-64 overflow-y-auto border border-gray-700 p-3 rounded space-y-2"></div>
+                            <div id="match-squad-list" class="h-96 overflow-y-auto border border-gray-700 p-3 rounded space-y-2"></div>
                         </div>
-                         <div class="bg-gray-900 p-4 rounded-lg">
-                            <h4 class="font-semibold text-lg mb-2">Escalação Tática (4-3-3)</h4>
-                            <div id="match-lineup-selection" class="h-64 overflow-y-auto border border-gray-700 p-3 rounded space-y-3"></div>
+                         <div class="bg-gray-900 p-4 rounded-lg space-y-4">
+                            <div>
+                                <h4 class="font-semibold text-lg mb-2">Escalação Tática (4-3-3)</h4>
+                                <div id="match-lineup-selection" class="h-64 overflow-y-auto border border-gray-700 p-3 rounded space-y-3"></div>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-lg mb-2">Reservas</h4>
+                                <div id="match-substitutes-selection" class="h-48 overflow-y-auto border border-gray-700 p-3 rounded grid grid-cols-1 gap-y-3"></div>
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -347,6 +359,11 @@
             </div>
             <button class="w-full bg-blue-600 p-2.5 rounded mt-4" onclick="saveRatings()">Salvar Avaliações e Finalizar Partida</button>
         </div>
+    </div>
+    
+    <div id="rotate-device-overlay" class="fixed inset-0 bg-black bg-opacity-90 flex-col items-center justify-center text-white z-[100] hidden">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 mb-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18.5,6.5H15.5a1,1,0,0,1,0-2h4a1,1,0,0,1,1,1v4a1,1,0,0,1-2,0V6.91A8.48,8.48,0,0,0,12,4.05,8.5,8.5,0,0,0,3.5,12.55a1,1,0,0,1-2,0A10.5,10.5,0,0,1,12,2.05,10.34,10.34,0,0,1,18.5,6.5Zm-13,5H8.5a1,1,0,0,1,0,2H4.5a1,1,0,0,1-1-1v-4a1,1,0,0,1,2,0v2.59A8.48,8.48,0,0,0,12,19.95,8.5,8.5,0,0,0,20.5,11.45a1,1,0,0,1,2,0,10.5,10.5,0,0,1-10.5,10.5A10.34,10.34,0,0,1,5.5,17.5Z"/></svg>
+        <p class="text-xl">Por favor, rode o seu dispositivo para a visualização horizontal.</p>
     </div>
 
     <script type="module">
@@ -459,12 +476,16 @@
             ui.views.forEach(v => v.classList.remove('active'));
             document.getElementById(viewId)?.classList.add('active');
             const nav = document.querySelector('nav');
-            if (viewId === 'live-match' && window.innerWidth < 768) {
-                nav.classList.add('hidden');
-            } else if (window.innerWidth < 768) {
-                 nav.classList.add('hidden');
+            const body = document.body;
+
+            if (viewId === 'live-match') {
+                body.classList.add('scout-view-active');
             } else {
-                 nav.classList.remove('hidden');
+                body.classList.remove('scout-view-active');
+            }
+
+            if (window.innerWidth < 768) {
+                 nav.classList.add('hidden');
             }
             ui.navLinks.forEach(l => l.classList.toggle('active', l.getAttribute('onclick') === `navigateTo('${viewId}')`));
             refreshCurrentView();
@@ -548,29 +569,50 @@
 
         window.updateLineupSelectors = () => {
             const lineupContainer = document.getElementById('match-lineup-selection');
+            const substitutesContainer = document.getElementById('match-substitutes-selection');
             const selectedPlayerIds = Array.from(document.querySelectorAll('#match-squad-list input:checked')).map(i => i.value);
             const selectedPlayers = selectedPlayerIds.map(id => appState.players.find(p => p.id === id)).filter(Boolean);
+            
             if (!selectedPlayers.length) {
                 lineupContainer.innerHTML = '<p class="text-gray-400 text-center mt-4">Selecione jogadores convocados para montar a escalação.</p>';
+                substitutesContainer.innerHTML = '<p class="text-gray-400 text-center mt-4">Selecione jogadores convocados.</p>';
                 return;
             }
+
             const playerOptions = selectedPlayers.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
             lineupContainer.innerHTML = Object.entries(lineupPositions).map(([key, label]) => `
                 <div class="grid grid-cols-3 items-center">
                     <label for="lineup-${key}" class="text-sm col-span-1">${label}:</label>
                     <select id="lineup-${key}" name="lineup-${key}" class="w-full p-2 mt-1 col-span-2"><option value="">Selecione...</option>${playerOptions}</select>
                 </div>`).join('');
+            
+            substitutesContainer.innerHTML = '';
+            for (let i = 1; i <= 10; i++) {
+                substitutesContainer.innerHTML += `
+                    <div class="grid grid-cols-3 items-center">
+                        <label for="substitute-${i}" class="text-sm col-span-1">Reserva ${i}:</label>
+                        <select id="substitute-${i}" name="substitute-${i}" class="w-full p-2 mt-1 col-span-2"><option value="">Selecione...</option>${playerOptions}</select>
+                    </div>`;
+            }
         };
 
         document.getElementById('new-match-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const squadPlayerIds = Array.from(document.querySelectorAll('#match-squad-list input:checked')).map(i => i.value);
             if (!squadPlayerIds.length) return showErrorMessage('Selecione pelo menos um jogador para a partida.');
+            
             const lineup = Object.keys(lineupPositions).reduce((acc, key) => ({...acc, [key]: document.getElementById(`lineup-${key}`).value }), {});
+            
+            const substitutes = [];
+            for (let i = 1; i <= 10; i++) {
+                const subId = document.getElementById(`substitute-${i}`).value;
+                if (subId) substitutes.push(subId);
+            }
+
             const matchData = {
                 myTeamName: document.getElementById('match-my-team-name').value || "Minha Equipe", 
                 opponentName: document.getElementById('match-opponent-name').value, date: document.getElementById('match-date').value, 
-                location: document.getElementById('match-location').value, squadPlayerIds, lineup,
+                location: document.getElementById('match-location').value, squadPlayerIds, lineup, substitutes,
                 myTeamScore: 0, opponentScore: 0, status: 'scheduled', events: [], 
                 possession: { myTeam: 0, opponent: 0, stopped: 0 }, ratings: {}
             };
@@ -1212,14 +1254,15 @@
                 const imgWidth = canvas.width;
                 const imgHeight = canvas.height;
                 const ratio = imgWidth / imgHeight;
-                let widthInPdf = pdfWidth; 
+                let widthInPdf = pdfWidth - 20; // 10mm margin on each side
                 let heightInPdf = widthInPdf / ratio;
-                if(heightInPdf > pdfHeight) {
-                    heightInPdf = pdfHeight;
+                
+                 if(heightInPdf > pdfHeight - 20) { // check if it exceeds page height with margin
+                    heightInPdf = pdfHeight - 20;
                     widthInPdf = heightInPdf * ratio;
                 }
                 
-                pdf.addImage(imgData, 'JPEG', (pdfWidth - widthInPdf) / 2, 0, widthInPdf, heightInPdf);
+                pdf.addImage(imgData, 'JPEG', (pdfWidth - widthInPdf) / 2, 10, widthInPdf, heightInPdf);
             }
             
             const matchSelect = document.getElementById('report-match-select');
