@@ -141,8 +141,8 @@
         <div id="live-match" class="view">
             <div class="bg-gray-800 p-4 rounded-lg mb-4"></div>
             <div class="field rounded-lg"><div class="grid grid-cols-1 sm:grid-cols-3 gap-4 h-full">
-                <div class="zone rounded-lg"><h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">DEFESA</h4><div class="action-buttons-container"><button class="action-btn bg-purple-600" onclick="logEvent(event, 'defesa', 'finalizacao_adv')">Fin. Adv.</button><button class="action-btn bg-purple-600" onclick="logEvent(event, 'defesa', 'chance_clara_adv')">Chance Adv.</button><button class="action-btn bg-red-600" onclick="logEvent(event, 'defesa', 'falta_sofrida')">Falta Sofrida</button><button class="action-btn bg-red-400" onclick="logEvent(event, 'defesa', 'falta_cometida')">Falta Cometida</button><button class="action-btn bg-yellow-500 h-10 col-span-2" onclick="logEvent(event, 'defesa', 'duelo')">Duelo</button></div><div class="pass-buttons grid grid-cols-2 gap-2"><button class="action-btn pass-btn" onclick="logEvent(event, 'defesa', 'passe_certo')">Passe Certo</button><button class="action-btn pass-btn-errado" onclick="logEvent(event, 'defesa', 'passe_errado')">Passe Errado</button></div></div>
-                <div class="zone rounded-lg"><h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">MEIO-CAMPO</h4><div class="action-buttons-container"><button class="action-btn bg-red-600" onclick="logEvent(event, 'meio', 'falta_sofrida')">F. Sofrida</button><button class="action-btn bg-red-400" onclick="logEvent(event, 'meio', 'falta_cometida')">F. Cometida</button><button class="action-btn bg-yellow-500 h-10 col-span-2" onclick="logEvent(event, 'meio', 'duelo')">Duelo</button></div><div class="pass-buttons grid grid-cols-2 gap-2"><button class="action-btn pass-btn" onclick="logEvent(event, 'meio', 'passe_certo')">Passe Certo</button><button class="action-btn pass-btn-errado" onclick="logEvent(event, 'meio', 'passe_errado')">Passe Errado</button></div></div>
+                <div class="zone rounded-lg"><h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">DEFESA</h4><div class="action-buttons-container"><button class="action-btn bg-purple-600" onclick="logEvent(event, 'defesa', 'finalizacao_adv')">Fin. Adv.</button><button class="action-btn bg-purple-600" onclick="logEvent(event, 'defesa', 'chance_clara_adv')">Chance Adv.</button><button class="action-btn bg-red-600" onclick="logEvent(event, 'defesa', 'falta_sofrida')">Falta Sofrida</button><button class="action-btn bg-red-400" onclick="logEvent(event, 'defesa', 'falta_cometida')">Falta Cometida</button><div></div><div></div><button class="action-btn bg-yellow-500 h-10 col-span-2" onclick="logEvent(event, 'defesa', 'duelo')">Duelo</button></div><div class="pass-buttons grid grid-cols-2 gap-2"><button class="action-btn pass-btn" onclick="logEvent(event, 'defesa', 'passe_certo')">Passe Certo</button><button class="action-btn pass-btn-errado" onclick="logEvent(event, 'defesa', 'passe_errado')">Passe Errado</button></div></div>
+                <div class="zone rounded-lg"><h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">MEIO-CAMPO</h4><div class="action-buttons-container"><button class="action-btn bg-red-600" onclick="logEvent(event, 'meio', 'falta_sofrida')">F. Sofrida</button><button class="action-btn bg-red-400" onclick="logEvent(event, 'meio', 'falta_cometida')">F. Cometida</button><div></div><div></div><div></div><div></div><button class="action-btn bg-yellow-500 h-10 col-span-2" onclick="logEvent(event, 'meio', 'duelo')">Duelo</button></div><div class="pass-buttons grid grid-cols-2 gap-2"><button class="action-btn pass-btn" onclick="logEvent(event, 'meio', 'passe_certo')">Passe Certo</button><button class="action-btn pass-btn-errado" onclick="logEvent(event, 'meio', 'passe_errado')">Passe Errado</button></div></div>
                 <div class="zone rounded-lg"><h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">ATAQUE</h4><div class="action-buttons-container"><button class="action-btn bg-green-500" onclick="logEvent(event, 'ataque', 'finalizacao')">Finalização</button><button class="action-btn bg-green-500" onclick="logEvent(event, 'ataque', 'chance_clara')">Chance Clara</button><button class="action-btn bg-blue-500" onclick="logEvent(event, 'ataque', 'cruzamento_dir')">Cruz. Dir</button><button class="action-btn bg-blue-500" onclick="logEvent(event, 'ataque', 'cruzamento_esq')">Cruz. Esq</button><button class="action-btn bg-red-600" onclick="logEvent(event, 'ataque', 'falta_sofrida')">F. Sofrida</button><button class="action-btn bg-red-400" onclick="logEvent(event, 'ataque', 'falta_cometida')">F. Cometida</button><button class="action-btn bg-yellow-500 h-10 col-span-2" onclick="logEvent(event, 'ataque', 'duelo')">Duelo</button></div><div class="pass-buttons grid grid-cols-2 gap-2"><button class="action-btn pass-btn" onclick="logEvent(event, 'ataque', 'passe_certo')">Passe Certo</button><button class="action-btn pass-btn-errado" onclick="logEvent(event, 'ataque', 'passe_errado')">Passe Errado</button></div></div>
             </div></div>
             <div id="sub-action-container" class="mt-3"></div>
@@ -365,44 +365,32 @@
             const convocadosIds = new Set(Array.from(convocadosCheckboxes).map(i => i.value));
             const convocadosPlayers = [...appState.players.filter(p => convocadosIds.has(p.id))];
 
-            // Store current selections to re-apply them after re-rendering
             const allSelects = document.querySelectorAll('#match-lineup-selection select, #match-substitutes-list select');
-            const previousSelections = new Map();
-            allSelects.forEach(s => {
-                if (s.value) {
-                    previousSelections.set(s.id, s.value);
-                }
-            });
+            const selections = new Map();
+            allSelects.forEach(s => { if (s.value) selections.set(s.id, s.value); });
+            const selectedPlayerIds = new Set(selections.values());
             
-            // Get all players currently selected in any dropdown
-            const selectedPlayerIds = new Set(previousSelections.values());
-
             const generateOptions = (currentSelectId) => {
-                let currentSelectionValue = previousSelections.get(currentSelectId);
+                const currentVal = selections.get(currentSelectId);
                 return convocadosPlayers.map(p => {
-                    const isSelectedElsewhere = selectedPlayerIds.has(p.id) && p.id !== currentSelectionValue;
+                    const isSelectedElsewhere = selectedPlayerIds.has(p.id) && p.id !== currentVal;
                     return `<option value="${p.id}" ${isSelectedElsewhere ? 'disabled' : ''}>${p.name}</option>`;
                 }).join('');
             };
             
-            // Re-render starters
             lineupContainer.innerHTML = Object.entries(lineupPositions).map(([key, label]) => {
                 const selectId = `lineup-${key}`;
                 return `<div class="grid grid-cols-3 items-center gap-2"><label for="${selectId}" class="text-sm col-span-1">${label}:</label><select id="${selectId}" class="w-full p-2 mt-1 col-span-2" onchange="updateMatchCreationLists()"><option value="">Selecione...</option>${generateOptions(selectId)}</select></div>`;
             }).join('');
             
-            // Re-render substitutes
             substitutesContainer.innerHTML = Array.from({length: 10}).map((_, i) => {
                 const selectId = `sub-${i}`;
                 return `<div class="grid grid-cols-3 items-center gap-2"><label for="${selectId}" class="text-sm col-span-1">Reserva ${i+1}:</label><select id="${selectId}" class="w-full p-2 mt-1 col-span-2" onchange="updateMatchCreationLists()"><option value="">Vazio</option>${generateOptions(selectId)}</select></div>`;
             }).join('');
 
-            // Restore all selections
-            previousSelections.forEach((playerId, selectId) => {
+            selections.forEach((playerId, selectId) => {
                 const selectElement = document.getElementById(selectId);
-                if (selectElement) {
-                    selectElement.value = playerId;
-                }
+                if (selectElement) selectElement.value = playerId;
             });
         };
 
@@ -669,16 +657,31 @@
 
         function renderChartsForReport(match, period = null) {
             const suffix = period ? `_${period}T` : '';
-            renderPossessionChart(match, `possessionChart${suffix}`); 
+            const possessionCanvasId = period ? `possessionChart${suffix}` : 'possessionChart';
+            
+            renderPossessionChart(match, possessionCanvasId, period);
             renderActionMapChart(match, `actionMapChart${suffix}`, period);
-            if (!period) {
-                renderActionMapChart(match, 'actionMapChart_1T', 1); 
-                renderActionMapChart(match, 'actionMapChart_2T', 2); 
+
+            if (!period) { // For the full report, also render period-specific action maps
+                renderActionMapChart(match, 'actionMapChart_1T', 1);
+                renderActionMapChart(match, 'actionMapChart_2T', 2);
             }
         }
         
         function renderReportContentForPDF(match, specificPeriod = null) {
             const reportFooter = `<div class="absolute bottom-0 left-1/2 -translate-x-1/2 text-center text-xs text-gray-400 p-2 w-full">Powered by Ciente - Inteligência Esportiva / Contato: assessoria@cienteesportes.com.br</div>`;
+            
+            if (specificPeriod) {
+                return `<div class="report-page">
+                    <div class="text-center mb-6"><h1 class="text-3xl font-bold">Relatório do ${specificPeriod}º Tempo</h1><p class="text-lg text-gray-600">${match.myTeamName} vs ${match.opponentName}</p></div>
+                    <div class="grid grid-cols-1 gap-8 report-section">
+                        <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Posse de Bola (${specificPeriod}ºT)</h3><div class="chart-container h-20"><canvas id="possessionChart_${specificPeriod}T"></canvas></div></div>
+                        <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-4">Volume de Ações (${specificPeriod}ºT)</h3><div class="chart-container" style="background-color: #166534;"><canvas id="actionMapChart_${specificPeriod}T"></canvas></div></div>
+                        <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Resumo de Ações (${specificPeriod}ºT)</h3><div id="report-summary-table-${specificPeriod}T"></div></div>
+                    </div>
+                     ${reportFooter}
+                </div>`;
+            }
             
             const page1 = `<div class="report-page">
                 <div class="text-center mb-6"><h1 class="text-4xl font-bold">${match.myTeamName} ${match.myTeamScore} x ${match.opponentScore} ${match.opponentName}</h1><p class="text-lg text-gray-600">${new Date(match.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})} - ${match.location}</p></div>
@@ -705,18 +708,17 @@
                 </div>
                 ${reportFooter}
             </div>`;
-
-            if (specificPeriod) {
-                // Return only the relevant period's content for halftime report
-                return `<div class="report-page"><h3 class="text-xl font-bold text-center mb-4">${specificPeriod}º Tempo</h3><div class="chart-container" style="background-color: #166534;"><canvas id="actionMapChart_${specificPeriod}T"></canvas></div><div id="report-summary-table-${specificPeriod}T" class="mt-4"></div></div>`;
-            }
-
-            renderManOfTheMatch(match);
-            renderTopStatsTable(match);
-            renderReportSummaryTable(match, 'report-summary-table', null);
-            renderReportSummaryTable(match, 'report-summary-table-1T', 1);
-            renderReportSummaryTable(match, 'report-summary-table-2T', 2);
-            renderFormation(match);
+            
+            // Call render functions for the full report's content
+            setTimeout(() => {
+                renderManOfTheMatch(match);
+                renderTopStatsTable(match);
+                renderReportSummaryTable(match, 'report-summary-table', null);
+                renderReportSummaryTable(match, 'report-summary-table-1T', 1);
+                renderReportSummaryTable(match, 'report-summary-table-2T', 2);
+                renderFormation(match);
+            }, 0);
+            
             return page1 + page2;
         }
 
@@ -851,6 +853,7 @@
             
             tempContainer.innerHTML = renderReportContentForPDF(match, 1);
             renderChartsForReport(match, 1);
+            renderReportSummaryTable(match, 'report-summary-table-1T', 1);
             
             await new Promise(resolve => setTimeout(resolve, 500)); // wait for charts to render
 
