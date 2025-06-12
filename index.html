@@ -115,6 +115,11 @@
         .pos-4-player { display: grid; grid-template-columns: repeat(4, 1fr); width: 100%; }
         .pos-3-player { display: grid; grid-template-columns: repeat(3, 1fr); width: 80%; margin: auto; }
         .pos-1-player { display: grid; grid-template-columns: 1fr; width: 100%; }
+        .export-btn-group { position: absolute; top: 0.5rem; right: 0.5rem; display: flex; gap: 0.5rem; }
+        .export-btn { background-color: rgba(255,255,255,0.1); border: none; padding: 0.4rem; border-radius: 9999px; cursor: pointer; }
+        .export-btn:hover { background-color: rgba(255,255,255,0.2); }
+        .dashboard-card { background-color: #1f2937; border: 1px solid #374151; position: relative;}
+
     </style>
 </head>
 <body class="flex flex-col h-screen antialiased">
@@ -368,24 +373,23 @@
             const allSelects = document.querySelectorAll('#match-lineup-selection select, #match-substitutes-list select');
             const selections = new Map();
             allSelects.forEach(s => { if (s.value) selections.set(s.id, s.value); });
-            const selectedPlayerIds = new Set(selections.values());
             
-            const generateOptions = (currentSelectId) => {
+            const renderOptions = (currentSelectId) => {
                 const currentVal = selections.get(currentSelectId);
                 return convocadosPlayers.map(p => {
-                    const isSelectedElsewhere = selectedPlayerIds.has(p.id) && p.id !== currentVal;
+                    const isSelectedElsewhere = [...selections.values()].includes(p.id) && p.id !== currentVal;
                     return `<option value="${p.id}" ${isSelectedElsewhere ? 'disabled' : ''}>${p.name}</option>`;
                 }).join('');
             };
             
             lineupContainer.innerHTML = Object.entries(lineupPositions).map(([key, label]) => {
                 const selectId = `lineup-${key}`;
-                return `<div class="grid grid-cols-3 items-center gap-2"><label for="${selectId}" class="text-sm col-span-1">${label}:</label><select id="${selectId}" class="w-full p-2 mt-1 col-span-2" onchange="updateMatchCreationLists()"><option value="">Selecione...</option>${generateOptions(selectId)}</select></div>`;
+                return `<div class="grid grid-cols-3 items-center gap-2"><label for="${selectId}" class="text-sm col-span-1">${label}:</label><select id="${selectId}" class="w-full p-2 mt-1 col-span-2" onchange="updateMatchCreationLists()"><option value="">Selecione...</option>${renderOptions(selectId)}</select></div>`;
             }).join('');
             
             substitutesContainer.innerHTML = Array.from({length: 10}).map((_, i) => {
                 const selectId = `sub-${i}`;
-                return `<div class="grid grid-cols-3 items-center gap-2"><label for="${selectId}" class="text-sm col-span-1">Reserva ${i+1}:</label><select id="${selectId}" class="w-full p-2 mt-1 col-span-2" onchange="updateMatchCreationLists()"><option value="">Vazio</option>${generateOptions(selectId)}</select></div>`;
+                return `<div class="grid grid-cols-3 items-center gap-2"><label for="${selectId}" class="text-sm col-span-1">Reserva ${i+1}:</label><select id="${selectId}" class="w-full p-2 mt-1 col-span-2" onchange="updateMatchCreationLists()"><option value="">Vazio</option>${renderOptions(selectId)}</select></div>`;
             }).join('');
 
             selections.forEach((playerId, selectId) => {
@@ -621,7 +625,7 @@
             const allPerformances = [];
             finishedMatches.forEach(m => { if(!m.ratings) return; Object.entries(m.ratings).forEach(([pid, rates]) => { const avg = (Object.values(rates).reduce((acc, v) => acc + parseFloat(v), 0)) / 4; const player = appState.players.find(p => p.id === pid); if(player) allPerformances.push({ name: player.name, score: avg, date: m.date }); }); });
             const topPerformances = [...allPerformances].sort((a,b) => b.score - a.score).slice(0, 5).map(p => `<li class="flex justify-between items-center text-gray-300 py-1"><div>${p.name}<p class="text-xs text-gray-500">${new Date(p.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</p></div><strong class="text-white">Nota ${p.score.toFixed(1)}</strong></li>`).join('');
-            container.innerHTML = `<h2 class="text-3xl font-bold text-white mb-6">Dashboard</h2><div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div id="team-stats-card" class="lg:col-span-3 dashboard-card p-6 rounded-lg"><h3 class="font-bold text-xl mb-4 text-white">Estatísticas Gerais</h3><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-4 text-center"><div><p class="text-4xl font-extrabold">${totalGames}</p><p class="text-gray-400">Jogos</p></div><div class="text-green-400"><p class="text-4xl font-extrabold">${wins}</p><p class="text-gray-400">Vitórias</p></div><div class="text-yellow-400"><p class="text-4xl font-extrabold">${draws}</p><p class="text-gray-400">Empates</p></div><div class="text-red-400"><p class="text-4xl font-extrabold">${losses}</p><p class="text-gray-400">Derrotas</p></div><div class="text-blue-400"><p class="text-4xl font-extrabold">${aproveitamento}%</p><p class="text-gray-400">Aproveitamento</p></div><div><p class="text-4xl font-extrabold text-green-400">${totalGoalsScored}</p><p class="text-gray-400">Gols Marcados</p></div><div><p class="text-4xl font-extrabold text-red-400">${totalGoalsConceded}</p><p class="text-gray-400">Gols Sofridos</p></div><div><p class="text-4xl font-extrabold">${(totalGames > 0 ? (totalGoalsScored/totalGames).toFixed(2) : '0.00')}</p><p class="text-gray-400">Gols p/ Jogo</p></div><div><p class="text-4xl font-extrabold">${(totalGames > 0 ? (totalGoalsConceded/totalGames).toFixed(2) : '0.00')}</p><p class="text-gray-400">Sofridos p/ Jogo</p></div></div></div><div class="dashboard-card p-6 rounded-lg lg:col-span-1"><h3 class="font-bold text-lg mb-4">Últimos 5 Resultados</h3><div class="flex gap-3">${last5Matches || '<p class="text-gray-400">Nenhuma partida finalizada.</p>'}</div></div><div id="performance-history-card" class="dashboard-card p-6 rounded-lg lg:col-span-2"><h3 class="font-bold text-lg mb-4">Melhores Desempenhos</h3><ul class="space-y-2">${topPerformances || '<p class="text-gray-400">Nenhuma avaliação registrada.</p>'}</ul></div></div>`;
+            container.innerHTML = `<h2 class="text-3xl font-bold text-white mb-6">Dashboard</h2><div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div id="team-stats-card" class="lg:col-span-3 dashboard-card p-6 rounded-lg"><h3 class="font-bold text-xl mb-4 text-white">Estatísticas Gerais</h3><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-4 text-center"><div><p class="text-4xl font-extrabold">${totalGames}</p><p class="text-gray-400">Jogos</p></div><div class="text-green-400"><p class="text-4xl font-extrabold">${wins}</p><p class="text-gray-400">Vitórias</p></div><div class="text-yellow-400"><p class="text-4xl font-extrabold">${draws}</p><p class="text-gray-400">Empates</p></div><div class="text-red-400"><p class="text-4xl font-extrabold">${losses}</p><p class="text-gray-400">Derrotas</p></div><div class="text-blue-400"><p class="text-4xl font-extrabold">${aproveitamento}%</p><p class="text-gray-400">Aproveitamento</p></div><div><p class="text-4xl font-extrabold text-green-400">${totalGoalsScored}</p><p class="text-gray-400">Gols Marcados</p></div><div><p class="text-4xl font-extrabold text-red-400">${totalGoalsConceded}</p><p class="text-gray-400">Gols Sofridos</p></div><div><p class="text-4xl font-extrabold">${(totalGames > 0 ? (totalGoalsScored/totalGames).toFixed(2) : '0.00')}</p><p class="text-gray-400">Gols p/ Jogo</p></div><div><p class="text-4xl font-extrabold">${(totalGames > 0 ? (totalGoalsConceded/totalGames).toFixed(2) : '0.00')}</p><p class="text-gray-400">Sofridos p/ Jogo</p></div></div></div><div class="dashboard-card p-6 rounded-lg lg:col-span-1"><h3 class="font-bold text-lg mb-4">Últimos 5 Resultados</h3><div class="flex gap-3">${last5Matches || '<p class="text-gray-400">Nenhuma partida finalizada.</p>'}</div></div><div id="performance-history-card" class="dashboard-card p-6 rounded-lg lg:col-span-2"><div class="export-btn-group"><button class="export-btn" onclick="exportPerformancesToTXT()" title="Exportar para TXT"><svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg></button></div><h3 class="font-bold text-lg mb-4">Melhores Desempenhos</h3><ul class="space-y-2">${topPerformances || '<p class="text-gray-400">Nenhuma avaliação registrada.</p>'}</ul></div></div>`;
         }
 
         function renderReportMatchSelect() {
@@ -726,10 +730,24 @@
         
         const fieldLinesPlugin = { id: 'fieldLines', beforeDraw: (chart) => { const { ctx, chartArea: { top, bottom, left, right }, scales: { x } } = chart; ctx.save(); ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; ctx.lineWidth = 1; const defenseZoneEnd = x.getPixelForValue(1); const midfieldZoneEnd = x.getPixelForValue(2); ctx.beginPath(); ctx.moveTo(defenseZoneEnd, top); ctx.lineTo(defenseZoneEnd, bottom); ctx.moveTo(midfieldZoneEnd, top); ctx.lineTo(midfieldZoneEnd, bottom); ctx.stroke(); ctx.restore(); } };
         
-        function renderPossessionChart(match, canvasId = 'possessionChart') {
+        function renderPossessionChart(match, canvasId = 'possessionChart', period) {
             const ctx = document.getElementById(canvasId)?.getContext('2d');
             if(!ctx) return;
-            charts[canvasId] = new Chart(ctx, { type: 'bar', data: { labels: ['Posse'], datasets: [ { label: match.myTeamName, data: [match.possession.myTeam], backgroundColor: '#ef4444' }, { label: match.opponentName, data: [match.possession.opponent], backgroundColor: '#3b82f6' } ]}, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true, display: false }, y: { stacked: true, display: false } }, plugins: { legend: { display: true, position: 'top', labels: {color: '#374151'} }, datalabels: { color: 'white', font: { weight: 'bold' }, formatter: (v,c) => { const t = c.chart.data.datasets.reduce((s, ds) => s + (ds.data[0]||0), 0); return t > 0 ? (v/t*100).toFixed(0)+'%' : '0%'; }}}}});
+
+            let myTeamPossession = 0;
+            let opponentPossession = 0;
+
+            if(period) {
+                const periodEvents = match.events.filter(e => e.period === period);
+                // Simple assumption for period possession - real implementation would need more granular data
+                myTeamPossession = match.possession.myTeam / (match.events.length || 1) * periodEvents.length;
+                opponentPossession = match.possession.opponent / (match.events.length || 1) * periodEvents.length;
+            } else {
+                myTeamPossession = match.possession.myTeam;
+                opponentPossession = match.possession.opponent;
+            }
+
+            charts[canvasId] = new Chart(ctx, { type: 'bar', data: { labels: ['Posse'], datasets: [ { label: match.myTeamName, data: [myTeamPossession], backgroundColor: '#ef4444' }, { label: match.opponentName, data: [opponentPossession], backgroundColor: '#3b82f6' } ]}, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true, display: false }, y: { stacked: true, display: false } }, plugins: { legend: { display: true, position: 'top', labels: {color: '#374151'} }, datalabels: { color: 'white', font: { weight: 'bold' }, formatter: (v,c) => { const t = c.chart.data.datasets.reduce((s, ds) => s + (ds.data[0]||0), 0); return t > 0 ? (v/t*100).toFixed(0)+'%' : '0%'; }}}}});
         }
 
         function renderActionMapChart(match, canvasId, period) {
