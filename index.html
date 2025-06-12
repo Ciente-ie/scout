@@ -104,7 +104,7 @@
         .export-btn { background-color: rgba(255,255,255,0.1); border: none; padding: 0.4rem; border-radius: 9999px; cursor: pointer; }
         .export-btn:hover { background-color: rgba(255,255,255,0.2); }
         .dashboard-card { background-color: #1f2937; border: 1px solid #374151; position: relative;}
-        [data-admin-only="true"] { display: none; } /* Initially hide admin-only elements */
+        .admin-only { display: none; } /* Hide admin elements by default */
     </style>
 </head>
 <body class="flex flex-col h-screen antialiased">
@@ -114,16 +114,16 @@
         <div class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" viewBox="0 0 16 16" fill="currentColor"><path d="M5 3a1 1 0 0 0-1 1v1.28c0 .34.1.67.3.94L8 10.4V14a1 1 0 0 0 1 1h.09a1 1 0 0 0 .71-.29l2-2a1 1 0 0 0 .29-.71V10.4l3.7-4.18c.2-.27.3-.6.3-.94V4a1 1 0 0 0-1-1H5Z"/><path d="M4 2a2 2 0 0 0-2 2v1.28a3 3 0 0 0 .93 2.12L7 11.84v2.41a1 1 0 0 0 .29.71l2 2a1 1 0 0 0 1.42 0l2-2a1 1 0 0 0 .29-.71v-2.4l3.07-3.44A3 3 0 0 0 14 6.28V4a2 2 0 0 0-2-2H4Z"/></svg><h1 class="text-white text-2xl font-bold hidden sm:block">Scout Pro</h1></div>
         <div id="main-nav-links" class="hidden md:flex items-center gap-1">
             <a href="#" class="nav-link-top active" data-view="dashboard" onclick="navigateTo('dashboard')">Dashboard</a>
-            <a href="#" class="nav-link-top" data-view="management" data-admin-only="true" onclick="navigateTo('management')">Jogadores</a>
-            <a href="#" class="nav-link-top" data-view="matches" data-admin-only="true" onclick="navigateTo('matches')">Partidas</a>
+            <a href="#" class="nav-link-top admin-only" data-view="management" onclick="navigateTo('management')">Jogadores</a>
+            <a href="#" class="nav-link-top admin-only" data-view="matches" onclick="navigateTo('matches')">Partidas</a>
             <a href="#" class="nav-link-top" data-view="reports" onclick="navigateTo('reports')">Relatórios</a>
         </div>
         <div class="flex items-center gap-4">
-            <button id="share-button" data-admin-only="true" onclick="shareProfile()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2">
+            <button id="share-button" onclick="shareProfile()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg items-center gap-2 admin-only">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" /></svg>
                 <span class="hidden sm:inline">Compartilhar</span>
             </button>
-            <div id="user-id-container" class="hidden md:block text-center text-xs text-gray-500"><p>ID do Usuário:</p><p id="user-id-display" class="break-words font-mono">Carregando...</p></div>
+            <div id="user-id-container" class="hidden md:block text-center text-xs text-gray-500 admin-only"><p>ID do Usuário:</p><p id="user-id-display" class="break-words font-mono">Carregando...</p></div>
             <button onclick="toggleMobileMenu()" class="md:hidden p-2 rounded-md text-gray-300 hover:bg-gray-700"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" /></svg></button>
         </div>
     </nav>
@@ -131,16 +131,16 @@
 
     <main class="flex-1 p-4 md:p-8 overflow-y-auto">
         <div id="dashboard" class="view active"></div>
-        <div id="management" class="view" data-admin-only="true">
+        <div id="management" class="view">
             <h2 class="text-3xl font-bold text-white mb-6">Gerenciamento de Jogadores</h2>
             <div class="bg-gray-800 p-4 md:p-6 rounded-lg"><div class="grid grid-cols-1 lg:grid-cols-3 gap-8"><div class="lg:col-span-1"><div class="bg-gray-900 p-4 rounded-lg h-full"><h3 class="text-xl font-semibold text-white mb-4">Adicionar / Editar Jogador</h3><form id="player-form" class="space-y-4"><input type="hidden" id="player-id"><div><label for="player-name" class="block mb-2 text-sm font-medium text-gray-300">Nome</label><input type="text" id="player-name" class="w-full p-2.5" required></div><div><label for="player-dob" class="block mb-2 text-sm font-medium text-gray-300">Nascimento</label><input type="date" id="player-dob" class="w-full p-2.5" required></div><div><label for="player-position" class="block mb-2 text-sm font-medium text-gray-300">Posição</label><input type="text" id="player-position" placeholder="Ex: Zagueiro" class="w-full p-2.5" required></div><button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg">Salvar Jogador</button></form></div></div><div class="lg:col-span-2"><div class="bg-gray-900 p-4 rounded-lg h-full"><h3 class="text-xl font-semibold text-white mb-4">Jogadores Cadastrados</h3><div class="overflow-y-auto max-h-[60vh]"><table class="w-full text-left"><thead class="text-gray-400 sticky top-0 bg-gray-900"><tr><th class="p-3">Nome</th><th class="p-3">Posição</th><th class="p-3">Ações</th></tr></thead><tbody id="players-table" class="divide-y divide-gray-700"></tbody></table></div></div></div></div></div>
         </div>
-        <div id="matches" class="view" data-admin-only="true">
-            <div class="flex justify-between items-center mb-6"><h2 class="text-3xl font-bold text-white">Partidas</h2><button class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-5 rounded-lg" onclick="openModal('new-match-modal')">Nova Partida</button></div>
+        <div id="matches" class="view">
+            <div class="flex justify-between items-center mb-6"><h2 class="text-3xl font-bold text-white">Partidas</h2><button class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-5 rounded-lg admin-only" onclick="openModal('new-match-modal')">Nova Partida</button></div>
             <div id="match-list" class="space-y-4"></div>
         </div>
         
-        <div id="live-match" class="view" data-admin-only="true">
+        <div id="live-match" class="view">
             <div class="bg-gray-800 p-4 rounded-lg mb-4"></div>
             <div class="field rounded-lg"><div class="grid grid-cols-1 sm:grid-cols-3 gap-4 h-full">
                 <div class="zone rounded-lg"><h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">DEFESA</h4><div class="action-buttons-container"><button class="action-btn bg-purple-600" onclick="logEvent(event, 'defesa', 'finalizacao_adv')">Fin. Adv.</button><button class="action-btn bg-purple-600" onclick="logEvent(event, 'defesa', 'chance_clara_adv')">Chance Adv.</button><button class="action-btn bg-red-600" onclick="logEvent(event, 'defesa', 'falta_sofrida')">Falta Sofrida</button><button class="action-btn bg-red-400" onclick="logEvent(event, 'defesa', 'falta_cometida')">Falta Cometida</button><div></div><div></div><button class="action-btn bg-yellow-500 h-10 col-span-2" onclick="logEvent(event, 'defesa', 'duelo')">Duelo</button></div><div class="pass-buttons grid grid-cols-2 gap-2"><button class="action-btn pass-btn" onclick="logEvent(event, 'defesa', 'passe_certo')">Passe Certo</button><button class="action-btn pass-btn-errado" onclick="logEvent(event, 'defesa', 'passe_errado')">Passe Errado</button></div></div>
@@ -153,7 +153,7 @@
         </div>
 
         <div id="reports" class="view">
-            <div class="flex flex-wrap justify-between items-center mb-6 gap-4"><h2 class="text-3xl font-bold text-white">Relatórios de Partida</h2><div id="reports-buttons" class="flex items-center gap-2"><button id="txt-export-button" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg" onclick="exportActionsToTXT()">Exportar Ações (TXT)</button><button id="pdf-export-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center" onclick="exportReportToPDF()"><span id="pdf-export-text">Exportar Relatório (PDF)</span><div id="pdf-export-loader" class="hidden ml-2 w-5 h-5 border-2 border-gray-400 border-t-white border-solid rounded-full animate-spin"></div></button></div></div>
+            <div class="flex flex-wrap justify-between items-center mb-6 gap-4"><h2 class="text-3xl font-bold text-white">Relatórios de Partida</h2><div id="reports-buttons" class="flex items-center gap-2"><button id="txt-export-button" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg admin-only" onclick="exportActionsToTXT()">Exportar Ações (TXT)</button><button id="pdf-export-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center admin-only" onclick="exportReportToPDF()"><span id="pdf-export-text">Exportar Relatório (PDF)</span><div id="pdf-export-loader" class="hidden ml-2 w-5 h-5 border-2 border-gray-400 border-t-white border-solid rounded-full animate-spin"></div></button></div></div>
             <div class="bg-gray-800 p-4 rounded-lg mb-6"><label for="report-match-select" class="mr-2 text-gray-300">Selecione uma Partida:</label><select id="report-match-select" class="w-full md:w-1/2 p-2 rounded mt-1" onchange="generateReports(this.value)"></select></div>
             <div id="report-content-wrapper" class="p-4 md:p-8 rounded-lg mt-6"><div id="report-content" class="hidden space-y-8"></div></div>
         </div>
@@ -252,7 +252,7 @@
         }
 
         function setupUIMode() {
-             const adminElements = document.querySelectorAll('[data-admin-only="true"]');
+             const adminElements = document.querySelectorAll('.admin-only');
              const userIdContainer = document.getElementById('user-id-container');
              const mainNavLinks = document.getElementById('main-nav-links');
              const mobileMenu = document.getElementById('mobile-menu');
@@ -262,12 +262,11 @@
                 if(userIdContainer) userIdContainer.style.display = 'none';
                  mobileMenu.innerHTML = `<a href="#" class="nav-link-top active block text-center" data-view="dashboard" onclick="navigateTo('dashboard')">Dashboard</a><a href="#" class="nav-link-top block text-center" data-view="reports" onclick="navigateTo('reports')">Relatórios</a>`;
             } else {
-                 adminElements.forEach(el => el.style.display = 'flex'); // Use flex for buttons, etc.
+                 adminElements.forEach(el => el.style.display = 'flex'); 
                  document.querySelector('[data-view="management"]').style.display = 'inline-block';
                  document.querySelector('[data-view="matches"]').style.display = 'inline-block';
                  if(userIdContainer) userIdContainer.style.display = 'block';
                  document.getElementById('user-id-display').textContent = userId;
-                 document.getElementById('user-id-display-mobile').textContent = userId;
                  mobileMenu.innerHTML = mainNavLinks.innerHTML + `<div class="text-center text-xs text-gray-500 pt-2 border-t border-gray-700 mt-2"><p>ID do Usuário:</p><p id="user-id-display-mobile" class="break-words font-mono">${userId}</p></div>`;
             }
         }
@@ -322,7 +321,7 @@
         };
 
         window.navigateTo = function(viewId) {
-            if (appState.isGuestMode && (viewId === 'management' || viewId === 'matches')) {
+            if (appState.isGuestMode && (viewId === 'management' || viewId === 'matches' || viewId === 'live-match')) {
                 return; // Prevent navigation for guests
             }
             appState.currentView = viewId;
@@ -474,7 +473,7 @@
                     live: { content: `<button class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded" onclick="startLiveMatch('${match.id}')">Continuar</button>` },
                     scheduled: { content: `<button class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" onclick="startLiveMatch('${match.id}')">Iniciar Scout</button>` }
                 };
-                card.innerHTML = `<div><p class="text-xl font-bold">${match.myTeamName} vs ${match.opponentName}</p><p class="text-sm text-gray-400">${new Date(match.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})} - ${match.location || 'Local não definido'}</p></div><div class="flex items-center gap-4">${statusConfig[match.status]?.content || ''}<button onclick="deleteMatch('${match.id}')" title="Excluir" class="text-red-500 hover:text-red-400 p-2 rounded-full"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button></div>`;
+                card.innerHTML = `<div><p class="text-xl font-bold">${match.myTeamName} vs ${match.opponentName}</p><p class="text-sm text-gray-400">${new Date(match.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})} - ${match.location || 'Local não definido'}</p></div><div class="flex items-center gap-4">${statusConfig[match.status]?.content || ''}<button onclick="deleteMatch('${match.id}')" title="Excluir" class="text-red-500 hover:text-red-400 p-2 rounded-full admin-only"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button></div>`;
                 listEl.appendChild(card);
             });
         }
@@ -681,7 +680,7 @@
             const allPerformances = [];
             finishedMatches.forEach(m => { if(!m.ratings) return; Object.entries(m.ratings).forEach(([pid, rates]) => { const avg = (Object.values(rates).reduce((acc, v) => acc + parseFloat(v), 0)) / 4; const player = appState.players.find(p => p.id === pid); if(player) allPerformances.push({ name: player.name, score: avg, date: m.date }); }); });
             const topPerformances = [...allPerformances].sort((a,b) => b.score - a.score).slice(0, 5).map(p => `<li class="flex justify-between items-center text-gray-300 py-1"><div>${p.name}<p class="text-xs text-gray-500">${new Date(p.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</p></div><strong class="text-white">Nota ${p.score.toFixed(1)}</strong></li>`).join('');
-            container.innerHTML = `<h2 class="text-3xl font-bold text-white mb-6">Dashboard</h2><div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div id="team-stats-card" class="lg:col-span-3 dashboard-card p-6 rounded-lg"><h3 class="font-bold text-xl mb-4 text-white">Estatísticas Gerais</h3><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-4 text-center"><div><p class="text-4xl font-extrabold">${totalGames}</p><p class="text-gray-400">Jogos</p></div><div class="text-green-400"><p class="text-4xl font-extrabold">${wins}</p><p class="text-gray-400">Vitórias</p></div><div class="text-yellow-400"><p class="text-4xl font-extrabold">${draws}</p><p class="text-gray-400">Empates</p></div><div class="text-red-400"><p class="text-4xl font-extrabold">${losses}</p><p class="text-gray-400">Derrotas</p></div><div class="text-blue-400"><p class="text-4xl font-extrabold">${aproveitamento}%</p><p class="text-gray-400">Aproveitamento</p></div><div><p class="text-4xl font-extrabold text-green-400">${totalGoalsScored}</p><p class="text-gray-400">Gols Marcados</p></div><div><p class="text-4xl font-extrabold text-red-400">${totalGoalsConceded}</p><p class="text-gray-400">Gols Sofridos</p></div><div><p class="text-4xl font-extrabold">${(totalGames > 0 ? (totalGoalsScored/totalGames).toFixed(2) : '0.00')}</p><p class="text-gray-400">Gols p/ Jogo</p></div><div><p class="text-4xl font-extrabold">${(totalGames > 0 ? (totalGoalsConceded/totalGames).toFixed(2) : '0.00')}</p><p class="text-gray-400">Sofridos p/ Jogo</p></div></div></div><div class="dashboard-card p-6 rounded-lg lg:col-span-1"><h3 class="font-bold text-lg mb-4">Últimos 5 Resultados</h3><div class="flex gap-3">${last5Matches || '<p class="text-gray-400">Nenhuma partida finalizada.</p>'}</div></div><div id="performance-history-card" class="dashboard-card p-6 rounded-lg lg:col-span-2"><div class="export-btn-group" data-admin-only="true"><button class="export-btn" onclick="exportPerformancesToTXT()" title="Exportar para TXT"><svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg></button></div><h3 class="font-bold text-lg mb-4">Melhores Desempenhos</h3><ul class="space-y-2">${topPerformances || '<p class="text-gray-400">Nenhuma avaliação registrada.</p>'}</ul></div></div>`;
+            container.innerHTML = `<h2 class="text-3xl font-bold text-white mb-6">Dashboard</h2><div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div id="team-stats-card" class="lg:col-span-3 dashboard-card p-6 rounded-lg"><h3 class="font-bold text-xl mb-4 text-white">Estatísticas Gerais</h3><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-4 text-center"><div><p class="text-4xl font-extrabold">${totalGames}</p><p class="text-gray-400">Jogos</p></div><div class="text-green-400"><p class="text-4xl font-extrabold">${wins}</p><p class="text-gray-400">Vitórias</p></div><div class="text-yellow-400"><p class="text-4xl font-extrabold">${draws}</p><p class="text-gray-400">Empates</p></div><div class="text-red-400"><p class="text-4xl font-extrabold">${losses}</p><p class="text-gray-400">Derrotas</p></div><div class="text-blue-400"><p class="text-4xl font-extrabold">${aproveitamento}%</p><p class="text-gray-400">Aproveitamento</p></div><div><p class="text-4xl font-extrabold text-green-400">${totalGoalsScored}</p><p class="text-gray-400">Gols Marcados</p></div><div><p class="text-4xl font-extrabold text-red-400">${totalGoalsConceded}</p><p class="text-gray-400">Gols Sofridos</p></div><div><p class="text-4xl font-extrabold">${(totalGames > 0 ? (totalGoalsScored/totalGames).toFixed(2) : '0.00')}</p><p class="text-gray-400">Gols p/ Jogo</p></div><div><p class="text-4xl font-extrabold">${(totalGames > 0 ? (totalGoalsConceded/totalGames).toFixed(2) : '0.00')}</p><p class="text-gray-400">Sofridos p/ Jogo</p></div></div></div><div class="dashboard-card p-6 rounded-lg lg:col-span-1"><h3 class="font-bold text-lg mb-4">Últimos 5 Resultados</h3><div class="flex gap-3">${last5Matches || '<p class="text-gray-400">Nenhuma partida finalizada.</p>'}</div></div><div id="performance-history-card" class="dashboard-card p-6 rounded-lg lg:col-span-2"><div class="export-btn-group admin-only"><button class="export-btn" onclick="exportPerformancesToTXT()" title="Exportar para TXT"><svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg></button></div><h3 class="font-bold text-lg mb-4">Melhores Desempenhos</h3><ul class="space-y-2">${topPerformances || '<p class="text-gray-400">Nenhuma avaliação registrada.</p>'}</ul></div></div>`;
         }
 
         function renderReportMatchSelect() {
