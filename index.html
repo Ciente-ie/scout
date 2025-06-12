@@ -460,7 +460,19 @@
             ui.liveMatch.header.innerHTML = `<div class="flex justify-between items-center text-white"><div class="text-2xl font-bold text-center">${match.myTeamName}</div><div class="text-5xl font-black">${match.myTeamScore} - ${match.opponentScore}</div><div class="text-2xl font-bold text-center">${match.opponentName}</div></div><div class="text-center text-7xl font-black text-white my-4" id="live-timer">${formatTime(liveState.seconds)}</div><div class="flex justify-center gap-2 flex-wrap"><button class="bg-green-600 px-3 py-1 rounded" onclick="timerControl('start1')">▶ 1ºT</button><button class="bg-yellow-500 px-3 py-1 rounded" onclick="timerControl('pause')">⏸ Intervalo</button><button class="bg-green-600 px-3 py-1 rounded" onclick="timerControl('start2')">▶ 2ºT</button><button class="bg-blue-600 px-3 py-1 rounded" onclick="generateHalftimeReport()">Relatório 1ºT</button><button class="bg-red-600 px-3 py-1 rounded" onclick="timerControl('end')">⏹ Fim de Jogo</button></div><div class="flex gap-2 mt-4"><button class="w-1/2 bg-green-700 hover:bg-green-800 p-3 rounded-lg text-white font-bold" onclick="prepareGoalModal('myTeam')">GOL PRÓ</button><button class="w-1/2 bg-red-800 hover:bg-red-900 p-3 rounded-lg text-white font-bold" onclick="logGoal('opponent')">GOL CONTRA</button></div>`;
             const possessionArea = document.getElementById('possession-area');
             if (possessionArea) {
-                possessionArea.innerHTML = `<div class="bg-gray-900/70 p-3 rounded-lg"><div class="flex items-stretch gap-2"><button id="possession-myTeam" onclick="togglePossession('myTeam')" class="possession-btn main-team bg-red-600 text-white rounded flex-grow text-base py-2">${match.myTeamName}</button><button id="possession-opponent" onclick="togglePossession('opponent')" class="possession-btn main-team bg-blue-600 text-white rounded flex-grow text-base py-2">${match.opponentName}</button><button id="possession-stopped" onclick="togglePossession('stopped')" class="possession-btn bg-gray-500 text-white rounded px-4">Parada</button></div><h3 class="text-center text-base font-bold text-white mt-3">Controle de Posse de Bola</h3></div>`;
+                const myTeamActiveClass = liveState.currentPossessionHolder === 'myTeam' ? 'active' : '';
+                const opponentActiveClass = liveState.currentPossessionHolder === 'opponent' ? 'active' : '';
+                const stoppedActiveClass = liveState.currentPossessionHolder === 'stopped' ? 'active' : '';
+
+                possessionArea.innerHTML = `
+                    <div class="bg-gray-900/70 p-3 rounded-lg">
+                        <div class="flex items-stretch gap-2">
+                            <button id="possession-myTeam" onclick="togglePossession('myTeam')" class="possession-btn main-team bg-red-600 text-white rounded flex-grow text-base py-2 ${myTeamActiveClass}">${match.myTeamName}</button>
+                            <button id="possession-opponent" onclick="togglePossession('opponent')" class="possession-btn main-team bg-blue-600 text-white rounded flex-grow text-base py-2 ${opponentActiveClass}">${match.opponentName}</button>
+                            <button id="possession-stopped" onclick="togglePossession('stopped')" class="possession-btn bg-gray-500 text-white rounded px-4 ${stoppedActiveClass}">Parada</button>
+                        </div>
+                        <h3 class="text-center text-base font-bold text-white mt-3">Controle de Posse de Bola</h3>
+                    </div>`;
             }
         }
 
@@ -483,15 +495,16 @@
 
         window.togglePossession = function(team) {
             clearInterval(liveState.possessionInterval);
-            document.querySelectorAll('.possession-btn').forEach(b => b.classList.remove('active'));
             if (team && liveState.currentPossessionHolder !== team) {
                 liveState.currentPossessionHolder = team;
-                document.getElementById(`possession-${team}`)?.classList.add('active');
                 liveState.possessionInterval = setInterval(() => { 
                     const match = appState.matches.find(m => m.id === appState.activeMatchId);
                     if(match) { const updatedPossession = { ...match.possession }; updatedPossession[team]++; updateMatchData(appState.activeMatchId, { possession: updatedPossession }); }
                 }, 1000);
-            } else { liveState.currentPossessionHolder = null; }
+            } else { 
+                liveState.currentPossessionHolder = null; 
+            }
+            renderLiveScoreAndTimer(); // Re-render to update active button class
         }
         
         const eventConfig = {
