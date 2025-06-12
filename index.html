@@ -86,7 +86,7 @@
         .possession-btn.active { box-shadow: 0 0 0 3px #fbbf24; background-color: #d97706; }
         input, select { background-color: #1f2937; color: white; border-color: #4b5563; border-radius: 0.375rem; }
         input:focus, select:focus { background-color: #374151; border-color: #60a5fa; box-shadow: none; outline: none;}
-        #report-content-wrapper { background-color: #ffffff; color: #111827; }
+        #report-content-wrapper, #pdf-temp-container { background-color: #ffffff; color: #111827; }
         .report-page { page-break-after: always; position: relative; padding-bottom: 30px; /* Space for report footer */ }
         .report-page:last-child { page-break-after: auto; }
         .report-section { page-break-inside: avoid; }
@@ -141,9 +141,9 @@
         <div id="live-match" class="view">
             <div class="bg-gray-800 p-4 rounded-lg mb-4"></div>
             <div class="field rounded-lg"><div class="grid grid-cols-1 sm:grid-cols-3 gap-4 h-full">
-                <div class="zone rounded-lg"><h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">DEFESA</h4><div class="action-buttons-container"><button class="action-btn bg-purple-600" onclick="logEvent(event, 'defesa', 'finalizacao_adv')">Fin. Adv.</button><button class="action-btn bg-purple-600" onclick="logEvent(event, 'defesa', 'chance_clara_adv')">Chance Adv.</button><button class="action-btn bg-red-600" onclick="logEvent(event, 'defesa', 'falta_sofrida')">Falta Sofrida</button><button class="action-btn bg-red-400" onclick="logEvent(event, 'defesa', 'falta_cometida')">Falta Cometida</button><button class="action-btn bg-yellow-500 h-10" onclick="logEvent(event, 'defesa', 'duelo')">Duelo</button></div><div class="pass-buttons grid grid-cols-2 gap-2"><button class="action-btn pass-btn" onclick="logEvent(event, 'defesa', 'passe_certo')">Passe Certo</button><button class="action-btn pass-btn-errado" onclick="logEvent(event, 'defesa', 'passe_errado')">Passe Errado</button></div></div>
-                <div class="zone rounded-lg"><h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">MEIO-CAMPO</h4><div class="action-buttons-container"><button class="action-btn bg-red-600" onclick="logEvent(event, 'meio', 'falta_sofrida')">F. Sofrida</button><button class="action-btn bg-red-400" onclick="logEvent(event, 'meio', 'falta_cometida')">F. Cometida</button><button class="action-btn bg-yellow-500 h-10" onclick="logEvent(event, 'meio', 'duelo')">Duelo</button></div><div class="pass-buttons grid grid-cols-2 gap-2"><button class="action-btn pass-btn" onclick="logEvent(event, 'meio', 'passe_certo')">Passe Certo</button><button class="action-btn pass-btn-errado" onclick="logEvent(event, 'meio', 'passe_errado')">Passe Errado</button></div></div>
-                <div class="zone rounded-lg"><h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">ATAQUE</h4><div class="action-buttons-container"><button class="action-btn bg-green-500" onclick="logEvent(event, 'ataque', 'finalizacao')">Finalização</button><button class="action-btn bg-green-500" onclick="logEvent(event, 'ataque', 'chance_clara')">Chance Clara</button><button class="action-btn bg-blue-500" onclick="logEvent(event, 'ataque', 'cruzamento_dir')">Cruz. Dir</button><button class="action-btn bg-blue-500" onclick="logEvent(event, 'ataque', 'cruzamento_esq')">Cruz. Esq</button><button class="action-btn bg-red-600" onclick="logEvent(event, 'ataque', 'falta_sofrida')">F. Sofrida</button><button class="action-btn bg-red-400" onclick="logEvent(event, 'ataque', 'falta_cometida')">F. Cometida</button><button class="action-btn bg-yellow-500 h-10" onclick="logEvent(event, 'ataque', 'duelo')">Duelo</button></div><div class="pass-buttons grid grid-cols-2 gap-2"><button class="action-btn pass-btn" onclick="logEvent(event, 'ataque', 'passe_certo')">Passe Certo</button><button class="action-btn pass-btn-errado" onclick="logEvent(event, 'ataque', 'passe_errado')">Passe Errado</button></div></div>
+                <div class="zone rounded-lg"><h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">DEFESA</h4><div class="action-buttons-container"><button class="action-btn bg-purple-600" onclick="logEvent(event, 'defesa', 'finalizacao_adv')">Fin. Adv.</button><button class="action-btn bg-purple-600" onclick="logEvent(event, 'defesa', 'chance_clara_adv')">Chance Adv.</button><button class="action-btn bg-red-600" onclick="logEvent(event, 'defesa', 'falta_sofrida')">Falta Sofrida</button><button class="action-btn bg-red-400" onclick="logEvent(event, 'defesa', 'falta_cometida')">Falta Cometida</button><button class="action-btn bg-yellow-500 h-10 col-span-2" onclick="logEvent(event, 'defesa', 'duelo')">Duelo</button></div><div class="pass-buttons grid grid-cols-2 gap-2"><button class="action-btn pass-btn" onclick="logEvent(event, 'defesa', 'passe_certo')">Passe Certo</button><button class="action-btn pass-btn-errado" onclick="logEvent(event, 'defesa', 'passe_errado')">Passe Errado</button></div></div>
+                <div class="zone rounded-lg"><h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">MEIO-CAMPO</h4><div class="action-buttons-container"><button class="action-btn bg-red-600" onclick="logEvent(event, 'meio', 'falta_sofrida')">F. Sofrida</button><button class="action-btn bg-red-400" onclick="logEvent(event, 'meio', 'falta_cometida')">F. Cometida</button><button class="action-btn bg-yellow-500 h-10 col-span-2" onclick="logEvent(event, 'meio', 'duelo')">Duelo</button></div><div class="pass-buttons grid grid-cols-2 gap-2"><button class="action-btn pass-btn" onclick="logEvent(event, 'meio', 'passe_certo')">Passe Certo</button><button class="action-btn pass-btn-errado" onclick="logEvent(event, 'meio', 'passe_errado')">Passe Errado</button></div></div>
+                <div class="zone rounded-lg"><h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">ATAQUE</h4><div class="action-buttons-container"><button class="action-btn bg-green-500" onclick="logEvent(event, 'ataque', 'finalizacao')">Finalização</button><button class="action-btn bg-green-500" onclick="logEvent(event, 'ataque', 'chance_clara')">Chance Clara</button><button class="action-btn bg-blue-500" onclick="logEvent(event, 'ataque', 'cruzamento_dir')">Cruz. Dir</button><button class="action-btn bg-blue-500" onclick="logEvent(event, 'ataque', 'cruzamento_esq')">Cruz. Esq</button><button class="action-btn bg-red-600" onclick="logEvent(event, 'ataque', 'falta_sofrida')">F. Sofrida</button><button class="action-btn bg-red-400" onclick="logEvent(event, 'ataque', 'falta_cometida')">F. Cometida</button><button class="action-btn bg-yellow-500 h-10 col-span-2" onclick="logEvent(event, 'ataque', 'duelo')">Duelo</button></div><div class="pass-buttons grid grid-cols-2 gap-2"><button class="action-btn pass-btn" onclick="logEvent(event, 'ataque', 'passe_certo')">Passe Certo</button><button class="action-btn pass-btn-errado" onclick="logEvent(event, 'ataque', 'passe_errado')">Passe Errado</button></div></div>
             </div></div>
             <div id="sub-action-container" class="mt-3"></div>
             <div id="possession-area" class="mt-4"></div>
@@ -364,37 +364,46 @@
             const convocadosCheckboxes = document.querySelectorAll('#match-squad-list input:checked');
             const convocadosIds = new Set(Array.from(convocadosCheckboxes).map(i => i.value));
             const convocadosPlayers = [...appState.players.filter(p => convocadosIds.has(p.id))];
-            
-            const selectedPlayers = new Set();
-            document.querySelectorAll('#match-lineup-selection select, #match-substitutes-list select').forEach(s => {
-                if (s.value) selectedPlayers.add(s.value);
-            });
 
-            const generateOptions = (currentSelection = null) => {
+            // Store current selections to re-apply them after re-rendering
+            const allSelects = document.querySelectorAll('#match-lineup-selection select, #match-substitutes-list select');
+            const previousSelections = new Map();
+            allSelects.forEach(s => {
+                if (s.value) {
+                    previousSelections.set(s.id, s.value);
+                }
+            });
+            
+            // Get all players currently selected in any dropdown
+            const selectedPlayerIds = new Set(previousSelections.values());
+
+            const generateOptions = (currentSelectId) => {
+                let currentSelectionValue = previousSelections.get(currentSelectId);
                 return convocadosPlayers.map(p => {
-                    const isSelected = selectedPlayers.has(p.id);
-                    const isMySelection = p.id === currentSelection;
-                    return `<option value="${p.id}" ${isSelected && !isMySelection ? 'disabled' : ''}>${p.name}</option>`;
+                    const isSelectedElsewhere = selectedPlayerIds.has(p.id) && p.id !== currentSelectionValue;
+                    return `<option value="${p.id}" ${isSelectedElsewhere ? 'disabled' : ''}>${p.name}</option>`;
                 }).join('');
             };
             
+            // Re-render starters
             lineupContainer.innerHTML = Object.entries(lineupPositions).map(([key, label]) => {
-                const currentSelection = document.getElementById(`lineup-${key}`)?.value;
-                return `<div class="grid grid-cols-3 items-center gap-2"><label for="lineup-${key}" class="text-sm col-span-1">${label}:</label><select id="lineup-${key}" class="w-full p-2 mt-1 col-span-2" onchange="updateMatchCreationLists()"><option value="">Selecione...</option>${generateOptions(currentSelection)}</select></div>`;
+                const selectId = `lineup-${key}`;
+                return `<div class="grid grid-cols-3 items-center gap-2"><label for="${selectId}" class="text-sm col-span-1">${label}:</label><select id="${selectId}" class="w-full p-2 mt-1 col-span-2" onchange="updateMatchCreationLists()"><option value="">Selecione...</option>${generateOptions(selectId)}</select></div>`;
             }).join('');
             
+            // Re-render substitutes
             substitutesContainer.innerHTML = Array.from({length: 10}).map((_, i) => {
-                const currentSelection = document.getElementById(`sub-${i}`)?.value;
-                return `<div class="grid grid-cols-3 items-center gap-2"><label for="sub-${i}" class="text-sm col-span-1">Reserva ${i+1}:</label><select id="sub-${i}" class="w-full p-2 mt-1 col-span-2" onchange="updateMatchCreationLists()"><option value="">Vazio</option>${generateOptions(currentSelection)}</select></div>`;
+                const selectId = `sub-${i}`;
+                return `<div class="grid grid-cols-3 items-center gap-2"><label for="${selectId}" class="text-sm col-span-1">Reserva ${i+1}:</label><select id="${selectId}" class="w-full p-2 mt-1 col-span-2" onchange="updateMatchCreationLists()"><option value="">Vazio</option>${generateOptions(selectId)}</select></div>`;
             }).join('');
 
-            // Restore previous selections
-            document.querySelectorAll('#match-lineup-selection select, #match-substitutes-list select').forEach(s => {
-                const previousValue = s.getAttribute('data-prev-value');
-                if (previousValue) s.value = previousValue;
+            // Restore all selections
+            previousSelections.forEach((playerId, selectId) => {
+                const selectElement = document.getElementById(selectId);
+                if (selectElement) {
+                    selectElement.value = playerId;
+                }
             });
-            // Store current value for next render
-            document.querySelectorAll('#match-lineup-selection select, #match-substitutes-list select').forEach(s => s.setAttribute('data-prev-value', s.value));
         };
 
         document.getElementById('new-match-form').addEventListener('submit', async (e) => {
@@ -456,7 +465,7 @@
         function renderLiveScoreAndTimer() {
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
             if (!match) return;
-            ui.liveMatch.header.innerHTML = `<div class="flex justify-between items-center text-white"><div class="text-2xl font-bold text-center">${match.myTeamName}</div><div class="text-5xl font-black">${match.myTeamScore} - ${match.opponentScore}</div><div class="text-2xl font-bold text-center">${match.opponentName}</div></div><div class="text-center text-7xl font-black text-white my-4" id="live-timer">${formatTime(liveState.seconds)}</div><div class="flex justify-center gap-2 flex-wrap"><button class="bg-green-600 px-3 py-1 rounded" onclick="timerControl('start1')">▶ 1ºT</button><button class="bg-yellow-500 px-3 py-1 rounded" onclick="timerControl('pause')">⏸ Intervalo</button><button class="bg-green-600 px-3 py-1 rounded" onclick="timerControl('start2')">▶ 2ºT</button><button class="bg-red-600 px-3 py-1 rounded" onclick="timerControl('end')">⏹ Fim de Jogo</button></div><div class="flex gap-2 mt-4"><button class="w-1/2 bg-green-700 hover:bg-green-800 p-3 rounded-lg text-white font-bold" onclick="prepareGoalModal('myTeam')">GOL PRÓ</button><button class="w-1/2 bg-red-800 hover:bg-red-900 p-3 rounded-lg text-white font-bold" onclick="logGoal('opponent')">GOL CONTRA</button></div>`;
+            ui.liveMatch.header.innerHTML = `<div class="flex justify-between items-center text-white"><div class="text-2xl font-bold text-center">${match.myTeamName}</div><div class="text-5xl font-black">${match.myTeamScore} - ${match.opponentScore}</div><div class="text-2xl font-bold text-center">${match.opponentName}</div></div><div class="text-center text-7xl font-black text-white my-4" id="live-timer">${formatTime(liveState.seconds)}</div><div class="flex justify-center gap-2 flex-wrap"><button class="bg-green-600 px-3 py-1 rounded" onclick="timerControl('start1')">▶ 1ºT</button><button class="bg-yellow-500 px-3 py-1 rounded" onclick="timerControl('pause')">⏸ Intervalo</button><button class="bg-green-600 px-3 py-1 rounded" onclick="timerControl('start2')">▶ 2ºT</button><button class="bg-blue-600 px-3 py-1 rounded" onclick="generateHalftimeReport()">Relatório 1ºT</button><button class="bg-red-600 px-3 py-1 rounded" onclick="timerControl('end')">⏹ Fim de Jogo</button></div><div class="flex gap-2 mt-4"><button class="w-1/2 bg-green-700 hover:bg-green-800 p-3 rounded-lg text-white font-bold" onclick="prepareGoalModal('myTeam')">GOL PRÓ</button><button class="w-1/2 bg-red-800 hover:bg-red-900 p-3 rounded-lg text-white font-bold" onclick="logGoal('opponent')">GOL CONTRA</button></div>`;
             const possessionArea = document.getElementById('possession-area');
             if (possessionArea) {
                 possessionArea.innerHTML = `<div class="bg-gray-900/70 p-3 rounded-lg"><div class="flex items-stretch gap-2"><button id="possession-myTeam" onclick="togglePossession('myTeam')" class="possession-btn main-team bg-red-600 text-white rounded flex-grow text-base py-2">${match.myTeamName}</button><button id="possession-opponent" onclick="togglePossession('opponent')" class="possession-btn main-team bg-blue-600 text-white rounded flex-grow text-base py-2">${match.opponentName}</button><button id="possession-stopped" onclick="togglePossession('stopped')" class="possession-btn bg-gray-500 text-white rounded px-4">Parada</button></div><h3 class="text-center text-base font-bold text-white mt-3">Controle de Posse de Bola</h3></div>`;
@@ -654,36 +663,88 @@
             document.getElementById('pdf-export-button').style.display = 'inline-flex';
             const match = appState.matches.find(m => m.id === matchId);
             if (!match) return;
+            reportContentEl.innerHTML = renderReportContentForPDF(match);
+            renderChartsForReport(match);
+        }
+
+        function renderChartsForReport(match, period = null) {
+            const suffix = period ? `_${period}T` : '';
+            renderPossessionChart(match, `possessionChart${suffix}`); 
+            renderActionMapChart(match, `actionMapChart${suffix}`, period);
+            if (!period) {
+                renderActionMapChart(match, 'actionMapChart_1T', 1); 
+                renderActionMapChart(match, 'actionMapChart_2T', 2); 
+            }
+        }
+        
+        function renderReportContentForPDF(match, specificPeriod = null) {
             const reportFooter = `<div class="absolute bottom-0 left-1/2 -translate-x-1/2 text-center text-xs text-gray-400 p-2 w-full">Powered by Ciente - Inteligência Esportiva / Contato: assessoria@cienteesportes.com.br</div>`;
-            reportContentEl.innerHTML = `
-                <div class="report-page"><div class="text-center mb-6"><h1 class="text-4xl font-bold">${match.myTeamName} ${match.myTeamScore} x ${match.opponentScore} ${match.opponentName}</h1><p class="text-lg text-gray-600">${new Date(match.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})} - ${match.location}</p></div><div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4 report-section"><div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Posse de Bola</h3><div class="chart-container h-20"><canvas id="possessionChart"></canvas></div><p class="text-center text-sm text-gray-600 mt-2">Tempo Total: ${formatTime(match.timerSeconds || 0)}</p></div><div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Destaque da Partida</h3><div id="report-motm" class="text-center"></div></div></div><div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4 report-section"><div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-4">Volume de Ações (Total)</h3><div class="chart-container" style="background-color: #166534; min-height: 240px; height: 240px;"><canvas id="actionMapChart"></canvas></div><div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div></div><div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Destaques Individuais</h3><div id="report-top-stats" class="p-1"></div></div></div><div class="grid grid-cols-1 lg:grid-cols-2 gap-4 report-section"><div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Resumo de Ações (Total)</h3><div id="report-summary-table"></div></div><div class="bg-gray-50 p-3 rounded-lg border"><div id="report-formation" class="h-full"></div></div></div>${reportFooter}</div>
-                <div class="report-page"><div class="text-center mb-8 pt-8"><h1 class="text-3xl font-bold">Scout por Período</h1></div><div class="grid grid-cols-1 lg:grid-cols-2 gap-8 report-section"><div class="bg-gray-50 p-4 rounded-lg border"><h3 class="text-xl font-bold text-center mb-4">1º Tempo</h3><div class="chart-container" style="background-color: #166534;"><canvas id="actionMapChart_1T"></canvas></div><div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div><div id="report-summary-table-1T" class="mt-4"></div></div><div class="bg-gray-50 p-4 rounded-lg border"><h3 class="text-xl font-bold text-center mb-4">2º Tempo</h3><div class="chart-container" style="background-color: #166534;"><canvas id="actionMapChart_2T"></canvas></div><div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div><div id="report-summary-table-2T" class="mt-4"></div></div></div>${reportFooter}</div>`;
-            renderPossessionChart(match); renderActionMapChart(match, 'actionMapChart', null); renderActionMapChart(match, 'actionMapChart_1T', 1); renderActionMapChart(match, 'actionMapChart_2T', 2);
-            renderManOfTheMatch(match); renderTopStatsTable(match); renderReportSummaryTable(match, 'report-summary-table', null); renderReportSummaryTable(match, 'report-summary-table-1T', 1); renderReportSummaryTable(match, 'report-summary-table-2T', 2); renderFormation(match);
+            
+            const page1 = `<div class="report-page">
+                <div class="text-center mb-6"><h1 class="text-4xl font-bold">${match.myTeamName} ${match.myTeamScore} x ${match.opponentScore} ${match.opponentName}</h1><p class="text-lg text-gray-600">${new Date(match.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})} - ${match.location}</p></div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4 report-section">
+                    <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Posse de Bola</h3><div class="chart-container h-20"><canvas id="possessionChart"></canvas></div><p class="text-center text-sm text-gray-600 mt-2">Tempo Total: ${formatTime(match.timerSeconds || 0)}</p></div>
+                    <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Destaque da Partida</h3><div id="report-motm"></div></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4 report-section">
+                    <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-4">Volume de Ações (Total)</h3><div class="chart-container" style="background-color: #166534; min-height: 240px; height: 240px;"><canvas id="actionMapChart"></canvas></div><div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div></div>
+                    <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Destaques Individuais</h3><div id="report-top-stats"></div></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 report-section">
+                    <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Resumo de Ações (Total)</h3><div id="report-summary-table"></div></div>
+                    <div class="bg-gray-50 p-3 rounded-lg border"><div id="report-formation"></div></div>
+                </div>
+                ${reportFooter}
+            </div>`;
+            
+            const page2 = `<div class="report-page">
+                <div class="text-center mb-8 pt-8"><h1 class="text-3xl font-bold">Scout por Período</h1></div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 report-section">
+                    <div class="bg-gray-50 p-4 rounded-lg border"><h3 class="text-xl font-bold text-center mb-4">1º Tempo</h3><div class="chart-container" style="background-color: #166534;"><canvas id="actionMapChart_1T"></canvas></div><div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div><div id="report-summary-table-1T" class="mt-4"></div></div>
+                    <div class="bg-gray-50 p-4 rounded-lg border"><h3 class="text-xl font-bold text-center mb-4">2º Tempo</h3><div class="chart-container" style="background-color: #166534;"><canvas id="actionMapChart_2T"></canvas></div><div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div><div id="report-summary-table-2T" class="mt-4"></div></div>
+                </div>
+                ${reportFooter}
+            </div>`;
+
+            if (specificPeriod) {
+                // Return only the relevant period's content for halftime report
+                return `<div class="report-page"><h3 class="text-xl font-bold text-center mb-4">${specificPeriod}º Tempo</h3><div class="chart-container" style="background-color: #166534;"><canvas id="actionMapChart_${specificPeriod}T"></canvas></div><div id="report-summary-table-${specificPeriod}T" class="mt-4"></div></div>`;
+            }
+
+            renderManOfTheMatch(match);
+            renderTopStatsTable(match);
+            renderReportSummaryTable(match, 'report-summary-table', null);
+            renderReportSummaryTable(match, 'report-summary-table-1T', 1);
+            renderReportSummaryTable(match, 'report-summary-table-2T', 2);
+            renderFormation(match);
+            return page1 + page2;
         }
 
         function destroyCharts() { Object.values(charts).forEach(chart => chart?.destroy()); }
         
         const fieldLinesPlugin = { id: 'fieldLines', beforeDraw: (chart) => { const { ctx, chartArea: { top, bottom, left, right }, scales: { x } } = chart; ctx.save(); ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; ctx.lineWidth = 1; const defenseZoneEnd = x.getPixelForValue(1); const midfieldZoneEnd = x.getPixelForValue(2); ctx.beginPath(); ctx.moveTo(defenseZoneEnd, top); ctx.lineTo(defenseZoneEnd, bottom); ctx.moveTo(midfieldZoneEnd, top); ctx.lineTo(midfieldZoneEnd, bottom); ctx.stroke(); ctx.restore(); } };
         
-        function renderPossessionChart(match) {
-            const ctx = document.getElementById('possessionChart').getContext('2d');
-            charts.possession = new Chart(ctx, { type: 'bar', data: { labels: ['Posse'], datasets: [ { label: match.myTeamName, data: [match.possession.myTeam], backgroundColor: '#ef4444' }, { label: match.opponentName, data: [match.possession.opponent], backgroundColor: '#3b82f6' } ]}, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true, display: false }, y: { stacked: true, display: false } }, plugins: { legend: { display: true, position: 'top', labels: {color: '#374151'} }, datalabels: { color: 'white', font: { weight: 'bold' }, formatter: (v,c) => { const t = c.chart.data.datasets.reduce((s, ds) => s + (ds.data[0]||0), 0); return t > 0 ? (v/t*100).toFixed(0)+'%' : '0%'; }}}}});
+        function renderPossessionChart(match, canvasId = 'possessionChart') {
+            const ctx = document.getElementById(canvasId)?.getContext('2d');
+            if(!ctx) return;
+            charts[canvasId] = new Chart(ctx, { type: 'bar', data: { labels: ['Posse'], datasets: [ { label: match.myTeamName, data: [match.possession.myTeam], backgroundColor: '#ef4444' }, { label: match.opponentName, data: [match.possession.opponent], backgroundColor: '#3b82f6' } ]}, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true, display: false }, y: { stacked: true, display: false } }, plugins: { legend: { display: true, position: 'top', labels: {color: '#374151'} }, datalabels: { color: 'white', font: { weight: 'bold' }, formatter: (v,c) => { const t = c.chart.data.datasets.reduce((s, ds) => s + (ds.data[0]||0), 0); return t > 0 ? (v/t*100).toFixed(0)+'%' : '0%'; }}}}});
         }
 
         function renderActionMapChart(match, canvasId, period) {
+            const ctx = document.getElementById(canvasId)?.getContext('2d');
+            if(!ctx) return;
             const events = period ? match.events.filter(e => e.period === period) : match.events;
             const sectorCounts = { defesa: 0, meio: 0, ataque: 0 };
             (events || []).forEach(e => { if (sectorCounts.hasOwnProperty(e.zone)) sectorCounts[e.zone]++; });
             const maxActions = Math.max(...Object.values(sectorCounts), 1);
             const getColor = (count) => `rgba(220, 38, 38, ${Math.min(0.2 + (count / maxActions) * 0.8, 1)})`;
             const getRadius = (count) => 10 + Math.sqrt(count) * 4;
-            const ctx = document.getElementById(canvasId).getContext('2d');
             charts[canvasId] = new Chart(ctx, { type: 'bubble', plugins: [fieldLinesPlugin], data: { datasets: [{ label: 'Volume', data: [{ x: 0.5, y: 5, r: getRadius(sectorCounts.defesa) }, { x: 1.5, y: 5, r: getRadius(sectorCounts.meio) }, { x: 2.5, y: 5, r: getRadius(sectorCounts.ataque) }], backgroundColor: [getColor(sectorCounts.defesa), getColor(sectorCounts.meio), getColor(sectorCounts.ataque)], borderColor: 'rgba(153, 27, 27, 1)', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, layout: { padding: 10 }, scales: { x: { min: 0, max: 3, grid: { display: false }, ticks: { display: false } }, y: { display: false, min: 0, max: 10 } }, plugins: { legend: { display: false }, datalabels: { color: 'white', font: { weight: 'bold', size: 16 }, formatter: (v, c) => Object.values(sectorCounts)[c.dataIndex] }}}});
         }
         
         function renderReportSummaryTable(match, containerId, period) {
             const container = document.getElementById(containerId);
+            if(!container) return;
             const allEvents = period ? match.events.filter(e => e.period === period) : match.events;
             const myEvents = allEvents.filter(e => e.scoringTeam !== 'opponent' && !e.action.endsWith('_adv'));
             const oppEvents = allEvents.filter(e => e.scoringTeam === 'opponent' || e.action.endsWith('_adv'));
@@ -710,7 +771,7 @@
         
         function renderManOfTheMatch(match) {
             const container = document.getElementById('report-motm');
-            if(!match.ratings || Object.keys(match.ratings).length === 0) { container.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhuma avaliação registrada.</p>'; return; }
+            if(!container || !match.ratings || Object.keys(match.ratings).length === 0) { if(container) container.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhuma avaliação registrada.</p>'; return; }
             const performers = Object.entries(match.ratings).map(([pid, r]) => ({ pid, avg: (Object.values(r).reduce((a,b) => a + parseFloat(b), 0)) / 4, rates: r }));
             const topPlayer = performers.reduce((a, b) => a.avg > b.avg ? a : b);
             const player = appState.players.find(p => p.id === topPlayer.pid);
@@ -719,31 +780,22 @@
         
         function renderTopStatsTable(match) {
             const container = document.getElementById('report-top-stats');
+            if(!container) return;
             const myEvents = match.events.filter(e => e.scoringTeam !== 'opponent' && !e.action.endsWith('_adv'));
-            const getTopStats = (action, detail, key) => {
-                const counts = myEvents.filter(e => e.action === action && (detail ? e.detail === detail : true) && e[key]).reduce((acc, e) => { acc[e[key]] = (acc[e[key]] || 0) + 1; return acc; }, {});
-                return Object.entries(counts).sort(([,a],[,b]) => b-a);
-            };
-
-            const goals = getTopStats('gol', null, 'playerId');
-            const assists = getTopStats('gol', null, 'assistId');
-            const shots = getTopStats('finalizacao', null, 'playerId');
-            const duelsWon = getTopStats('duelo', 'ganhou', 'playerId');
-
+            const getTopStats = (action, detail, key) => { const counts = myEvents.filter(e => e.action === action && (detail ? e.detail === detail : true) && e[key]).reduce((acc, e) => { acc[e[key]] = (acc[e[key]] || 0) + 1; return acc; }, {}); return Object.entries(counts).sort(([,a],[,b]) => b-a); };
+            const goals = getTopStats('gol', null, 'playerId'); const assists = getTopStats('gol', null, 'assistId'); const shots = getTopStats('finalizacao', null, 'playerId'); const duelsWon = getTopStats('duelo', 'ganhou', 'playerId');
             const renderList = (title, data, icon) => { let listHTML = `<div class="bg-white p-3 rounded-lg shadow-sm"><div class="flex items-center gap-3 mb-2"><span class="bg-gray-200 p-2 rounded-full">${icon}</span><h4 class="font-semibold text-gray-800 text-lg">${title}</h4></div><ul class="text-sm text-gray-600 space-y-1 pl-1">`; if (data.length === 0) { listHTML += '<li>Nenhum registro.</li>'; } else { data.forEach(([id, count]) => { const player = appState.players.find(p => p.id === id); listHTML += `<li class="flex justify-between"><span>${player?.name || 'Desconhecido'}</span> <strong>${count}</strong></li>`; }); } listHTML += '</ul></div>'; return listHTML; };
             const renderSingleStat = (title, data, icon) => { const [playerId, count] = data.length > 0 ? data[0] : [null, 0]; const player = appState.players.find(p => p.id === playerId); return `<div class="bg-white p-3 rounded-lg shadow-sm flex items-center gap-3"><span class="bg-gray-200 p-2 rounded-full">${icon}</span><div><h4 class="font-semibold text-gray-500 text-sm">${title}</h4><p class="font-bold text-gray-800 text-base">${player?.name || 'N/A'}</p></div><strong class="ml-auto text-xl font-black text-gray-800">${count > 0 ? count : '-'}</strong></div>`; };
-            
             const goalIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4c0-1.165.451-2.223 1.172-3.001L8.228 9z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18z" /></svg>`;
             const assistIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" viewBox="0 0 24 24" fill="currentColor"><path d="M21.51,2.05A1.23,1.23,0,0,0,20.29,2L4.7,6.85a1.24,1.24,0,0,0-.7,2.2L9.45,11,7.21,14.49a1.24,1.24,0,0,0,.4,1.75l5.09,3.18a1.23,1.23,0,0,0,1.75-.4L22,3.76A1.24,1.24,0,0,0,21.51,2.05Z"/></svg>`;
             const shotIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>`;
             const duelIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>`;
-
             container.innerHTML = `<div class="space-y-3">${renderList('Gols', goals, goalIcon)}${renderList('Assistências', assists, assistIcon)}${renderSingleStat('Mais Finalizações', shots, shotIcon)}${renderSingleStat('Mais Duelos Ganhos', duelsWon, duelIcon)}</div>`;
         }
 
         function renderFormation(match) {
             const container = document.getElementById('report-formation');
-            if (!match.lineup) { container.innerHTML = '<p class="text-gray-500 text-center">Escalação não definida.</p>'; return; }
+            if (!container || !match.lineup) { if(container) container.innerHTML = '<p class="text-gray-500 text-center">Escalação não definida.</p>'; return; }
             let formationHTML = `<h4 class="text-center font-bold mb-4">Esquema Tático: 4-3-3</h4><div class="formation-container"><div class="formation-grid-tv">`;
             const lineup = match.lineup;
             const getPlayerTag = (posKey) => `<div class="player-position"><div class="player-tag"><div class="player-name">${appState.players.find(p => p.id === lineup[posKey])?.name || 'Vazio'}</div><div class="pos-label">${lineupPositions[posKey]}</div></div></div>`;
@@ -755,15 +807,7 @@
             container.innerHTML = formationHTML;
         }
         
-        function downloadFile(content, fileName) {
-            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url); link.setAttribute("download", fileName);
-            document.body.appendChild(link); link.click(); document.body.removeChild(link);
-        }
-        
-        window.exportReportToPDF = async function() {
+        async function exportReportToPDF() {
             const reportContent = document.getElementById('report-content-wrapper');
             const button = document.getElementById('pdf-export-button'); const text = document.getElementById('pdf-export-text'); const loader = document.getElementById('pdf-export-loader');
             text.classList.add('hidden'); loader.classList.remove('hidden'); button.disabled = true;
@@ -792,6 +836,51 @@
                  reportContent.style.cssText = originalStyle;
                  text.classList.remove('hidden'); loader.classList.add('hidden'); button.disabled = false;
             }
+        }
+        
+        async function generateHalftimeReport() {
+            const match = appState.matches.find(m => m.id === appState.activeMatchId);
+            if (!match) return showErrorMessage("Nenhuma partida ativa para gerar relatório.");
+
+            const tempContainer = document.createElement('div');
+            tempContainer.id = 'pdf-temp-container';
+            tempContainer.style.position = 'absolute';
+            tempContainer.style.left = '-9999px';
+            tempContainer.style.width = '800px';
+            document.body.appendChild(tempContainer);
+            
+            tempContainer.innerHTML = renderReportContentForPDF(match, 1);
+            renderChartsForReport(match, 1);
+            
+            await new Promise(resolve => setTimeout(resolve, 500)); // wait for charts to render
+
+            try {
+                const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+                const canvas = await html2canvas(tempContainer.querySelector('.report-page'), { scale: 3, useCORS: true, backgroundColor: '#ffffff' });
+                const imgData = canvas.toDataURL('image/jpeg', 0.8);
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                const ratio = canvas.width / canvas.height;
+                let widthInPdf = pdfWidth; 
+                let heightInPdf = widthInPdf / ratio;
+                if(heightInPdf > pdfHeight) { heightInPdf = pdfHeight; widthInPdf = heightInPdf * ratio; }
+                pdf.addImage(imgData, 'JPEG', (pdfWidth - widthInPdf) / 2, 0, widthInPdf, heightInPdf);
+                pdf.save(`Relatorio_1T_${match.myTeamName}_vs_${match.opponentName}.pdf`);
+            } catch (e) {
+                showErrorMessage("Erro ao gerar PDF do 1º Tempo.", e);
+            } finally {
+                document.body.removeChild(tempContainer);
+            }
+        }
+        window.generateHalftimeReport = generateHalftimeReport;
+        window.exportReportToPDF = exportReportToPDF;
+
+        function downloadFile(content, fileName) {
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url); link.setAttribute("download", fileName);
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
         window.exportActionsToTXT = function() {
