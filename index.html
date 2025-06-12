@@ -50,9 +50,9 @@
         .pass-btn-errado { background-color: #991b1b; }
         .pass-btn-errado:hover { background-color: #b91c1c; }
 
-        .possession-btn { padding: 0.5rem; }
-        .possession-btn.main-team { flex-grow: 1; font-size: 1.125rem; }
-        .possession-btn.active { box-shadow: 0 0 0 3px #fbbf24; background-color: #d97706; }
+        .possession-stack { display: flex; flex-direction: column; gap: 0.5rem; }
+        .possession-btn { padding: 0.75rem; font-size: 1rem; font-weight: bold; border-radius: 0.375rem;}
+        .possession-btn.active { box-shadow: 0 0 0 3px #fbbf24; }
         input, select { background-color: #1f2937; color: white; border-color: #4b5563; border-radius: 0.375rem; }
         input:focus, select:focus { background-color: #374151; border-color: #60a5fa; box-shadow: none; outline: none;}
         #report-content-wrapper { background-color: #ffffff; color: #111827; }
@@ -197,62 +197,65 @@
             <div class="bg-gray-800 p-4 rounded-lg mb-4">
                 <!-- Score and Timer -->
             </div>
-            
-            <div class="field rounded-lg mb-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <!-- Defensive Zone -->
-                    <div class="zone rounded-lg">
-                        <h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">DEFESA</h4>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button class="action-btn bg-purple-600" onclick="logEvent(event, 'defesa', 'finalizacao_adv')">Fin. Adv.</button>
-                            <button class="action-btn bg-purple-600" onclick="logEvent(event, 'defesa', 'chance_clara_adv')">Chance Adv.</button>
-                            <button class="action-btn bg-yellow-500" onclick="logEvent(event, 'defesa', 'duelo')">Duelo</button>
-                            <button class="action-btn bg-red-600" onclick="logEvent(event, 'defesa', 'falta_sofrida')">Falta Sofrida</button>
-                            <button class="action-btn bg-red-400" onclick="logEvent(event, 'defesa', 'falta_cometida')">Falta Cometida</button>
+            <div class="flex flex-col md:flex-row gap-4">
+                <div class="flex-grow">
+                    <div class="field rounded-lg mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- Defensive Zone -->
+                            <div class="zone rounded-lg">
+                                <h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">DEFESA</h4>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button class="action-btn bg-purple-600" onclick="logEvent(event, 'defesa', 'finalizacao_adv')">Fin. Adv.</button>
+                                    <button class="action-btn bg-purple-600" onclick="logEvent(event, 'defesa', 'chance_clara_adv')">Chance Adv.</button>
+                                    <button class="action-btn bg-yellow-500" onclick="logEvent(event, 'defesa', 'duelo')">Duelo</button>
+                                    <button class="action-btn bg-red-600" onclick="logEvent(event, 'defesa', 'falta_sofrida')">Falta Sofrida</button>
+                                    <button class="action-btn bg-red-400" onclick="logEvent(event, 'defesa', 'falta_cometida')">Falta Cometida</button>
+                                </div>
+                                <div class="pass-buttons grid grid-cols-2 gap-2">
+                                    <button class="action-btn pass-btn" onclick="logEvent(event, 'defesa', 'passe_certo')">Passe Certo</button>
+                                    <button class="action-btn pass-btn-errado" onclick="logEvent(event, 'defesa', 'passe_errado')">Passe Errado</button>
+                                </div>
+                            </div>
+                            <!-- Midfield Zone -->
+                            <div class="zone rounded-lg">
+                                <h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">MEIO-CAMPO</h4>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button class="action-btn bg-yellow-500" onclick="logEvent(event, 'meio', 'duelo')">Duelo</button>
+                                    <button class="action-btn bg-red-600" onclick="logEvent(event, 'meio', 'falta_sofrida')">F. Sofrida</button>
+                                    <button class="action-btn bg-red-400" onclick="logEvent(event, 'meio', 'falta_cometida')">F. Cometida</button>
+                                </div>
+                                <div class="pass-buttons grid grid-cols-2 gap-2">
+                                    <button class="action-btn pass-btn" onclick="logEvent(event, 'meio', 'passe_certo')">Passe Certo</button>
+                                    <button class="action-btn pass-btn-errado" onclick="logEvent(event, 'meio', 'passe_errado')">Passe Errado</button>
+                                </div>
+                            </div>
+                            <!-- Attack Zone -->
+                            <div class="zone rounded-lg">
+                                <h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">ATAQUE</h4>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button class="action-btn bg-green-500" onclick="logEvent(event, 'ataque', 'finalizacao')">Finalização</button>
+                                    <button class="action-btn bg-green-500" onclick="logEvent(event, 'ataque', 'chance_clara')">Chance Clara</button>
+                                    <button class="action-btn bg-yellow-500" onclick="logEvent(event, 'ataque', 'duelo')">Duelo</button>
+                                    <button class="action-btn bg-blue-500" onclick="logEvent(event, 'ataque', 'cruzamento_dir')">Cruz. Dir</button>
+                                    <button class="action-btn bg-blue-500" onclick="logEvent(event, 'ataque', 'cruzamento_esq')">Cruz. Esq</button>
+                                    <button class="action-btn bg-red-600" onclick="logEvent(event, 'ataque', 'falta_sofrida')">F. Sofrida</button>
+                                    <button class="action-btn bg-red-400" onclick="logEvent(event, 'ataque', 'falta_cometida')">F. Cometida</button>
+                                </div>
+                                <div class="pass-buttons grid grid-cols-2 gap-2">
+                                    <button class="action-btn pass-btn" onclick="logEvent(event, 'ataque', 'passe_certo')">Passe Certo</button>
+                                    <button class="action-btn pass-btn-errado" onclick="logEvent(event, 'ataque', 'passe_errado')">Passe Errado</button>
+                                </div>
+                            </div>
                         </div>
-                        <div class="pass-buttons grid grid-cols-2 gap-2">
-                            <button class="action-btn pass-btn" onclick="logEvent(event, 'defesa', 'passe_certo')">Passe Certo</button>
-                            <button class="action-btn pass-btn-errado" onclick="logEvent(event, 'defesa', 'passe_errado')">Passe Errado</button>
-                        </div>
+                        <!-- Container for sub-action buttons -->
+                        <div id="sub-action-container" class="mt-3"></div>
                     </div>
-                    <!-- Midfield Zone -->
-                    <div class="zone rounded-lg">
-                        <h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">MEIO-CAMPO</h4>
-                         <div class="grid grid-cols-2 gap-2">
-                            <button class="action-btn bg-yellow-500" onclick="logEvent(event, 'meio', 'duelo')">Duelo</button>
-                            <button class="action-btn bg-red-600" onclick="logEvent(event, 'meio', 'falta_sofrida')">F. Sofrida</button>
-                            <button class="action-btn bg-red-400" onclick="logEvent(event, 'meio', 'falta_cometida')">F. Cometida</button>
-                        </div>
-                         <div class="pass-buttons grid grid-cols-2 gap-2">
-                             <button class="action-btn pass-btn" onclick="logEvent(event, 'meio', 'passe_certo')">Passe Certo</button>
-                             <button class="action-btn pass-btn-errado" onclick="logEvent(event, 'meio', 'passe_errado')">Passe Errado</button>
-                        </div>
-                    </div>
-                    <!-- Attack Zone -->
-                    <div class="zone rounded-lg">
-                        <h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">ATAQUE</h4>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button class="action-btn bg-green-500" onclick="logEvent(event, 'ataque', 'finalizacao')">Finalização</button>
-                            <button class="action-btn bg-green-500" onclick="logEvent(event, 'ataque', 'chance_clara')">Chance Clara</button>
-                            <button class="action-btn bg-yellow-500" onclick="logEvent(event, 'ataque', 'duelo')">Duelo</button>
-                            <button class="action-btn bg-blue-500" onclick="logEvent(event, 'ataque', 'cruzamento_dir')">Cruz. Dir</button>
-                            <button class="action-btn bg-blue-500" onclick="logEvent(event, 'ataque', 'cruzamento_esq')">Cruz. Esq</button>
-                            <button class="action-btn bg-red-600" onclick="logEvent(event, 'ataque', 'falta_sofrida')">F. Sofrida</button>
-                            <button class="action-btn bg-red-400" onclick="logEvent(event, 'ataque', 'falta_cometida')">F. Cometida</button>
-                        </div>
-                         <div class="pass-buttons grid grid-cols-2 gap-2">
-                             <button class="action-btn pass-btn" onclick="logEvent(event, 'ataque', 'passe_certo')">Passe Certo</button>
-                             <button class="action-btn pass-btn-errado" onclick="logEvent(event, 'ataque', 'passe_errado')">Passe Errado</button>
-                        </div>
-                    </div>
+                    <div id="possession-controls" class="w-full md:w-32 flex-shrink-0"></div>
                 </div>
-                 <!-- Container for sub-action buttons -->
-                <div id="sub-action-container" class="mt-3"></div>
-            </div>
 
-            <div class="bg-gray-800 p-2 rounded-lg h-56 overflow-y-auto">
-                 <table class="w-full text-left text-sm"><thead class="text-gray-400 sticky top-0 bg-gray-800"><tr><th>Tempo</th><th>P.</th><th>Setor</th><th>Ação</th><th>Detalhe</th><th>Jogador</th></tr></thead><tbody id="live-log-body" class="divide-y divide-gray-700"></tbody></table>
-            </div>
+                <div class="bg-gray-800 p-2 rounded-lg h-56 overflow-y-auto mt-4">
+                    <table class="w-full text-left text-sm"><thead class="text-gray-400 sticky top-0 bg-gray-800"><tr><th>Tempo</th><th>P.</th><th>Setor</th><th>Ação</th><th>Detalhe</th><th>Jogador</th></tr></thead><tbody id="live-log-body" class="divide-y divide-gray-700"></tbody></table>
+                </div>
         </div>
 
         <!-- Reports View -->
@@ -680,16 +683,15 @@
                  <div class="flex gap-2 mt-4">
                     <button class="w-1/2 bg-green-700 hover:bg-green-800 p-3 rounded-lg text-white font-bold" onclick="prepareGoalModal('myTeam')">GOL PRÓ</button>
                     <button class="w-1/2 bg-red-800 hover:bg-red-900 p-3 rounded-lg text-white font-bold" onclick="logGoal('opponent')">GOL CONTRA</button>
-                </div>
-                 <div class="bg-gray-900 p-3 rounded-lg mt-4">
-                    <h3 class="text-center text-base font-bold text-white mb-2">Controle de Posse de Bola</h3>
-                    <div class="flex justify-center gap-4">
-                        <button id="possession-myTeam" class="possession-btn main-team bg-blue-600 text-white rounded" onclick="togglePossession('myTeam')">${match.myTeamName}</button>
-                        <button id="possession-opponent" class="possession-btn main-team bg-red-600 text-white rounded" onclick="togglePossession('opponent')">${match.opponentName}</button>
-                        <button id="possession-stopped" class="possession-btn bg-gray-500 text-white rounded" onclick="togglePossession('stopped')">Bola Parada</button>
-                    </div>
-                    <div class="text-center text-white mt-2" id="possession-display"></div>
                 </div>`;
+            document.getElementById('possession-controls').innerHTML = `
+                <div class="possession-stack">
+                    <button id="possession-myTeam" class="possession-btn main-team bg-red-600 text-white" onclick="togglePossession('myTeam')">${match.myTeamName}</button>
+                    <button id="possession-opponent" class="possession-btn main-team bg-blue-600 text-white" onclick="togglePossession('opponent')">${match.opponentName}</button>
+                    <button id="possession-stopped" class="possession-btn bg-gray-500 text-white" onclick="togglePossession('stopped')">Bola Parada</button>
+                </div>
+                <div class="text-center text-white mt-2" id="possession-display"></div>
+            `;
             updatePossessionDisplay();
         }
 
@@ -734,7 +736,7 @@
             const total = match.possession.myTeam + match.possession.opponent || 1;
             const myTeamPerc = ((match.possession.myTeam / total) * 100).toFixed(0);
             const opponentPerc = ((match.possession.opponent / total) * 100).toFixed(0);
-            display.textContent = `Posse: ${match.myTeamName} ${myTeamPerc}% | ${match.opponentName} ${opponentPerc}%`;
+            display.textContent = `Posse: ${myTeamPerc}% | ${opponentPerc}%`;
         }
         
         // --- EVENT LOGGING ---
@@ -1254,15 +1256,14 @@
                 const imgWidth = canvas.width;
                 const imgHeight = canvas.height;
                 const ratio = imgWidth / imgHeight;
-                let widthInPdf = pdfWidth - 20; // 10mm margin on each side
+                let widthInPdf = pdfWidth; 
                 let heightInPdf = widthInPdf / ratio;
-                
-                 if(heightInPdf > pdfHeight - 20) { // check if it exceeds page height with margin
-                    heightInPdf = pdfHeight - 20;
+                if(heightInPdf > pdfHeight) {
+                    heightInPdf = pdfHeight;
                     widthInPdf = heightInPdf * ratio;
                 }
                 
-                pdf.addImage(imgData, 'JPEG', (pdfWidth - widthInPdf) / 2, 10, widthInPdf, heightInPdf);
+                pdf.addImage(imgData, 'JPEG', (pdfWidth - widthInPdf) / 2, 0, widthInPdf, heightInPdf);
             }
             
             const matchSelect = document.getElementById('report-match-select');
