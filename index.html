@@ -100,7 +100,7 @@
     <!-- Sidebar Navigation -->
     <nav class="w-64 bg-gray-900 p-4 flex-col flex-shrink-0 hidden md:flex">
         <div class="flex items-center gap-3 mb-10 pl-2">
-            <svg class="h-8 w-8 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.25m11.25 0h8.25M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" viewBox="0 0 16 16" fill="currentColor"><path d="M5 3a1 1 0 0 0-1 1v1.28c0 .34.1.67.3.94L8 10.4V14a1 1 0 0 0 1 1h.09a1 1 0 0 0 .71-.29l2-2a1 1 0 0 0 .29-.71V10.4l3.7-4.18c.2-.27.3-.6.3-.94V4a1 1 0 0 0-1-1H5Z"/><path d="M4 2a2 2 0 0 0-2 2v1.28a3 3 0 0 0 .93 2.12L7 11.84v2.41a1 1 0 0 0 .29.71l2 2a1 1 0 0 0 1.42 0l2-2a1 1 0 0 0 .29-.71v-2.4l3.07-3.44A3 3 0 0 0 14 6.28V4a2 2 0 0 0-2-2H4Z"/></svg>
             <h1 class="text-white text-2xl font-bold">Scout Pro</h1>
         </div>
         <a href="#" class="nav-link active text-lg p-3 rounded-r-lg mb-2" onclick="navigateTo('dashboard')">Dashboard</a>
@@ -458,6 +458,14 @@
             appState.currentView = viewId;
             ui.views.forEach(v => v.classList.remove('active'));
             document.getElementById(viewId)?.classList.add('active');
+            const nav = document.querySelector('nav');
+            if (viewId === 'live-match' && window.innerWidth < 768) {
+                nav.classList.add('hidden');
+            } else if (window.innerWidth < 768) {
+                 nav.classList.add('hidden');
+            } else {
+                 nav.classList.remove('hidden');
+            }
             ui.navLinks.forEach(l => l.classList.toggle('active', l.getAttribute('onclick') === `navigateTo('${viewId}')`));
             refreshCurrentView();
         }
@@ -755,10 +763,6 @@
             const form = ui.playerSelectionModal.form;
             const playerId = select.value;
             
-            if (form.querySelector('#event-action-player').value === 'finalizacao' && !playerId) {
-                return; 
-            }
-
             finalizeEvent(
                 form.querySelector('#event-zone-player').value,
                 form.querySelector('#event-action-player').value,
@@ -1112,8 +1116,6 @@
             const goals = getTopStats('gol', null, 'playerId');
             const assists = getTopStats('gol', null, 'assistId');
             const shots = getTopStats('finalizacao', null, 'playerId');
-            const topAssister = assists.length > 0 ? assists[0] : [null, 0];
-            const topShooter = shots.length > 0 ? shots[0] : [null, 0];
 
             const renderList = (title, data, icon) => {
                 let listHTML = `<div class="bg-white p-3 rounded-lg shadow-sm">
@@ -1135,7 +1137,7 @@
             };
 
             const renderSingleStat = (title, data, icon) => {
-                const [playerId, count] = data;
+                const [playerId, count] = data.length > 0 ? data[0] : [null, 0];
                 const player = appState.players.find(p => p.id === playerId);
                 return `<div class="bg-white p-3 rounded-lg shadow-sm flex items-center gap-3">
                             <span class="bg-gray-200 p-2 rounded-full">${icon}</span>
@@ -1147,14 +1149,14 @@
                         </div>`;
             };
             
-            const goalIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a.75.75 0 0 1 .75.75v.231a5.98 5.98 0 0 1 2.378 1.132l.21-.21a.75.75 0 0 1 1.06 1.06l-.21.21a5.98 5.98 0 0 1 1.132 2.378H15a.75.75 0 0 1 0 1.5h-.231a5.98 5.98 0 0 1-1.132 2.378l.21.21a.75.75 0 1 1-1.06 1.06l-.21-.21a5.98 5.98 0 0 1-2.378 1.132V15a.75.75 0 0 1-1.5 0v-.231a5.98 5.98 0 0 1-2.378-1.132l-.21.21a.75.75 0 1 1-1.06-1.06l.21-.21a5.98 5.98 0 0 1-1.132-2.378H5a.75.75 0 0 1 0-1.5h.231a5.98 5.98 0 0 1 1.132-2.378l-.21-.21a.75.75 0 0 1 1.06-1.06l.21.21A5.98 5.98 0 0 1 9.25 4.981V4.75A.75.75 0 0 1 10 4V2.75A.75.75 0 0 1 10 2zM8.5 10a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0z"/></svg>`;
-            const assistIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M15.293 5.293a1 1 0 0 1 1.414 1.414l-.707.707a1 1 0 0 1-1.414-1.414l.707-.707zM11 10a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM3.293 8.707a1 1 0 0 1 1.414-1.414l.707.707a1 1 0 0 1-1.414 1.414l-.707-.707zM8 5a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm6-5a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" /></svg>`;
-            const shotIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L9.414 11H13a1 1 0 100-2H9.414l1.293-1.293z" clip-rule="evenodd"/></svg>`;
+            const goalIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a.75.75 0 0 1 .75.75v.231a5.98 5.98 0 0 1 2.378 1.132l.21-.21a.75.75 0 0 1 1.06 1.06l-.21.21a5.98 5.98 0 0 1 1.132 2.378H15a.75.75 0 0 1 0 1.5h-.231a5.98 5.98 0 0 1-1.132 2.378l.21.21a.75.75 0 1 1-1.06 1.06l-.21-.21a5.98 5.98 0 0 1-2.378 1.132V15a.75.75 0 0 1-1.5 0v-.231a5.98 5.98 0 0 1-2.378-1.132l-.21.21a.75.75 0 1 1-1.06-1.06l.21-.21a5.98 5.98 0 0 1-1.132-2.378H5a.75.75 0 0 1 0-1.5h.231a5.98 5.98 0 0 1 1.132-2.378l-.21-.21a.75.75 0 0 1 1.06-1.06l.21.21A5.98 5.98 0 0 1 9.25 4.981V4.75A.75.75 0 0 1 10 4V2.75A.75.75 0 0 1 10 2zM8.5 10a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0z" /></svg>`;
+            const assistIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 16 16" fill="currentColor"><path d="M7.375 2.25a.75.75 0 0 0-1.25 1.06l.75.844-3.125.031a.75.75 0 0 0 0 1.5h3.313L5.43 7.844a.75.75 0 0 0 1.062 1.062L9.25 6.156v3.125a.75.75 0 0 0 1.5 0V6.156L13.516 8.906a.75.75 0 0 0 1.062-1.062L12.016 5.688h1.234a.75.75 0 0 0 0-1.5H10L8.625 2.25zM4.25 12a.75.75 0 0 0 0 1.5h7.5a.75.75 0 0 0 0-1.5h-7.5z"/></svg>`;
+            const shotIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-3.707-8.293a1 1 0 011.414 0L10 12.586l2.293-2.879a1 1 0 011.414 1.414l-3 3.75a1 1 0 01-1.414 0l-3-3.75a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>`;
 
             container.innerHTML = `
                 <div class="space-y-3">
                     ${renderList('Gols', goals, goalIcon)}
-                    ${renderSingleStat('Assistências', topAssister, assistIcon)}
+                    ${renderList('Assistências', assists, assistIcon)}
                     ${renderSingleStat('Finalizações', topShooter, shotIcon)}
                 </div>
             `;
