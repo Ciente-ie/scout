@@ -110,6 +110,14 @@
         .details-icon { transition: transform 0.3s; }
         .performance-main-row.open .details-icon { transform: rotate(90deg); }
         
+        /* --- ESTILOS DE LAYOUT PARA A TELA DE SCOUT --- */
+        #live-match {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        /* --- ESTILOS PARA TELA CHEIA --- */
         body.fullscreen-active nav,
         body.fullscreen-active footer {
             display: none;
@@ -120,30 +128,48 @@
             max-height: 100vh;
             overflow: hidden;
         }
+
+        /* Layout em Tela Cheia (Retrato) */
         body.fullscreen-active #live-match {
-            height: 100%;
             display: flex;
             flex-direction: column;
+            height: 100%;
             padding: 0.5rem;
             gap: 0.5rem;
         }
-        body.fullscreen-active #live-match > .bg-gray-800.p-4 { /* Header */
-            flex-shrink: 0;
+        body.fullscreen-active #live-match > * {
+            margin: 0 !important; /* Sobrescreve margens existentes */
         }
-        body.fullscreen-active #live-match > .field { /* Field */
-            flex-grow: 1; 
-            min-height: 0;
+        body.fullscreen-active #live-match > #live-match-controls {
+            flex-shrink: 0; /* Impede que a sidebar encolha */
         }
-        body.fullscreen-active #live-match > #sub-action-container,
-        body.fullscreen-active #live-match > #possession-area,
-        body.fullscreen-active #live-match > div:has(#live-log-body),
-        body.fullscreen-active #live-match > div:has(button[onclick^='undoLastAction']) {
-            flex-shrink: 0;
-            margin-top: 0;
+        body.fullscreen-active #live-match > .field {
+            flex-grow: 1; /* Faz o campo preencher o espaço restante */
+            min-height: 0; /* Essencial para permitir rolagem interna no flexbox */
         }
-        body.fullscreen-active #live-match > div:has(#live-log-body) { 
-            height: auto;
-            overflow-y: hidden;
+        
+        /* Layout em Tela Cheia (Paisagem) */
+        @media (orientation: landscape) {
+            body.fullscreen-active #live-match {
+                display: grid;
+                grid-template-columns: minmax(320px, 1.2fr) 2.8fr; /* Coluna de Controles | Coluna do Campo */
+                grid-template-rows: 1fr;
+                gap: 1rem;
+            }
+            body.fullscreen-active #live-match-controls {
+                display: flex;
+                flex-direction: column;
+                min-height: 0; /* Permite que o contêiner encolha */
+                gap: 0.5rem;
+            }
+            body.fullscreen-active #live-match-controls > div:has(#live-log-body) {
+                flex-grow: 1; /* Faz o log ocupar o espaço restante na sidebar */
+                min-height: 0; /* Essencial para rolagem */
+            }
+            body.fullscreen-active #live-match-controls .bg-gray-800,
+            body.fullscreen-active #live-match-controls #possession-area {
+                flex-shrink: 0; /* Impede que os outros controles encolham */
+            }
         }
 
         body:not(.is-admin) .admin-only {
@@ -152,72 +178,7 @@
         body.is-guest #performance-nav-link {
             display: inline-block !important;
         }
-        
-        /* CORREÇÃO PARA TELA CHEIA HORIZONTAL (LANDSCAPE) */
-        @media (orientation: landscape) {
-            body.fullscreen-active #live-match {
-                display: grid;
-                grid-template-columns: minmax(300px, 1.2fr) 2.8fr; /* Coluna da Esquerda (Controles) | Coluna da Direita (Campo) */
-                grid-template-rows: auto auto 1fr auto;
-                grid-template-areas:
-                    "header   field"
-                    "poss     field"
-                    "log      field"
-                    "controls field"; /* Área para botões de desfazer e sub-ações */
-                height: 100vh;
-                overflow: hidden;
-                gap: 1rem;
-                padding: 0.5rem;
-            }
 
-            /* Garante que itens do grid não tenham margens conflitantes */
-            body.fullscreen-active #live-match > * {
-                margin: 0 !important;
-            }
-
-            /* Atribui os elementos às suas respectivas áreas no grid */
-            body.fullscreen-active #live-match > .bg-gray-800.p-4 { 
-                grid-area: header;
-            }
-            body.fullscreen-active #live-match > .field { 
-                grid-area: field;
-                height: 100%;
-                min-height: 0;
-            }
-            body.fullscreen-active #live-match > #possession-area { 
-                grid-area: poss;
-            }
-            body.fullscreen-active #live-match > div:has(#live-log-body) { 
-                grid-area: log;
-                min-height: 0; /* Crítico para o elemento poder encolher e exibir a barra de rolagem */
-                height: 100%;
-            }
-            
-            /* Agrupa os botões inferiores na mesma área */
-            body.fullscreen-active #live-match > div:has(button[onclick^='undoLastAction']),
-            body.fullscreen-active #live-match > #sub-action-container {
-                grid-area: controls;
-                align-self: end; /* Alinha na parte de baixo da área */
-            }
-            
-            /* Ajusta o conteúdo dentro do cabeçalho da barra lateral */
-            body.fullscreen-active #live-match > .bg-gray-800.p-4 {
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                padding: 0.5rem;
-            }
-            body.fullscreen-active #live-match #live-timer {
-                font-size: 3rem; /* Equivalente a 5xl */
-                margin: 0.5rem 0;
-            }
-            body.fullscreen-active #live-match .text-5xl {
-                font-size: 2.25rem; /* Equivalente a 4xl */
-            }
-            body.fullscreen-active #live-match .text-2xl {
-                font-size: 1rem; /* Equivalente a xl */
-            }
-        }
     </style>
 </head>
 <body class="flex flex-col h-screen antialiased">
@@ -255,19 +216,68 @@
         </div>
         
         <div id="live-match" class="view">
-            <div class="bg-gray-800 p-4 rounded-lg mb-4"></div>
-            <div class="field rounded-lg"><div class="grid grid-cols-1 sm:grid-cols-3 gap-4 h-full">
-                <div class="zone rounded-lg"><h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">DEFESA</h4><div class="action-buttons-container"><button class="action-btn bg-purple-600" onclick="logEvent(event, 'defesa', 'finalizacao_adv')">Fin. Adv.</button><button class="action-btn bg-purple-600" onclick="logEvent(event, 'defesa', 'chance_clara_adv')">Chance Adv.</button><button class="action-btn bg-red-500" onclick="logEvent(event, 'defesa', 'falta')">Falta</button><button class="action-btn bg-yellow-500" onclick="logEvent(event, 'defesa', 'duelo')">Duelo</button></div><div class="pass-buttons grid grid-cols-2 gap-2"><button class="action-btn pass-btn" onclick="logEvent(event, 'defesa', 'passe_certo')">Passe Certo</button><button class="action-btn pass-btn-errado" onclick="logEvent(event, 'defesa', 'passe_errado')">Passe Errado</button></div></div>
-                <div class="zone rounded-lg"><h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">MEIO-CAMPO</h4><div class="action-buttons-container"><button class="action-btn bg-red-500" onclick="logEvent(event, 'meio', 'falta')">Falta</button><button class="action-btn bg-yellow-500" onclick="logEvent(event, 'meio', 'duelo')">Duelo</button></div><div class="pass-buttons grid grid-cols-2 gap-2"><button class="action-btn pass-btn" onclick="logEvent(event, 'meio', 'passe_certo')">Passe Certo</button><button class="action-btn pass-btn-errado" onclick="logEvent(event, 'meio', 'passe_errado')">Passe Errado</button></div></div>
-                <div class="zone rounded-lg"><h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">ATAQUE</h4><div class="action-buttons-container"><button class="action-btn bg-green-500" onclick="logEvent(event, 'ataque', 'finalizacao')">Finalização</button><button class="action-btn bg-green-500" onclick="logEvent(event, 'ataque', 'chance_clara')">Chance Clara</button><button class="action-btn bg-blue-500" onclick="logEvent(event, 'ataque', 'cruzamento')">Cruzamento</button><button class="action-btn bg-red-500" onclick="logEvent(event, 'ataque', 'falta')">Falta</button><button class="action-btn bg-yellow-500" onclick="logEvent(event, 'ataque', 'duelo')">Duelo</button></div><div class="pass-buttons grid grid-cols-2 gap-2"><button class="action-btn pass-btn" onclick="logEvent(event, 'ataque', 'passe_certo')">Passe Certo</button><button class="action-btn pass-btn-errado" onclick="logEvent(event, 'ataque', 'passe_errado')">Passe Errado</button></div></div>
-            </div></div>
-            <div id="sub-action-container" class="mt-3"></div>
-            <div id="possession-area" class="mt-4"></div>
-            <div class="bg-gray-800 p-2 rounded-lg h-56 overflow-y-auto mt-4"><table class="w-full text-left text-sm"><thead class="text-gray-400 sticky top-0 bg-gray-800"><tr><th>Tempo</th><th>P.</th><th>Setor</th><th>Ação</th><th>Detalhe</th><th>Jogador</th></tr></thead><tbody id="live-log-body" class="divide-y divide-gray-700"></tbody></table></div>
-            <div class="mt-2 flex justify-end">
-                <button onclick="undoLastAction()" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg text-sm">
-                    Desfazer Última Ação
-                </button>
+            <!-- Container de Controles (Sidebar em Paisagem) -->
+            <div id="live-match-controls">
+                <div class="bg-gray-800 p-4 rounded-lg"></div> <!-- Placar, Timer, etc. -->
+                <div id="possession-area"></div>
+                <div id="sub-action-container"></div>
+                <div class="bg-gray-800 p-2 rounded-lg h-56 overflow-y-auto"> <!-- Log de Ações -->
+                    <table class="w-full text-left text-sm">
+                        <thead class="text-gray-400 sticky top-0 bg-gray-800">
+                            <tr><th>Tempo</th><th>P.</th><th>Setor</th><th>Ação</th><th>Detalhe</th><th>Jogador</th></tr>
+                        </thead>
+                        <tbody id="live-log-body" class="divide-y divide-gray-700"></tbody>
+                    </table>
+                </div>
+                <div class="flex justify-end">
+                    <button onclick="undoLastAction()" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg text-sm">
+                        Desfazer Última Ação
+                    </button>
+                </div>
+            </div>
+
+            <!-- Container do Campo -->
+            <div class="field rounded-lg">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 h-full">
+                    <div class="zone rounded-lg">
+                        <h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">DEFESA</h4>
+                        <div class="action-buttons-container">
+                            <button class="action-btn bg-purple-600" onclick="logEvent(event, 'defesa', 'finalizacao_adv')">Fin. Adv.</button>
+                            <button class="action-btn bg-purple-600" onclick="logEvent(event, 'defesa', 'chance_clara_adv')">Chance Adv.</button>
+                            <button class="action-btn bg-red-500" onclick="logEvent(event, 'defesa', 'falta')">Falta</button>
+                            <button class="action-btn bg-yellow-500" onclick="logEvent(event, 'defesa', 'duelo')">Duelo</button>
+                        </div>
+                        <div class="pass-buttons grid grid-cols-2 gap-2">
+                            <button class="action-btn pass-btn" onclick="logEvent(event, 'defesa', 'passe_certo')">Passe Certo</button>
+                            <button class="action-btn pass-btn-errado" onclick="logEvent(event, 'defesa', 'passe_errado')">Passe Errado</button>
+                        </div>
+                    </div>
+                    <div class="zone rounded-lg">
+                        <h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">MEIO-CAMPO</h4>
+                        <div class="action-buttons-container">
+                            <button class="action-btn bg-red-500" onclick="logEvent(event, 'meio', 'falta')">Falta</button>
+                            <button class="action-btn bg-yellow-500" onclick="logEvent(event, 'meio', 'duelo')">Duelo</button>
+                        </div>
+                        <div class="pass-buttons grid grid-cols-2 gap-2">
+                            <button class="action-btn pass-btn" onclick="logEvent(event, 'meio', 'passe_certo')">Passe Certo</button>
+                            <button class="action-btn pass-btn-errado" onclick="logEvent(event, 'meio', 'passe_errado')">Passe Errado</button>
+                        </div>
+                    </div>
+                    <div class="zone rounded-lg">
+                        <h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">ATAQUE</h4>
+                        <div class="action-buttons-container">
+                            <button class="action-btn bg-green-500" onclick="logEvent(event, 'ataque', 'finalizacao')">Finalização</button>
+                            <button class="action-btn bg-green-500" onclick="logEvent(event, 'ataque', 'chance_clara')">Chance Clara</button>
+                            <button class="action-btn bg-blue-500" onclick="logEvent(event, 'ataque', 'cruzamento')">Cruzamento</button>
+                            <button class="action-btn bg-red-500" onclick="logEvent(event, 'ataque', 'falta')">Falta</button>
+                            <button class="action-btn bg-yellow-500" onclick="logEvent(event, 'ataque', 'duelo')">Duelo</button>
+                        </div>
+                        <div class="pass-buttons grid grid-cols-2 gap-2">
+                            <button class="action-btn pass-btn" onclick="logEvent(event, 'ataque', 'passe_certo')">Passe Certo</button>
+                            <button class="action-btn pass-btn-errado" onclick="logEvent(event, 'ataque', 'passe_errado')">Passe Errado</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -471,7 +481,7 @@
             views: document.querySelectorAll('.view'),
             modalContainer: document.getElementById('modal-container'),
             liveMatch: {
-                header: document.querySelector('#live-match .bg-gray-800'),
+                header: document.querySelector('#live-match #live-match-controls .bg-gray-800'),
                 logBody: document.getElementById('live-log-body'),
                 subActionContainer: document.getElementById('sub-action-container')
             }
@@ -870,10 +880,12 @@
             ui.liveMatch.logBody.innerHTML = '';
 
             const isFullscreen = document.body.classList.contains('fullscreen-active');
-            // AJUSTE: Em tela cheia, mostra apenas as 3 últimas ações para economizar espaço.
-            const eventsToShow = isFullscreen ? match.events.slice(0, 3) : match.events;
+            // Show only last 3 events in fullscreen, otherwise show all
+            const eventsToShow = isFullscreen && window.matchMedia("(orientation: portrait)").matches ? match.events.slice(0, 3) : match.events;
 
             eventsToShow.forEach(ev => {
+                // insertRow() or insertRow(-1) appends to the end of the table body.
+                // Since eventsToShow is already ordered newest to oldest, this will display correctly.
                 const row = ui.liveMatch.logBody.insertRow();
                 const detailText = (ev.detail && ev.detail !== 'N/A') ? ev.detail.replace(/_/g, ' ') : '';
                 row.innerHTML = `<td class="p-2 text-xs">${formatTime(ev.time)}</td><td class="p-2 text-xs">${ev.period}ºT</td><td class="p-2 text-xs">${ev.zone}</td><td class="p-2 text-xs">${(ev.action || '').replace(/_/g, ' ')}</td><td class="p-2 text-xs">${detailText}</td><td class="p-2 text-xs">${ev.playerName}</td>`;
