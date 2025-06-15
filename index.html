@@ -46,10 +46,10 @@
         }
         .zone {
             border: 1px dashed rgba(255,255,255,0.3);
-            padding: 0.75rem;
+            padding: 0.5rem;
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
+            gap: 0.5rem;
         }
         .action-buttons-container {
             flex-grow: 1;
@@ -60,13 +60,13 @@
         }
         .pass-buttons {
             border-top: 2px solid rgba(255,255,255,0.1);
-            padding-top: 0.75rem;
+            padding-top: 0.5rem;
             margin-top: auto;
         }
         .action-btn {
             transition: all 0.2s;
-            padding: 0.75rem 0.5rem;
-            font-size: 0.8rem;
+            padding: 0.5rem 0.25rem;
+            font-size: 0.75rem;
             line-height: 1.2;
             font-weight: 600;
             border-radius: 0.375rem;
@@ -110,7 +110,6 @@
         .details-icon { transition: transform 0.3s; }
         .performance-main-row.open .details-icon { transform: rotate(90deg); }
         
-        /* --- ESTILOS DE LAYOUT PARA A TELA DE SCOUT --- */
         #live-match {
             display: flex;
             flex-direction: column;
@@ -136,39 +135,38 @@
             height: 100%;
             padding: 0.5rem;
             gap: 0.5rem;
+            overflow-y: auto;
         }
         body.fullscreen-active #live-match > * {
             margin: 0 !important; /* Sobrescreve margens existentes */
         }
         body.fullscreen-active #live-match > #live-match-controls {
-            flex-shrink: 0; /* Impede que a sidebar encolha */
+            flex-shrink: 0;
         }
         body.fullscreen-active #live-match > .field {
-            flex-grow: 1; /* Faz o campo preencher o espaço restante */
-            min-height: 0; /* Essencial para permitir rolagem interna no flexbox */
+            flex-grow: 1;
+            min-height: 300px; /* Garante altura mínima para o campo */
         }
         
         /* Layout em Tela Cheia (Paisagem) */
         @media (orientation: landscape) {
             body.fullscreen-active #live-match {
                 display: grid;
-                grid-template-columns: minmax(320px, 1.2fr) 2.8fr; /* Coluna de Controles | Coluna do Campo */
+                overflow: hidden; /* Desativa a rolagem do container principal */
+                grid-template-columns: minmax(300px, 1fr) 2.5fr; /* Coluna de Controles | Coluna do Campo */
                 grid-template-rows: 1fr;
                 gap: 1rem;
             }
             body.fullscreen-active #live-match-controls {
                 display: flex;
                 flex-direction: column;
-                min-height: 0; /* Permite que o contêiner encolha */
+                min-height: 0;
                 gap: 0.5rem;
+                overflow-y: auto; /* Permite a rolagem da sidebar */
             }
-            body.fullscreen-active #live-match-controls > div:has(#live-log-body) {
-                flex-grow: 1; /* Faz o log ocupar o espaço restante na sidebar */
-                min-height: 0; /* Essencial para rolagem */
-            }
-            body.fullscreen-active #live-match-controls .bg-gray-800,
-            body.fullscreen-active #live-match-controls #possession-area {
-                flex-shrink: 0; /* Impede que os outros controles encolham */
+             body.fullscreen-active #live-match .field > .grid {
+                height: 100%;
+                min-height: 0;
             }
         }
 
@@ -464,7 +462,14 @@
                 appState.currentView = 'dashboard';
             }
             switch(appState.currentView) {
-                case 'live-match': renderLiveScoreAndTimer(); renderLiveLog(); break;
+                case 'live-match': 
+                    if (appState.activeMatchId) {
+                        renderLiveScoreAndTimer(); 
+                        renderLiveLog();
+                    } else {
+                        navigateTo('matches'); // Se não houver partida ativa, volta para a lista
+                    }
+                    break;
                 case 'matches': renderMatchList(); break;
                 case 'dashboard': renderDashboard(); break;
                 case 'performance': renderPerformancePage(); break;
@@ -488,6 +493,9 @@
         };
 
         window.navigateTo = function(viewId) {
+            if (viewId !== 'live-match') {
+                appState.activeMatchId = null;
+            }
             const blockGuest = ['management', 'matches', 'live-match'];
             if (appState.isGuestMode && blockGuest.includes(viewId)) {
                 return;
@@ -742,8 +750,8 @@
 
         function renderLiveScoreAndTimer() {
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
-            if (!match) return;
-            ui.liveMatch.header.innerHTML = `<div class="flex justify-between items-center text-white"><div class="text-2xl font-bold text-center">${match.myTeamName}</div><div class="text-5xl font-black">${match.myTeamScore} - ${match.opponentScore}</div><div class="text-2xl font-bold text-center">${match.opponentName}</div></div><div class="text-center text-7xl font-black text-white my-4" id="live-timer">${formatTime(liveState.seconds)}</div><div class="flex justify-center items-center gap-2 flex-wrap"><button class="bg-green-600 px-3 py-1 rounded" onclick="timerControl('start1')">▶ 1ºT</button><button class="bg-yellow-500 px-3 py-1 rounded" onclick="timerControl('pause')">⏸ Intervalo</button><button class="bg-green-600 px-3 py-1 rounded" onclick="timerControl('start2')">▶ 2ºT</button><button class="bg-blue-600 px-3 py-1 rounded" onclick="showHalftimeReport()">Relatório 1ºT</button><button class="bg-red-600 px-3 py-1 rounded" onclick="timerControl('end')">⏹ Fim de Jogo</button><button onclick="toggleFullScreen()" class="p-2 rounded-md text-gray-300 hover:bg-gray-700 md:hidden" title="Tela Cheia"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 110 2H5v2a1 1 0 11-2 0V4zm14 0a1 1 0 00-1-1h-4a1 1 0 100 2h3v2a1 1 0 102 0V4zm-2 10v2h-3a1 1 0 100 2h4a1 1 0 001-1v-4a1 1 0 10-2 0zM5 14v2h3a1 1 0 110 2H4a1 1 0 01-1-1v-4a1 1 0 112 0z" clip-rule="evenodd" /></svg></button></div><div class="flex gap-2 mt-4"><button class="w-1/2 bg-green-700 hover:bg-green-800 p-3 rounded-lg text-white font-bold" onclick="prepareGoalModal('myTeam')">GOL PRÓ</button><button class="w-1/2 bg-red-800 hover:bg-red-900 p-3 rounded-lg text-white font-bold" onclick="logGoal('opponent')">GOL CONTRA</button></div>`;
+            if (!match || !ui.liveMatch.header) return;
+            ui.liveMatch.header.innerHTML = `<div class="flex justify-between items-center text-white"><div class="text-xl font-bold text-center">${match.myTeamName}</div><div class="text-4xl font-black">${match.myTeamScore} - ${match.opponentScore}</div><div class="text-xl font-bold text-center">${match.opponentName}</div></div><div class="text-center text-6xl font-black text-white my-2" id="live-timer">${formatTime(liveState.seconds)}</div><div class="flex justify-center items-center gap-2 flex-wrap"><button class="bg-green-600 px-3 py-1 rounded text-sm" onclick="timerControl('start1')">▶ 1ºT</button><button class="bg-yellow-500 px-3 py-1 rounded text-sm" onclick="timerControl('pause')">⏸ Int.</button><button class="bg-green-600 px-3 py-1 rounded text-sm" onclick="timerControl('start2')">▶ 2ºT</button><button class="bg-blue-600 px-3 py-1 rounded text-sm" onclick="showHalftimeReport()">Rel. 1ºT</button><button class="bg-red-600 px-3 py-1 rounded text-sm" onclick="timerControl('end')">⏹ Fim</button><button onclick="toggleFullScreen()" class="p-2 rounded-md text-gray-300 hover:bg-gray-700 md:hidden" title="Tela Cheia"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 110 2H5v2a1 1 0 11-2 0V4zm14 0a1 1 0 00-1-1h-4a1 1 0 100 2h3v2a1 1 0 102 0V4zm-2 10v2h-3a1 1 0 100 2h4a1 1 0 001-1v-4a1 1 0 10-2 0zM5 14v2h3a1 1 0 110 2H4a1 1 0 01-1-1v-4a1 1 0 112 0z" clip-rule="evenodd" /></svg></button></div><div class="flex gap-2 mt-2"><button class="w-1/2 bg-green-700 hover:bg-green-800 p-2 rounded-lg text-white font-bold" onclick="prepareGoalModal('myTeam')">GOL PRÓ</button><button class="w-1/2 bg-red-800 hover:bg-red-900 p-2 rounded-lg text-white font-bold" onclick="logGoal('opponent')">GOL CONTRA</button></div>`;
             const possessionArea = document.getElementById('possession-area');
             if (possessionArea) {
                 const myTeamActiveClass = liveState.currentPossessionHolder === 'myTeam' ? 'active' : '';
@@ -879,13 +887,9 @@
             if (!match || !match.events || !ui.liveMatch.logBody) return;
             ui.liveMatch.logBody.innerHTML = '';
 
-            const isFullscreen = document.body.classList.contains('fullscreen-active');
-            // Show only last 3 events in fullscreen, otherwise show all
-            const eventsToShow = isFullscreen && window.matchMedia("(orientation: portrait)").matches ? match.events.slice(0, 3) : match.events;
+            const eventsToShow = match.events; // Show all events, container will scroll
 
             eventsToShow.forEach(ev => {
-                // insertRow() or insertRow(-1) appends to the end of the table body.
-                // Since eventsToShow is already ordered newest to oldest, this will display correctly.
                 const row = ui.liveMatch.logBody.insertRow();
                 const detailText = (ev.detail && ev.detail !== 'N/A') ? ev.detail.replace(/_/g, ' ') : '';
                 row.innerHTML = `<td class="p-2 text-xs">${formatTime(ev.time)}</td><td class="p-2 text-xs">${ev.period}ºT</td><td class="p-2 text-xs">${ev.zone}</td><td class="p-2 text-xs">${(ev.action || '').replace(/_/g, ' ')}</td><td class="p-2 text-xs">${detailText}</td><td class="p-2 text-xs">${ev.playerName}</td>`;
