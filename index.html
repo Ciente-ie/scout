@@ -122,19 +122,9 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
-            padding: 0.5rem;
-            gap: 0.5rem;
         }
-        body.fullscreen-active #live-match > .bg-gray-800.p-4 { /* Header */
-            flex-shrink: 0;
-        }
-        body.fullscreen-active #live-match > .field { /* Field */
-            flex-grow: 1; 
-            min-height: 0;
-        }
-        body.fullscreen-active #live-match .bg-gray-800.overflow-y-auto { /* Log */
-            flex-shrink: 0;
-            height: 30vh; /* 30% of viewport height */
+         body.fullscreen-active #live-match > .field {
+            flex-grow: 1;
         }
 
         body:not(.is-admin) .admin-only {
@@ -940,11 +930,6 @@
                 }
             });
             await updateMatchData(appState.activeMatchId, { status: 'finished', ratings: ratings });
-            
-            if (document.fullscreenElement) {
-                await document.exitFullscreen();
-            }
-
             closeModal('rating-modal'); 
             navigateTo('matches');
         }
@@ -1240,7 +1225,7 @@
                     <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-4">Volume de Ações (Total)</h3><div class="chart-container" style="background-color: #166534; min-height: 240px; height: 240px;"><canvas id="actionMapChart"></canvas></div><div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div></div>
                     <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Destaques Individuais</h3><div id="report-top-stats"></div></div>
                 </div>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 report-section">
+                <div class="grid grid-cols-2 gap-4 report-section">
                     <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Resumo de Ações (Total)</h3><div id="report-summary-table"></div></div>
                     <div class="bg-gray-50 p-3 rounded-lg border"><div id="report-formation"></div></div>
                 </div>
