@@ -136,14 +136,14 @@
         }
         body.fullscreen-active #live-match > #sub-action-container,
         body.fullscreen-active #live-match > #possession-area,
-        body.fullscreen-active #live-match > div:has(#live-log-body),
-        body.fullscreen-active #live-match > div:has(button[onclick^='undoLastAction']) {
+        body.fullscreen-active #live-log-container,
+        body.fullscreen-active #undo-container {
             flex-shrink: 0;
             margin-top: 0;
         }
-        body.fullscreen-active #live-match > div:has(#live-log-body) { 
-            height: auto;
-            overflow-y: hidden;
+        body.fullscreen-active #live-log-container {
+            height: 25vh;
+            overflow-y: auto;
         }
 
         body:not(.is-admin) .admin-only {
@@ -197,8 +197,8 @@
             </div></div>
             <div id="sub-action-container" class="mt-3"></div>
             <div id="possession-area" class="mt-4"></div>
-            <div class="bg-gray-800 p-2 rounded-lg h-56 overflow-y-auto mt-4"><table class="w-full text-left text-sm"><thead class="text-gray-400 sticky top-0 bg-gray-800"><tr><th>Tempo</th><th>P.</th><th>Setor</th><th>Ação</th><th>Detalhe</th><th>Jogador</th></tr></thead><tbody id="live-log-body" class="divide-y divide-gray-700"></tbody></table></div>
-            <div class="mt-2 flex justify-end">
+            <div id="live-log-container" class="bg-gray-800 p-2 rounded-lg h-56 overflow-y-auto mt-4"><table class="w-full text-left text-sm"><thead class="text-gray-400 sticky top-0 bg-gray-800"><tr><th>Tempo</th><th>P.</th><th>Setor</th><th>Ação</th><th>Detalhe</th><th>Jogador</th></tr></thead><tbody id="live-log-body" class="divide-y divide-gray-700"></tbody></table></div>
+            <div id="undo-container" class="mt-2 flex justify-end">
                 <button onclick="undoLastAction()" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg text-sm">
                     Desfazer Última Ação
                 </button>
@@ -802,15 +802,12 @@
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
             if (!match || !match.events || !ui.liveMatch.logBody) return;
             ui.liveMatch.logBody.innerHTML = '';
-
+            
             const isFullscreen = document.body.classList.contains('fullscreen-active');
-            // Show only last 3 events in fullscreen, otherwise show all
             const eventsToShow = isFullscreen ? match.events.slice(0, 3) : match.events;
 
             eventsToShow.forEach(ev => {
-                // insertRow() or insertRow(-1) appends to the end of the table body.
-                // Since eventsToShow is already ordered newest to oldest, this will display correctly.
-                const row = ui.liveMatch.logBody.insertRow();
+                const row = ui.liveMatch.logBody.insertRow(0); 
                 const detailText = (ev.detail && ev.detail !== 'N/A') ? ev.detail.replace(/_/g, ' ') : '';
                 row.innerHTML = `<td class="p-2 text-xs">${formatTime(ev.time)}</td><td class="p-2 text-xs">${ev.period}ºT</td><td class="p-2 text-xs">${ev.zone}</td><td class="p-2 text-xs">${(ev.action || '').replace(/_/g, ' ')}</td><td class="p-2 text-xs">${detailText}</td><td class="p-2 text-xs">${ev.playerName}</td>`;
             });
