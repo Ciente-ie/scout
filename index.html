@@ -115,6 +115,12 @@
             flex-direction: column;
             gap: 1rem;
         }
+        #log-chevron {
+            transition: transform 0.3s;
+        }
+        #live-log-container.open #log-chevron {
+            transform: rotate(180deg);
+        }
 
         /* --- ESTILOS PARA TELA CHEIA --- */
         body.fullscreen-active nav,
@@ -138,22 +144,22 @@
             overflow-y: auto;
         }
         body.fullscreen-active #live-match > * {
-            margin: 0 !important; /* Sobrescreve margens existentes */
+            margin: 0 !important;
         }
         body.fullscreen-active #live-match > #live-match-controls {
             flex-shrink: 0;
         }
         body.fullscreen-active #live-match > .field {
             flex-grow: 1;
-            min-height: 300px; /* Garante altura mínima para o campo */
+            min-height: 300px;
         }
         
         /* Layout em Tela Cheia (Paisagem) */
         @media (orientation: landscape) {
             body.fullscreen-active #live-match {
                 display: grid;
-                overflow: hidden; /* Desativa a rolagem do container principal */
-                grid-template-columns: minmax(300px, 1fr) 2.5fr; /* Coluna de Controles | Coluna do Campo */
+                overflow: hidden;
+                grid-template-columns: minmax(300px, 1fr) 2.5fr;
                 grid-template-rows: 1fr;
                 gap: 1rem;
             }
@@ -162,7 +168,7 @@
                 flex-direction: column;
                 min-height: 0;
                 gap: 0.5rem;
-                overflow-y: auto; /* Permite a rolagem da sidebar */
+                overflow-y: auto;
             }
              body.fullscreen-active #live-match .field > .grid {
                 height: 100%;
@@ -214,27 +220,33 @@
         </div>
         
         <div id="live-match" class="view">
-            <!-- Container de Controles (Sidebar em Paisagem) -->
             <div id="live-match-controls">
-                <div class="bg-gray-800 p-4 rounded-lg"></div> <!-- Placar, Timer, etc. -->
+                <div class="bg-gray-800 p-4 rounded-lg"></div>
                 <div id="possession-area"></div>
                 <div id="sub-action-container"></div>
-                <div class="bg-gray-800 p-2 rounded-lg h-56 overflow-y-auto"> <!-- Log de Ações -->
-                    <table class="w-full text-left text-sm">
-                        <thead class="text-gray-400 sticky top-0 bg-gray-800">
-                            <tr><th>Tempo</th><th>P.</th><th>Setor</th><th>Ação</th><th>Detalhe</th><th>Jogador</th></tr>
-                        </thead>
-                        <tbody id="live-log-body" class="divide-y divide-gray-700"></tbody>
-                    </table>
-                </div>
-                <div class="flex justify-end">
-                    <button onclick="undoLastAction()" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg text-sm">
-                        Desfazer Última Ação
-                    </button>
+                <div id="live-log-container" class="bg-gray-800 rounded-lg">
+                    <div class="p-2 flex justify-between items-center cursor-pointer" onclick="toggleLog()">
+                        <h4 class="font-bold text-white text-sm">Histórico de Ações</h4>
+                        <div class="flex items-center gap-2">
+                             <button onclick="event.stopPropagation(); undoLastAction()" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-1 px-3 rounded-lg text-xs">Desfazer</button>
+                            <svg id="log-chevron" class="h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div id="live-log-content" class="hidden">
+                         <div class="p-2 border-t border-gray-700 overflow-y-auto" style="max-height: 150px;">
+                            <table class="w-full text-left text-xs">
+                                <thead class="text-gray-400 sticky top-0 bg-gray-800">
+                                    <tr><th>Tempo</th><th>P.</th><th>Setor</th><th>Ação</th><th>Detalhe</th><th>Jogador</th></tr>
+                                </thead>
+                                <tbody id="live-log-body" class="divide-y divide-gray-700"></tbody>
+                            </table>
+                         </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Container do Campo -->
             <div class="field rounded-lg">
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 h-full">
                     <div class="zone rounded-lg">
@@ -442,7 +454,7 @@
             if (!userId) return;
             onSnapshot(collection(db, "artifacts", appId, "users", userId, "players"), (snapshot) => {
                 appState.players = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                if(['management', 'performance'].includes(appState.currentView)) { refreshCurrentView(); }
+                refreshCurrentView(); 
             }, (error) => { console.error("Erro ao carregar jogadores.", error); });
 
             onSnapshot(query(collection(db, "artifacts", appId, "users", userId, "matches")), (snapshot) => {
@@ -452,7 +464,7 @@
             
             onSnapshot(doc(db, "artifacts", appId, "users", userId, "settings", "profile"), (doc) => {
                 appState.settings = doc.exists() ? doc.data() : {};
-                if (appState.currentView === 'dashboard') refreshCurrentView();
+                refreshCurrentView();
             }, (error) => { console.error("Erro ao carregar configurações.", error); });
         }
         
@@ -461,24 +473,20 @@
             if (appState.isGuestMode && blockGuest.includes(appState.currentView)) {
                 appState.currentView = 'dashboard';
             }
+            
+            // Only render the active view to prevent bleeding into other tabs
             switch(appState.currentView) {
                 case 'live-match': 
                     if (appState.activeMatchId) {
                         renderLiveScoreAndTimer(); 
                         renderLiveLog();
-                    } else {
-                        navigateTo('matches'); // Se não houver partida ativa, volta para a lista
                     }
                     break;
                 case 'matches': renderMatchList(); break;
                 case 'dashboard': renderDashboard(); break;
                 case 'performance': renderPerformancePage(); break;
-                case 'management':
-                    renderPlayersTable();
-                    break;
-                case 'reports': 
-                    renderReportMatchSelect();
-                    break;
+                case 'management': renderPlayersTable(); break;
+                case 'reports': renderReportMatchSelect(); break;
             }
         }
 
@@ -496,16 +504,35 @@
             if (viewId !== 'live-match') {
                 appState.activeMatchId = null;
             }
+            
             const blockGuest = ['management', 'matches', 'live-match'];
             if (appState.isGuestMode && blockGuest.includes(viewId)) {
                 return;
             }
+
+            if (viewId === 'live-match' && !appState.activeMatchId) {
+                console.error("Tentativa de navegar para live-match sem partida ativa.");
+                navigateTo('matches');
+                return;
+            }
+            
             appState.currentView = viewId;
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.getElementById(viewId)?.classList.add('active');
+
+            document.querySelectorAll('.view').forEach(v => {
+                if(v.id === viewId) {
+                    v.classList.add('active');
+                } else {
+                    v.classList.remove('active');
+                }
+            });
+
             const mobileMenu = document.getElementById('mobile-menu');
             if (mobileMenu && !mobileMenu.classList.contains('hidden')) { mobileMenu.classList.add('hidden'); }
-            document.querySelectorAll('.nav-link-top').forEach(l => { l.classList.toggle('active', l.getAttribute('data-view') === viewId); });
+            
+            document.querySelectorAll('.nav-link-top').forEach(l => { 
+                l.classList.toggle('active', l.getAttribute('data-view') === viewId);
+            });
+
             refreshCurrentView();
         }
 
@@ -751,7 +778,7 @@
         function renderLiveScoreAndTimer() {
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
             if (!match || !ui.liveMatch.header) return;
-            ui.liveMatch.header.innerHTML = `<div class="flex justify-between items-center text-white"><div class="text-xl font-bold text-center">${match.myTeamName}</div><div class="text-4xl font-black">${match.myTeamScore} - ${match.opponentScore}</div><div class="text-xl font-bold text-center">${match.opponentName}</div></div><div class="text-center text-6xl font-black text-white my-2" id="live-timer">${formatTime(liveState.seconds)}</div><div class="flex justify-center items-center gap-2 flex-wrap"><button class="bg-green-600 px-3 py-1 rounded text-sm" onclick="timerControl('start1')">▶ 1ºT</button><button class="bg-yellow-500 px-3 py-1 rounded text-sm" onclick="timerControl('pause')">⏸ Int.</button><button class="bg-green-600 px-3 py-1 rounded text-sm" onclick="timerControl('start2')">▶ 2ºT</button><button class="bg-blue-600 px-3 py-1 rounded text-sm" onclick="showHalftimeReport()">Rel. 1ºT</button><button class="bg-red-600 px-3 py-1 rounded text-sm" onclick="timerControl('end')">⏹ Fim</button><button onclick="toggleFullScreen()" class="p-2 rounded-md text-gray-300 hover:bg-gray-700 md:hidden" title="Tela Cheia"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 110 2H5v2a1 1 0 11-2 0V4zm14 0a1 1 0 00-1-1h-4a1 1 0 100 2h3v2a1 1 0 102 0V4zm-2 10v2h-3a1 1 0 100 2h4a1 1 0 001-1v-4a1 1 0 10-2 0zM5 14v2h3a1 1 0 110 2H4a1 1 0 01-1-1v-4a1 1 0 112 0z" clip-rule="evenodd" /></svg></button></div><div class="flex gap-2 mt-2"><button class="w-1/2 bg-green-700 hover:bg-green-800 p-2 rounded-lg text-white font-bold" onclick="prepareGoalModal('myTeam')">GOL PRÓ</button><button class="w-1/2 bg-red-800 hover:bg-red-900 p-2 rounded-lg text-white font-bold" onclick="logGoal('opponent')">GOL CONTRA</button></div>`;
+            ui.liveMatch.header.innerHTML = `<div class="flex justify-between items-center text-white"><div class="text-lg font-bold text-center">${match.myTeamName}</div><div class="text-3xl font-black">${match.myTeamScore} - ${match.opponentScore}</div><div class="text-lg font-bold text-center">${match.opponentName}</div></div><div class="text-center text-5xl font-black text-white my-2" id="live-timer">${formatTime(liveState.seconds)}</div><div class="flex justify-center items-center gap-2 flex-wrap"><button class="bg-green-600 px-2 py-1 rounded text-xs" onclick="timerControl('start1')">▶ 1ºT</button><button class="bg-yellow-500 px-2 py-1 rounded text-xs" onclick="timerControl('pause')">⏸ Int.</button><button class="bg-green-600 px-2 py-1 rounded text-xs" onclick="timerControl('start2')">▶ 2ºT</button><button class="bg-blue-600 px-2 py-1 rounded text-xs" onclick="showHalftimeReport()">Rel. 1ºT</button><button class="bg-red-600 px-2 py-1 rounded text-xs" onclick="timerControl('end')">⏹ Fim</button><button onclick="toggleFullScreen()" class="p-2 rounded-md text-gray-300 hover:bg-gray-700 md:hidden" title="Tela Cheia"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 110 2H5v2a1 1 0 11-2 0V4zm14 0a1 1 0 00-1-1h-4a1 1 0 100 2h3v2a1 1 0 102 0V4zm-2 10v2h-3a1 1 0 100 2h4a1 1 0 001-1v-4a1 1 0 10-2 0zM5 14v2h3a1 1 0 110 2H4a1 1 0 01-1-1v-4a1 1 0 112 0z" clip-rule="evenodd" /></svg></button></div><div class="flex gap-2 mt-2"><button class="w-1/2 bg-green-700 hover:bg-green-800 p-2 rounded-lg text-white font-bold" onclick="prepareGoalModal('myTeam')">GOL PRÓ</button><button class="w-1/2 bg-red-800 hover:bg-red-900 p-2 rounded-lg text-white font-bold" onclick="logGoal('opponent')">GOL CONTRA</button></div>`;
             const possessionArea = document.getElementById('possession-area');
             if (possessionArea) {
                 const myTeamActiveClass = liveState.currentPossessionHolder === 'myTeam' ? 'active' : '';
@@ -765,9 +792,16 @@
                             <button id="possession-opponent" onclick="togglePossession('opponent')" class="possession-btn main-team bg-blue-600 text-white rounded flex-grow text-base py-2 ${opponentActiveClass}">${match.opponentName}</button>
                             <button id="possession-stopped" onclick="togglePossession('stopped')" class="possession-btn bg-gray-500 text-white rounded px-4 ${stoppedActiveClass}">Parada</button>
                         </div>
-                        <h3 class="text-center text-base font-bold text-white mt-3">Controle de Posse de Bola</h3>
+                        <h3 class="text-center text-sm font-bold text-white mt-2">Controle de Posse de Bola</h3>
                     </div>`;
             }
+        }
+
+        window.toggleLog = function() {
+            const container = document.getElementById('live-log-container');
+            const content = document.getElementById('live-log-content');
+            container.classList.toggle('open');
+            content.classList.toggle('hidden');
         }
 
         window.timerControl = function(action) {
@@ -887,12 +921,12 @@
             if (!match || !match.events || !ui.liveMatch.logBody) return;
             ui.liveMatch.logBody.innerHTML = '';
 
-            const eventsToShow = match.events; // Show all events, container will scroll
+            const eventsToShow = match.events; 
 
             eventsToShow.forEach(ev => {
                 const row = ui.liveMatch.logBody.insertRow();
                 const detailText = (ev.detail && ev.detail !== 'N/A') ? ev.detail.replace(/_/g, ' ') : '';
-                row.innerHTML = `<td class="p-2 text-xs">${formatTime(ev.time)}</td><td class="p-2 text-xs">${ev.period}ºT</td><td class="p-2 text-xs">${ev.zone}</td><td class="p-2 text-xs">${(ev.action || '').replace(/_/g, ' ')}</td><td class="p-2 text-xs">${detailText}</td><td class="p-2 text-xs">${ev.playerName}</td>`;
+                row.innerHTML = `<td class="p-1 text-xs">${formatTime(ev.time)}</td><td class="p-1 text-xs">${ev.period}ºT</td><td class="p-1 text-xs">${ev.zone}</td><td class="p-1 text-xs">${(ev.action || '').replace(/_/g, ' ')}</td><td class="p-1 text-xs">${detailText}</td><td class="p-1 text-xs">${ev.playerName}</td>`;
             });
         }
 
