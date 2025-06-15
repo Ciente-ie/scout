@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-t">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scout Free - Análise de Futebol</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -222,10 +222,8 @@
         </div>
         
         <div id="live-match" class="view">
-            <!-- Container de Controles -->
-             <div id="live-match-controls" class="space-y-2">
-                <div class="bg-gray-800 p-4 rounded-lg"></div> <!-- Placar, Timer, etc. -->
-                <div id="possession-area"></div>
+            <div id="live-match-controls" class="space-y-2">
+                <div class="bg-gray-800 p-4 rounded-lg"></div> <div id="possession-area"></div>
                 <div id="sub-action-container"></div>
                 <div id="live-log-container" class="bg-gray-800 rounded-lg">
                     <div class="p-2 flex justify-between items-center cursor-pointer" onclick="toggleLog()">
@@ -250,7 +248,6 @@
                 </div>
             </div>
 
-            <!-- Container do Campo -->
             <div class="field rounded-lg">
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 h-full">
                     <div class="zone rounded-lg">
@@ -349,8 +346,7 @@
                 <button onclick="closeModal('halftime-report-modal')" class="text-gray-500 hover:text-gray-800 font-bold text-2xl">&times;</button>
             </div>
             <div id="halftime-report-content" class="p-6 overflow-y-auto">
-                <!-- O conteúdo do relatório será injetado aqui -->
-            </div>
+                </div>
         </div>
     </div>
 
@@ -1172,8 +1168,8 @@
                          return `<tbody class="performance-group border-b border-gray-700">
                                     <tr class="bg-gray-800">
                                         <td class="p-4 font-semibold text-white">${p.name}</td>
-                                        <td class="p-4 text-center">0</td>
                                         <td class="p-4 text-center font-bold">-</td>
+                                        <td class="p-4 text-center">0</td>
                                         <td class="p-4 text-center text-gray-500">
                                             <span></span>
                                         </td>
@@ -1195,8 +1191,8 @@
                     return `<tbody class="performance-group border-b border-gray-700">
                                 <tr class="performance-main-row" onclick="togglePerformanceDetails(this)">
                                     <td class="p-4 font-semibold text-white">${p.name}</td>
-                                    <td class="p-4 text-center">${p.matchPerformances.length}</td>
                                     <td class="p-4 text-center font-bold text-blue-400">${p.overallAvg.toFixed(1)}</td>
+                                    <td class="p-4 text-center">${p.matchPerformances.length}</td>
                                     <td class="p-4 text-center">
                                         <svg class="details-icon h-5 w-5 text-gray-400 inline-block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
                                     </td>
@@ -1237,8 +1233,8 @@
                         <thead class="bg-gray-900">
                             <tr>
                                 <th class="p-4 w-2/5">Jogador</th>
-                                <th class="p-4 text-center">Jogos</th>
                                 <th class="p-4 text-center">Média Geral</th>
+                                <th class="p-4 text-center">Jogos</th>
                                 <th class="p-4 text-center">Detalhes</th>
                             </tr>
                         </thead>
