@@ -374,6 +374,17 @@
         
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'scout-pro-futebol-v2';
         
+        // Helper function to display an error message directly in the UI.
+        function showUserFacingError(viewId, message) {
+            const container = document.getElementById(viewId);
+            if (container) {
+                container.innerHTML = `<div class="p-8 text-center text-yellow-300 bg-yellow-900 bg-opacity-50 rounded-lg">
+                    <h1 class="text-3xl font-bold mb-4">Aviso</h1>
+                    <p class="text-lg">${message}</p>
+                </div>`;
+            }
+        }
+        
         async function firebaseAuth() {
             try {
                 const urlParams = new URLSearchParams(window.location.search);
@@ -391,44 +402,38 @@
                     }
                 });
 
-                // This single listener handles the app logic after any authentication succeeds.
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
-                        // An authenticated user is present.
-
-                        // Step 1: Determine which user's data to load.
+                        console.log("Auth state changed. User authenticated with UID:", user.uid);
                         if (appState.isGuestMode) {
-                            userId = guestId; // For guests, use the ID from the URL.
+                            userId = guestId;
+                            console.log("Guest mode active. Using guest_id as userId for data fetching:", userId);
                         } else {
-                            userId = user.uid; // For admins, use their own authenticated ID.
+                            userId = user.uid;
+                            console.log("Admin mode active. Using auth.currentUser.uid as userId:", userId);
                         }
                         
-                        // Step 2: Set up the UI based on whether it's a guest or admin.
                         setupUIMode();
 
-                        // Step 3: Attach data listeners if they haven't been attached yet.
                         if (!appState.listenersAttached) {
-                            setupListeners(); // This function uses the `userId` we just set.
+                            console.log("Attaching Firestore listeners...");
+                            setupListeners();
                             appState.listenersAttached = true;
                         }
                         
-                        // Step 4: Navigate to the appropriate view.
-                        // For a guest, always start at the dashboard.
-                        // For an admin, go to their last view or dashboard.
-                        // We check the currentView state to avoid unnecessary navigation on reload
                         const initialView = appState.isGuestMode ? 'dashboard' : (appState.currentView || 'dashboard');
                         navigateTo(initialView);
+                    } else {
+                        console.log("Auth state changed. User is not authenticated. Waiting for sign-in...");
                     }
                 });
 
-                // Trigger the sign-in process if no user is currently signed in.
-                // This will, in turn, trigger the onAuthStateChanged listener above.
                 if (!auth.currentUser) {
                     if (appState.isGuestMode) {
-                        // Guests are always signed in anonymously.
+                        console.log("Guest mode: signing in anonymously.");
                         await signInAnonymously(auth);
                     } else {
-                        // Admins use their token or fall back to anonymous.
+                        console.log("Admin mode: attempting to sign in.");
                         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                             await signInWithCustomToken(auth, __initial_auth_token);
                         } else {
@@ -474,21 +479,55 @@
         }
 
         function setupListeners() {
-            if (!userId) return;
+            if (!userId) {
+                console.error("setupListeners called without a userId!");
+                return;
+            }
+            console.log(`Setting up listeners for userId: ${userId}`);
+            let dataLoaded = { players: false, matches: false };
+            let timeoutTriggered = false;
+
+            // Set a timeout to check if data has loaded.
+            setTimeout(() => {
+                if (appState.isGuestMode && (!dataLoaded.players || !dataLoaded.matches)) {
+                    timeoutTriggered = true;
+                    console.warn("Data did not load within 5 seconds for guest. This is likely a permissions issue with Firestore security rules.");
+                    showUserFacingError('dashboard', 'Não foi possível carregar os dados compartilhados. O link pode ser inválido ou o acesso pode não ser permitido.');
+                    showUserFacingError('performance', 'Não foi possível carregar os dados de desempenho.');
+                    showUserFacingError('reports', 'Não foi possível carregar os dados para os relatórios.');
+                }
+            }, 5000);
+
             onSnapshot(collection(db, "artifacts", appId, "users", userId, "players"), (snapshot) => {
+                if (timeoutTriggered) return;
+                console.log(`Players snapshot received. Found ${snapshot.docs.length} players.`);
+                dataLoaded.players = true;
                 appState.players = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 refreshCurrentView(); 
-            }, (error) => { console.error("Erro ao carregar jogadores.", error); });
+            }, (error) => {
+                console.error("Erro ao carregar jogadores (verifique as regras de segurança do Firestore):", error);
+                showUserFacingError('dashboard', `Erro ao carregar dados: ${error.message}`);
+            });
 
             onSnapshot(query(collection(db, "artifacts", appId, "users", userId, "matches")), (snapshot) => {
+                if (timeoutTriggered) return;
+                console.log(`Matches snapshot received. Found ${snapshot.docs.length} matches.`);
+                dataLoaded.matches = true;
                 appState.matches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 refreshCurrentView();
-            }, (error) => { console.error("Erro ao carregar partidas.", error); });
+            }, (error) => {
+                console.error("Erro ao carregar partidas (verifique as regras de segurança do Firestore):", error);
+                showUserFacingError('dashboard', `Erro ao carregar dados: ${error.message}`);
+            });
             
             onSnapshot(doc(db, "artifacts", appId, "users", userId, "settings", "profile"), (doc) => {
+                if (timeoutTriggered) return;
+                console.log(`Settings snapshot received. Document exists: ${doc.exists()}`);
                 appState.settings = doc.exists() ? doc.data() : {};
                 refreshCurrentView();
-            }, (error) => { console.error("Erro ao carregar configurações.", error); });
+            }, (error) => {
+                console.error("Erro ao carregar configurações:", error);
+            });
         }
         
         function refreshCurrentView() {
