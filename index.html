@@ -95,19 +95,6 @@
         .report-header { position: absolute; top: 10px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: center; }
         .report-logo { max-height: 40px; max-width: 150px; }
         .report-section { page-break-inside: avoid; }
-        .formation-container { background-color: #105a32; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 68 105'%3E%3Crect width='68' height='105' fill='%23166534'/%3E%3Cpath d='M34 52.5 a10 10 0 0 1 0 -0.01' stroke='rgba(255,255,255,0.2)' stroke-width='0.5' fill='none' /%3E%3Cline x1='0' y1='52.5' x2='68' y2='52.5' stroke='rgba(255,255,255,0.2)' stroke-width='0.5' /%3E%3Crect x='13' y='0' width='42' height='16.5' stroke='rgba(255,255,255,0.2)' stroke-width='0.5' fill='none' /%3E%3Crect x='24' y='0' width='20' height='5.5' stroke='rgba(255,255,255,0.2)' stroke-width='0.5' fill='none' /%3E%3Crect x='13' y='88.5' width='42' height='16.5' stroke='rgba(255,255,255,0.2)' stroke-width='0.5' fill='none' /%3E%3Crect x='24' y='99.5' width='20' height='5.5' stroke='rgba(255,255,255,0.2)' stroke-width='0.5' fill='none' /%3E%3C/svg%3E"); background-size: cover; background-position: center; border: 2px solid #a0aec0; padding: 1rem; aspect-ratio: 7 / 10; max-width: 400px; margin: auto; border-radius: 0.5rem; }
-        .formation-grid-tv { display: grid; grid-template-rows: repeat(10, 1fr); height: 100%; }
-        .player-position { display: flex; justify-content: center; align-items: center; text-align: center; }
-        .player-tag { background: rgba(0,0,0,0.6); padding: 0.2rem 0.6rem; border-radius: 0.375rem; }
-        .pos-label { font-size: 0.65rem; font-weight: bold; color: #a0aec0; text-transform: uppercase; line-height: 1; }
-        .player-name { font-weight: 600; font-size: 0.75rem; color: white; line-height: 1.2; }
-        .gk-pos { grid-row: 10 / 11; }
-        .def-pos { grid-row: 8 / 9; }
-        .mid-pos { grid-row: 5 / 6; }
-        .att-pos { grid-row: 2 / 3; }
-        .pos-4-player { display: grid; grid-template-columns: repeat(4, 1fr); width: 100%; }
-        .pos-3-player { display: grid; grid-template-columns: repeat(3, 1fr); width: 80%; margin: auto; }
-        .pos-1-player { display: grid; grid-template-columns: 1fr; width: 100%; }
         .dashboard-card { background-color: #1f2937; border: 1px solid #374151; position: relative;}
         .performance-main-row { cursor: pointer; transition: background-color 0.2s; }
         .performance-main-row:hover { background-color: #2d3748; }
@@ -385,6 +372,20 @@
             }
         }
         
+        window.toggleAdvancedStats = function() {
+            const container = document.getElementById('advanced-stats-container');
+            const button = document.getElementById('advanced-stats-toggle');
+            const isHidden = container.classList.contains('hidden');
+
+            if (isHidden) {
+                container.classList.remove('hidden');
+                button.innerHTML = 'Esconder Estatísticas Avançadas ▲';
+            } else {
+                container.classList.add('hidden');
+                button.innerHTML = 'Ver Estatísticas Avançadas ▼';
+            }
+        }
+
         async function firebaseAuth() {
             try {
                 const urlParams = new URLSearchParams(window.location.search);
@@ -1148,19 +1149,50 @@
             if(!container) return;
             const finishedMatches = appState.matches.filter(m => m.status === 'finished');
             const totalGames = finishedMatches.length;
+            
+            // General Stats
             const totalGoalsScored = finishedMatches.reduce((acc, m) => acc + (m.myTeamScore || 0), 0);
             const totalGoalsConceded = finishedMatches.reduce((acc, m) => acc + (m.opponentScore || 0), 0);
             let wins = 0, draws = 0, losses = 0;
             finishedMatches.forEach(m => { if (m.myTeamScore > m.opponentScore) wins++; else if (m.myTeamScore < m.opponentScore) losses++; else draws++; });
             const aproveitamento = totalGames > 0 ? (((wins * 3 + draws) / (totalGames * 3)) * 100).toFixed(0) : 0;
             const last5Matches = [...finishedMatches].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0,5).map(m => { let result = 'E', color = 'bg-yellow-500'; if (m.myTeamScore > m.opponentScore) { result = 'V'; color = 'bg-green-500'; } if (m.myTeamScore < m.opponentScore) { result = 'D'; color = 'bg-red-500'; } return `<span class="w-8 h-8 flex items-center justify-center text-white font-bold rounded-full ${color}">${result}</span>`; }).join('');
+            
+            // Advanced Stats Calculation
+            let totalPossessionPercent = 0;
+            let totalTeamShots = 0;
+            let totalTeamClearChances = 0;
+            let totalOpponentShots = 0;
+            let totalOpponentClearChances = 0;
+
+            finishedMatches.forEach(m => {
+                const possession = m.possession || { myTeam: 0, opponent: 0, stopped: 0 };
+                const totalPossessionSeconds = possession.myTeam + possession.opponent; // Only count active possession
+                if (totalPossessionSeconds > 0) {
+                    totalPossessionPercent += (possession.myTeam / totalPossessionSeconds) * 100;
+                }
+                if (m.events && m.events.length > 0) {
+                    totalTeamShots += m.events.filter(e => e.action === 'finalizacao').length;
+                    totalTeamClearChances += m.events.filter(e => e.action === 'chance_clara').length;
+                    totalOpponentShots += m.events.filter(e => e.action === 'finalizacao_adv').length;
+                    totalOpponentClearChances += m.events.filter(e => e.action === 'chance_clara_adv').length;
+                }
+            });
+
+            const avgPossession = totalGames > 0 ? (totalPossessionPercent / totalGames).toFixed(1) : '0.0';
+            const avgTeamShots = totalGames > 0 ? (totalTeamShots / totalGames).toFixed(1) : '0.0';
+            const avgTeamClearChances = totalGames > 0 ? (totalTeamClearChances / totalGames).toFixed(1) : '0.0';
+            const avgOpponentShots = totalGames > 0 ? (totalOpponentShots / totalGames).toFixed(1) : '0.0';
+            const avgOpponentClearChances = totalGames > 0 ? (totalOpponentClearChances / totalGames).toFixed(1) : '0.0';
+            
+            // Top Performances
             const allPerformances = [];
             finishedMatches.forEach(m => { if(!m.ratings) return; Object.entries(m.ratings).forEach(([pid, rates]) => { if (!rates.played) return; const avg = (Object.values(rates).filter(v => typeof v === 'string').reduce((acc, v) => acc + parseFloat(v), 0)) / 4; const player = appState.players.find(p => p.id === pid); if(player) allPerformances.push({ name: player.name, score: avg, date: m.date }); }); });
             const topPerformances = [...allPerformances].sort((a,b) => b.score - a.score).slice(0, 5).map(p => `<li class="flex justify-between items-center text-gray-300 py-1"><div>${p.name}<p class="text-xs text-gray-500">${new Date(p.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</p></div><strong class="text-white">Nota ${p.score.toFixed(1)}</strong></li>`).join('');
             
             container.innerHTML = `<h2 class="text-3xl font-bold text-white mb-6">Dashboard</h2>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div id="team-stats-card" class="lg:col-span-3 dashboard-card p-6 rounded-lg flex flex-col md:flex-row items-center gap-6">
+                    <div id="team-stats-card" class="lg:col-span-3 dashboard-card p-6 rounded-lg flex flex-col items-center gap-6">
                         <div id="dashboard-logo-container" class="hidden flex-shrink-0">
                             <img id="dashboard-logo" src="" class="max-h-24 rounded-lg bg-white/10 p-2" alt="Logo do Time">
                         </div>
@@ -1169,9 +1201,19 @@
                              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-4 text-center">
                                 <div><p class="text-4xl font-extrabold">${totalGames}</p><p class="text-gray-400">Jogos</p></div><div class="text-green-400"><p class="text-4xl font-extrabold">${wins}</p><p class="text-gray-400">Vitórias</p></div><div class="text-yellow-400"><p class="text-4xl font-extrabold">${draws}</p><p class="text-gray-400">Empates</p></div><div class="text-red-400"><p class="text-4xl font-extrabold">${losses}</p><p class="text-gray-400">Derrotas</p></div><div class="text-blue-400"><p class="text-4xl font-extrabold">${aproveitamento}%</p><p class="text-gray-400">Aproveitamento</p></div><div><p class="text-4xl font-extrabold text-green-400">${totalGoalsScored}</p><p class="text-gray-400">Gols Marcados</p></div><div><p class="text-4xl font-extrabold text-red-400">${totalGoalsConceded}</p><p class="text-gray-400">Gols Sofridos</p></div><div><p class="text-4xl font-extrabold">${(totalGames > 0 ? (totalGoalsScored/totalGames).toFixed(2) : '0.00')}</p><p class="text-gray-400">Gols p/ Jogo</p></div><div><p class="text-4xl font-extrabold">${(totalGames > 0 ? (totalGoalsConceded/totalGames).toFixed(2) : '0.00')}</p><p class="text-gray-400">Sofridos p/ Jogo</p></div>
                             </div>
+                            <div class="mt-6 pt-4 border-t border-gray-700 w-full">
+                                <button onclick="toggleAdvancedStats()" id="advanced-stats-toggle" class="text-blue-400 hover:text-blue-300 w-full text-center p-2 bg-gray-800 rounded-md transition">Ver Estatísticas Avançadas ▼</button>
+                                <div id="advanced-stats-container" class="hidden mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 text-center">
+                                    <div><p class="text-3xl font-bold">${avgPossession}%</p><p class="text-gray-400 text-sm">Posse/Jogo</p></div>
+                                    <div><p class="text-3xl font-bold text-green-400">${avgTeamShots}</p><p class="text-gray-400 text-sm">Finalizações/Jogo</p></div>
+                                    <div><p class="text-3xl font-bold text-green-400">${avgTeamClearChances}</p><p class="text-gray-400 text-sm">Chances Claras/Jogo</p></div>
+                                    <div><p class="text-3xl font-bold text-red-400">${avgOpponentShots}</p><p class="text-gray-400 text-sm">Fin. Adv./Jogo</p></div>
+                                    <div><p class="text-3xl font-bold text-red-400">${avgOpponentClearChances}</p><p class="text-gray-400 text-sm">Chances Adv./Jogo</p></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="dashboard-card p-6 rounded-lg lg:col-span-1"><h3 class="font-bold text-lg mb-4">Últimos 5 Resultados</h3><div class="flex gap-3">${last5Matches || '<p class="text-gray-400">Nenhuma partida finalizada.</p>'}</div></div>
+                    <div class="dashboard-card p-6 rounded-lg lg:col-span-1"><h3 class="font-bold text-lg mb-4">Últimos 5 Resultados</h3><div class="flex justify-center gap-3">${last5Matches || '<p class="text-gray-400">Nenhuma partida finalizada.</p>'}</div></div>
                     <div id="performance-history-card" class="dashboard-card p-6 rounded-lg lg:col-span-2"><h3 class="font-bold text-lg mb-4">Melhores Desempenhos Recentes</h3><ul class="space-y-2">${topPerformances || '<p class="text-gray-400">Nenhuma avaliação registrada.</p>'}</ul></div>
                 </div>`;
             
@@ -1507,42 +1549,72 @@
             container.innerHTML = `<div class="space-y-3">${renderList('Gols', goals, goalIcon)}${renderList('Assistências', assists, assistIcon)}${renderSingleStat('Mais Finalizações', shots, shotIcon)}${renderSingleStat('Mais Duelos Ganhos', duelsWon, duelIcon)}</div>`;
         }
 
+        // ---------- CORRECTION STARTS HERE ----------
         function renderFormation(match) {
             const container = document.getElementById('report-formation');
-            if (!container || !match.lineup) { 
-                if(container) container.innerHTML = '<p class="text-gray-500 text-center">Escalação não definida.</p>'; 
-                return; 
+            // Add a check for squadPlayerIds for robustness
+            if (!container || !match.lineup || !match.squadPlayerIds) {
+                if (container) container.innerHTML = '<p class="text-gray-500 text-center p-4">Escalação não definida.</p>';
+                return;
             }
 
-            let formationHTML = `<h4 class="text-center font-bold mb-4">Esquema Tático: 4-3-3</h4><div class="formation-container"><div class="formation-grid-tv">`;
-            const lineup = match.lineup;
-            const getPlayerTag = (posKey) => {
-                const playerId = lineup[posKey];
-                const player = appState.players.find(p => p.id === playerId);
-                return `<div class="player-position"><div class="player-tag"><div class="player-name">${player?.name || 'Vazio'}</div><div class="pos-label">${lineupPositions[posKey]}</div></div></div>`;
-            };
-            formationHTML += `<div class="att-pos pos-3-player">${getPlayerTag('lw')}${getPlayerTag('st')}${getPlayerTag('rw')}</div>`;
-            formationHTML += `<div class="mid-pos pos-3-player">${getPlayerTag('lcm')}${getPlayerTag('dm')}${getPlayerTag('rcm')}</div>`;
-            formationHTML += `<div class="def-pos pos-4-player">${getPlayerTag('lb')}${getPlayerTag('lcb')}${getPlayerTag('rcb')}${getPlayerTag('rb')}</div>`;
-            formationHTML += `<div class="gk-pos pos-1-player">${getPlayerTag('gk')}</div>`;
-            formationHTML += `</div></div>`;
-            
-            if (match.substitutes && match.substitutes.length > 0) {
-                const substitutePlayers = match.substitutes.map(subId => {
-                    const player = appState.players.find(p => p.id === subId);
-                    return player ? player.name : null;
-                }).filter(Boolean);
+            const lineupOrder = ['gk', 'lb', 'lcb', 'rcb', 'rb', 'dm', 'lcm', 'rcm', 'lw', 'st', 'rw'];
+            const lineupPlayerIds = new Set();
+            let startersHTML = '';
 
-                if (substitutePlayers.length > 0) {
-                    formationHTML += `<div class="mt-4 pt-3 border-t border-gray-200">
-                                        <h5 class="text-center font-bold text-sm mb-2">Reservas</h5>
-                                        <p class="text-center text-xs text-gray-600">${substitutePlayers.join(' &bull; ')}</p>
-                                    </div>`;
+            // Loop through the fixed positions to build the starters list
+            for (let i = 0; i < lineupOrder.length; i++) {
+                const posKey = lineupOrder[i];
+                const playerId = match.lineup[posKey];
+
+                // Add the player ID to a set for later use to find substitutes
+                if (playerId) {
+                    lineupPlayerIds.add(playerId);
                 }
+
+                const player = playerId ? appState.players.find(p => p.id === playerId) : null;
+
+                startersHTML += `<tr class="border-b border-white/20">
+                    <td class="p-1.5 font-bold text-center w-8">${i + 1}</td>
+                    <td class="p-1.5">${player ? player.name : '<i class="opacity-50">Vazio</i>'}</td>
+                </tr>`;
             }
-            
+
+            // Deriving substitutes by finding all players in the squad who are NOT in the starting lineup.
+            // This is more robust than relying on `match.substitutes` which might be missing.
+            const substitutes = (match.squadPlayerIds || [])
+                .filter(pid => !lineupPlayerIds.has(pid))
+                .map(subId => appState.players.find(p => p.id === subId))
+                .filter(Boolean)
+                .sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically
+
+            let reservesHTML = '';
+            // Loop up to 10 reserves, to match the creation modal limit.
+            for (let i = 0; i < 10; i++) {
+                const player = substitutes[i];
+                reservesHTML += `<tr class="border-b border-white/20">
+                    <td class="p-1.5 font-bold text-center w-8">${i + 12}</td>
+                    <td class="p-1.5">${player ? player.name : '<i class="opacity-50">Vazio</i>'}</td>
+                </tr>`;
+            }
+
+            const formationHTML = `<h4 class="text-center font-bold mb-3 text-xl">Escalação da Equipe</h4>
+                <div class="bg-green-800 p-3 rounded-lg text-white">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                        <div>
+                            <h5 class="font-bold text-center mb-2 pb-1 border-b border-white/30">TITULARES</h5>
+                            <table class="w-full text-left text-sm">${startersHTML}</table>
+                        </div>
+                        <div class="mt-4 sm:mt-0">
+                            <h5 class="font-bold text-center mb-2 pb-1 border-b border-white/30">RESERVAS</h5>
+                            <table class="w-full text-left text-sm">${reservesHTML}</table>
+                        </div>
+                    </div>
+                </div>`;
+
             container.innerHTML = formationHTML;
         }
+        // ---------- CORRECTION ENDS HERE ----------
         
         async function exportReportToPDF() {
             const reportContent = document.getElementById('report-content-wrapper');
