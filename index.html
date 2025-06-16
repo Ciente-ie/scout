@@ -173,63 +173,6 @@
             display: inline-block !important;
         }
 
-        /* --- AJUSTE: Responsive Performance Table Styles --- */
-        @media screen and (max-width: 900px) {
-            .performance-table thead {
-                display: none; /* Oculta o cabeçalho em telas menores */
-            }
-            .performance-table tbody,
-            .performance-table .performance-group,
-            .performance-table .performance-main-row,
-            .performance-table .performance-main-row td {
-                display: block;
-                width: 100%;
-            }
-            .performance-table .performance-group {
-                border: 1px solid #374151;
-                border-radius: 0.5rem;
-                margin-bottom: 1rem;
-                overflow: hidden;
-            }
-            .performance-table .performance-main-row {
-                border-bottom: 2px solid #4b5563;
-                padding-bottom: 0.5rem;
-                cursor: default; /* Remove cursor pointer as it's not a single row click */
-            }
-            .performance-table .performance-main-row td {
-                text-align: right;
-                position: relative;
-                padding: 0.75rem 1rem;
-                padding-left: 50%;
-                border-bottom: 1px solid #2d3748;
-            }
-            .performance-table .performance-main-row td:last-child {
-                border-bottom: 0;
-            }
-            /* Adiciona os labels antes do conteúdo da célula */
-            .performance-table .performance-main-row td::before {
-                content: attr(data-label);
-                position: absolute;
-                left: 0;
-                width: 45%;
-                padding-left: 1rem;
-                font-weight: 600;
-                text-align: left;
-                white-space: nowrap;
-                color: #a0aec0;
-            }
-             /* Style para o botão de detalhes */
-            .performance-table .performance-main-row td[data-label="Detalhes"] {
-                padding-top: 1rem;
-                padding-bottom: 1rem;
-                background-color: #1f2937;
-            }
-             /* Garante que o ícone do chevron fique visível */
-            .performance-table .details-icon {
-                margin: auto;
-            }
-        }
-
     </style>
 </head>
 <body class="flex flex-col h-screen antialiased">
@@ -592,7 +535,6 @@
                 if (timeoutTriggered) return;
                 console.log(`Settings snapshot received. Document exists: ${doc.exists()}`);
                 appState.settings = doc.exists() ? doc.data() : {};
-                // AJUSTE: A chamada para updateNavLogo() foi removida daqui pois a logo da nav agora é fixa
                 refreshCurrentView();
             }, (error) => {
                 console.error("Erro ao carregar configurações:", error);
@@ -727,7 +669,6 @@
                     await setDoc(doc(db, "artifacts", appId, "users", userId, "settings", "profile"), { logoDataUrl });
                     alert("Logo salva com sucesso!");
                     appState.settings.logoDataUrl = logoDataUrl;
-                    // AJUSTE: A chamada para updateNavLogo() foi removida daqui
                 } catch(err) {
                     showErrorMessage("Não foi possível salvar a logo.", err);
                 }
@@ -1335,25 +1276,16 @@
             }
         }
 
+        // ---------- AJUSTE: Função togglePerformanceDetails revertida para a versão original e mais simples. ----------
         window.togglePerformanceDetails = function(row) {
-            // Em telas pequenas, o clique é no botão dentro da célula
-            const targetElement = event.target;
-            if (!targetElement.classList.contains('details-icon')) {
-                // Se a tela for pequena, o clique deve ser no ícone
-                 if (window.innerWidth <= 900) return;
-            }
-            
-            // Procura o elemento pai .performance-group para encontrar a linha de detalhes
-            const group = row.closest('.performance-group');
-            if (!group) return;
-
-            const detailsRow = group.querySelector('.performance-details-row');
-             if (detailsRow) {
+            const detailsRow = row.nextElementSibling;
+            if (detailsRow && detailsRow.classList.contains('performance-details-row')) {
                 detailsRow.classList.toggle('hidden');
-                group.querySelector('.performance-main-row').classList.toggle('open');
+                row.classList.toggle('open');
             }
         }
         
+        // ---------- AJUSTE: renderPerformancePage revertida para tabela normal com espaçamento reduzido. ----------
         function renderPerformancePage() {
             const container = document.getElementById('performance');
             if (!container) return;
@@ -1382,10 +1314,6 @@
                             matchDate: new Date(match.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
                             opponentName: match.opponentName,
                             overall: avg,
-                            tecnico: rates.tecnico,
-                            tatico: rates.tatico,
-                            fisico: rates.fisico,
-                            comportamental: rates.comportamental,
                             goals,
                             assists,
                             shots,
@@ -1399,13 +1327,11 @@
             const sortedPerformances = Object.values(performances).map(p => {
                 const overallScores = p.matchPerformances.map(mp => mp.overall);
                 const overallAvg = overallScores.length > 0 ? (overallScores.reduce((a, b) => a + b, 0) / overallScores.length) : 0;
-                
                 const totalGoals = p.matchPerformances.reduce((acc, mp) => acc + mp.goals, 0);
                 const totalAssists = p.matchPerformances.reduce((acc, mp) => acc + mp.assists, 0);
                 const totalShots = p.matchPerformances.reduce((acc, mp) => acc + mp.shots, 0);
                 const totalDuelsWon = p.matchPerformances.reduce((acc, mp) => acc + mp.duelsWon, 0);
                 const totalDuelsLost = p.matchPerformances.reduce((acc, mp) => acc + mp.duelsLost, 0);
-
                 return { ...p, overallAvg, totalGoals, totalAssists, totalShots, totalDuelsWon, totalDuelsLost };
             }).sort((a, b) => b.overallAvg - a.overallAvg);
 
@@ -1418,42 +1344,42 @@
                     
                     const detailsRows = p.matchPerformances.sort((a,b) => new Date(b.matchDate) - new Date(a.matchDate)).map(mp => `
                         <tr class="bg-gray-800 border-t border-gray-700 text-center">
-                            <td class="py-2 px-4 text-sm text-left">${mp.matchDate}</td>
-                            <td class="py-2 px-4 text-sm text-left">${mp.opponentName}</td>
-                            <td class="py-2 px-4 text-sm font-bold text-blue-300">${mp.overall.toFixed(1)}</td>
-                            <td class="py-2 px-4 text-sm">${mp.goals}</td>
-                            <td class="py-2 px-4 text-sm">${mp.assists}</td>
-                            <td class="py-2 px-4 text-sm">${mp.shots}</td>
-                            <td class="py-2 px-4 text-sm">${mp.duelsWon} / ${mp.duelsLost}</td>
+                            <td class="py-2 px-3 text-sm text-left">${mp.matchDate}</td>
+                            <td class="py-2 px-3 text-sm text-left">${mp.opponentName}</td>
+                            <td class="py-2 px-3 text-sm font-bold text-blue-300">${mp.overall.toFixed(1)}</td>
+                            <td class="py-2 px-3 text-sm">${mp.goals}</td>
+                            <td class="py-2 px-3 text-sm">${mp.assists}</td>
+                            <td class="py-2 px-3 text-sm">${mp.shots}</td>
+                            <td class="py-2 px-3 text-sm">${mp.duelsWon} / ${mp.duelsLost}</td>
                         </tr>
                     `).join('');
 
-                    return `<tbody class="performance-group">
-                                <tr class="performance-main-row">
-                                    <td data-label="Jogador" class="p-4 font-semibold text-white">${p.name} <span class="text-xs text-gray-400">${p.position}</span></td>
-                                    <td data-label="Média Geral" class="p-4 text-center font-bold text-blue-400">${p.overallAvg.toFixed(1)}</td>
-                                    <td data-label="Jogos" class="p-4 text-center">${p.matchPerformances.length}</td>
-                                    <td data-label="Gols" class="p-4 text-center">${p.totalGoals}</td>
-                                    <td data-label="Assist." class="p-4 text-center">${p.totalAssists}</td>
-                                    <td data-label="FIN" class="p-4 text-center">${p.totalShots}</td>
-                                    <td data-label="Duelos G/P" class="p-4 text-center">${p.totalDuelsWon} / ${p.totalDuelsLost}</td>
-                                    <td data-label="Detalhes" class="p-4 text-center" onclick="togglePerformanceDetails(this.parentElement)">
-                                        <svg class="details-icon h-6 w-6 text-gray-400 inline-block cursor-pointer" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+                    return `<tbody class="border-b border-gray-700">
+                                <tr class="performance-main-row" onclick="togglePerformanceDetails(this)">
+                                    <td class="p-3 font-semibold text-white">${p.name} <span class="text-xs text-gray-400">${p.position}</span></td>
+                                    <td class="p-3 text-center font-bold text-blue-400">${p.overallAvg.toFixed(1)}</td>
+                                    <td class="p-3 text-center">${p.matchPerformances.length}</td>
+                                    <td class="p-3 text-center">${p.totalGoals}</td>
+                                    <td class="p-3 text-center">${p.totalAssists}</td>
+                                    <td class="p-3 text-center">${p.totalShots}</td>
+                                    <td class="p-3 text-center">${p.totalDuelsWon} / ${p.totalDuelsLost}</td>
+                                    <td class="p-3 text-center">
+                                        <svg class="details-icon h-5 w-5 text-gray-400 inline-block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
                                     </td>
                                 </tr>
                                 <tr class="performance-details-row hidden">
                                     <td colspan="8" class="p-0">
-                                        <div class="p-4 bg-gray-900 overflow-x-auto">
-                                            <table class="w-full text-left min-w-[600px] details-table">
+                                        <div class="p-4 bg-gray-900">
+                                            <table class="w-full text-left">
                                                 <thead class="text-xs text-gray-400 uppercase">
                                                     <tr class="text-center">
-                                                        <th class="py-2 px-4 text-left">Data</th>
-                                                        <th class="py-2 px-4 text-left">Adversário</th>
-                                                        <th class="py-2 px-4">Nota</th>
-                                                        <th class="py-2 px-4">Gols</th>
-                                                        <th class="py-2 px-4">Assist.</th>
-                                                        <th class="py-2 px-4">FIN</th>
-                                                        <th class="py-2 px-4">Duelos G/P</th>
+                                                        <th class="py-2 px-3 text-left">Data</th>
+                                                        <th class="py-2 px-3 text-left">Adversário</th>
+                                                        <th class="py-2 px-3">Nota</th>
+                                                        <th class="py-2 px-3">Gols</th>
+                                                        <th class="py-2 px-3">Assist.</th>
+                                                        <th class="py-2 px-3">FIN</th>
+                                                        <th class="py-2 px-3">Duelos G/P</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -1472,18 +1398,18 @@
                     <h2 class="text-3xl font-bold text-white">Desempenho Geral dos Jogadores</h2>
                     <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg admin-only" onclick="exportPerformancesToTXT()">Exportar para TXT</button>
                 </div>
-                <div class="bg-gray-800 rounded-lg overflow-hidden">
-                    <table class="w-full text-left performance-table">
+                <div class="bg-gray-800 rounded-lg overflow-x-auto">
+                    <table class="w-full text-left min-w-[900px]">
                         <thead class="bg-gray-900">
                             <tr>
-                                <th class="p-4 w-2/5">Jogador</th>
-                                <th class="p-4 text-center">Média Geral</th>
-                                <th class="p-4 text-center">Jogos</th>
-                                <th class="p-4 text-center" title="Gols">Gols</th>
-                                <th class="p-4 text-center" title="Assistências">Assist.</th>
-                                <th class="p-4 text-center" title="Finalizações">FIN</th>
-                                <th class="p-4 text-center" title="Duelos Ganhos / Perdidos">Duelos G/P</th>
-                                <th class="p-4 text-center">Detalhes</th>
+                                <th class="p-3 w-2/5">Jogador</th>
+                                <th class="p-3 text-center">Média Geral</th>
+                                <th class="p-3 text-center">Jogos</th>
+                                <th class="p-3 text-center" title="Gols">Gols</th>
+                                <th class="p-3 text-center" title="Assistências">Assist.</th>
+                                <th class="p-3 text-center" title="Finalizações">FIN</th>
+                                <th class="p-3 text-center" title="Duelos Ganhos / Perdidos">Duelos G/P</th>
+                                <th class="p-3 text-center">Detalhes</th>
                             </tr>
                         </thead>
                         ${tableHTML}
@@ -1679,7 +1605,6 @@
             if(player) { container.innerHTML = `<div class="flex flex-col items-center justify-center h-full bg-blue-50 rounded-lg p-3"><svg class="h-10 w-10 text-yellow-400 mb-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg><p class="text-xl font-bold text-gray-800">${player.name}</p><p class="text-md text-gray-600">Nota Média: <span class="font-bold text-blue-600">${topPlayer.avg.toFixed(1)}</span></p><div class="w-full grid grid-cols-2 gap-x-2 mt-2 text-xs text-left"><span class="font-semibold text-gray-500">Técnico:</span><span class="font-bold text-gray-700 text-right">${topPlayer.rates.tecnico}</span><span class="font-semibold text-gray-500">Tático:</span><span class="font-bold text-gray-700 text-right">${topPlayer.rates.tatico}</span><span class="font-semibold text-gray-500">Físico:</span><span class="font-bold text-gray-700 text-right">${topPlayer.rates.fisico}</span><span class="font-semibold text-gray-500">Comport.:</span><span class="font-bold text-gray-700 text-right">${topPlayer.rates.comportamental}</span></div></div>`; }
         }
         
-        // ---------- AJUSTE: Cálculo do tempo do gol por período ----------
         function renderTopStatsTable(match) {
             const container = document.getElementById('report-top-stats');
             if (!container) return;
