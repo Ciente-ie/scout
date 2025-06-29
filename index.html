@@ -1819,8 +1819,9 @@
         }
         
        /**
-         * ATUALIZADO: Função de exportação para PDF agora usa orientação paisagem ('l')
-         * e uma abordagem de renderização estática para garantir consistência e evitar cortes.
+         * CORRIGIDO: Função de exportação de PDF para garantir que todo o conteúdo seja visível.
+         * A principal mudança é instruir o html2canvas a capturar a largura e altura total do conteúdo
+         * (scrollWidth/scrollHeight), evitando que informações sejam cortadas.
          */
         async function exportReportToPDF() {
             const button = document.getElementById('pdf-export-button');
@@ -1843,30 +1844,36 @@
                 return;
             }
             
+            // Re-renderiza o relatório para garantir que esteja atualizado
             generateReports(matchId); 
-            await new Promise(resolve => setTimeout(resolve, 300));
+            // Espera um tempo para os gráficos e o conteúdo renderizarem
+            await new Promise(resolve => setTimeout(resolve, 500)); 
             
+            // Usa um container temporário para a renderização para evitar cintilação na tela e garantir um tamanho consistente
             const tempContainer = document.createElement('div');
+            // Estilo para renderização fora da tela
             tempContainer.style.position = 'absolute';
             tempContainer.style.left = '-9999px';
-            tempContainer.style.width = '1122px'; // Largura para simular uma renderização de paisagem A4
+            // Define uma largura fixa que corresponde a uma página A4 paisagem de alta resolução
+            tempContainer.style.width = '1122px'; 
             document.body.appendChild(tempContainer);
 
             try {
-                // MUDANÇA PRINCIPAL: Orientação definida para paisagem ('l')
+                // Inicializa o PDF na orientação paisagem
                 const pdf = new jsPDF({ orientation: 'l', unit: 'mm', format: 'a4' });
                 const visiblePages = document.querySelectorAll('#report-content .report-page');
                 
                 for (let i = 0; i < visiblePages.length; i++) {
                     const originalPage = visiblePages[i];
                     
+                    // Clona a página para renderizá-la no nosso container fora da tela
                     const pageClone = originalPage.cloneNode(true);
                     tempContainer.innerHTML = '';
                     tempContainer.appendChild(pageClone);
                     
+                    // Substitui os canvases dos gráficos por imagens estáticas para garantir que sejam capturados corretamente
                     const originalCanvases = originalPage.querySelectorAll('canvas');
                     const clonedCanvases = pageClone.querySelectorAll('canvas');
-
                     for (let j = 0; j < clonedCanvases.length; j++) {
                         const canvasToReplace = clonedCanvases[j];
                         const chartId = originalCanvases[j].id;
@@ -1881,16 +1888,21 @@
                         }
                     }
 
+                    // Espera um pouco para as imagens carregarem no clone
                     await new Promise(resolve => setTimeout(resolve, 200));
 
                     console.log(`Exportação para PDF: Capturando página ${i + 1}...`);
+                    
+                    // **MODIFICAÇÃO**: Define explicitamente para o html2canvas capturar a largura e altura total do conteúdo rolável
                     const pageCanvas = await html2canvas(pageClone, {
-                        scale: 2,
+                        scale: 2, // Escala maior para melhor qualidade
                         useCORS: true,
-                        backgroundColor: '#ffffff'
+                        backgroundColor: '#ffffff',
+                        width: pageClone.scrollWidth,
+                        height: pageClone.scrollHeight
                     });
                     
-                    const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.92);
+                    const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.95);
 
                     if (i > 0) {
                         pdf.addPage();
@@ -1903,14 +1915,17 @@
                     const canvasHeight = pageCanvas.height;
                     const canvasRatio = canvasWidth / canvasHeight;
 
+                    // Calcula as dimensões da imagem para caber na página, mantendo a proporção
                     let finalWidth = pdfWidth;
                     let finalHeight = pdfWidth / canvasRatio;
 
+                    // Se a altura estourar, redimensiona com base na altura
                     if (finalHeight > pdfHeight) {
                         finalHeight = pdfHeight;
                         finalWidth = pdfHeight * canvasRatio;
                     }
-
+                    
+                    // Centraliza a imagem na página
                     const x = (pdfWidth - finalWidth) / 2;
                     const y = (pdfHeight - finalHeight) / 2;
                     
@@ -1920,9 +1935,10 @@
                 pdf.save(`Relatorio_${match.myTeamName}_vs_${match.opponentName}.pdf`);
 
             } catch (e) {
-                showErrorMessage("Erro ao gerar o arquivo PDF. Tente novamente. Se o erro persistir, verifique o console para mais detalhes.", e);
+                showErrorMessage("Erro ao gerar o arquivo PDF. Tente novamente.", e);
                 console.error("Falha na exportação para PDF:", e);
             } finally {
+                // Limpeza
                 document.body.removeChild(tempContainer);
                 console.log("Exportação para PDF: Finalizando e resetando UI.");
                 text.classList.remove('hidden');
