@@ -9,6 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <!-- Bibliotecas para PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -91,11 +92,8 @@
         input, select { background-color: #1f2937; color: white; border-color: #4b5563; border-radius: 0.375rem; }
         input:focus, select:focus { background-color: #374151; border-color: #60a5fa; box-shadow: none; outline: none;}
         #report-content-wrapper { background-color: #ffffff; color: #111827; }
-        .report-page { page-break-after: always; position: relative; padding: 60px 20px 30px 20px; }
+        .report-page { page-break-after: always; position: relative; padding: 20px; }
         .report-page:last-child { page-break-after: auto; }
-        .report-header { position: absolute; top: 10px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: center; }
-        .report-logo { max-height: 40px; max-width: 150px; }
-        .report-section { page-break-inside: avoid; }
         .dashboard-card { background-color: #1f2937; border: 1px solid #374151; position: relative;}
         .performance-main-row { cursor: pointer; transition: background-color 0.2s; }
         .performance-main-row:hover { background-color: #2d3748; }
@@ -1438,7 +1436,7 @@
             
             const match = appState.matches.find(m => m.id === matchId);
             if (!match) return;
-            reportContentEl.innerHTML = renderReportContentForPDF(match);
+            reportContentEl.innerHTML = renderReportHTMLForDisplay(match);
             
             setTimeout(() => {
                 renderChartsForReport(match);
@@ -1447,358 +1445,105 @@
 
         function renderChartsForReport(match, period = null) {
             const suffix = period ? `_${period}T` : '';
-            const possessionData = period == 1 ? match.possession1T : match.possession;
+            const possessionData = period == 1 ? (match.possession1T || {myTeam:0, opponent:0}) : match.possession;
             renderPossessionChart(match, `possessionChart${suffix}`, possessionData);
             renderActionMapChart(match, `actionMapChart${suffix}`, period);
 
             if (!period) {
                 renderActionMapChart(match, 'actionMapChart_1T', 1);
                 renderActionMapChart(match, 'actionMapChart_2T', 2);
-                renderReportSummaryTable(match, 'report-summary-table', null);
-                renderReportSummaryTable(match, 'report-summary-table-1T', 1);
-                renderReportSummaryTable(match, 'report-summary-table-2T', 2);
-                renderManOfTheMatch(match);
-                renderTopStatsTable(match);
-                renderFormation(match);
             }
         }
         
-        function getReportSummaryTableHTML(match, period) {
-            const allEvents = period ? match.events.filter(e => e.period == period) : match.events;
-
-            if (allEvents.length === 0 && period) {
-                return '<p class="text-center text-gray-500 p-4">Nenhum dado neste período.</p>';
-            }
-
-            const myEvents = allEvents.filter(e => e.scoringTeam !== 'opponent' && !e.action.endsWith('_adv'));
-            const oppEvents = allEvents.filter(e => e.scoringTeam === 'opponent' || e.action.endsWith('_adv'));
-            const count = (arr, action, detail) => arr.filter(e => e.action === action && (detail ? e.detail === detail : true)).length;
-
-            const calculateChancesBreakdown = (eventsToAnalyze) => {
-                const breakdown = {
-                    myTeam: { '0-15': 0, '15-30': 0, '30+': 0 },
-                    opponent: { '0-15': 0, '15-30': 0, '30+': 0 }
-                };
-                const chanceEvents = eventsToAnalyze.filter(e => e.action === 'chance_clara' || e.action === 'chance_clara_adv');
-
-                chanceEvents.forEach(e => {
-                    const team = e.action === 'chance_clara' ? 'myTeam' : 'opponent';
-                    let timeInPeriod = e.time;
-                    if (e.period === 2 && match.secondHalfStartSeconds > -1) {
-                        timeInPeriod -= match.secondHalfStartSeconds;
-                    }
-                    const minute = timeInPeriod / 60;
-                    let bucket;
-                    if (minute <= 15) bucket = '0-15';
-                    else if (minute <= 30) bucket = '15-30';
-                    else bucket = '30+';
-                    breakdown[team][bucket]++;
-                });
-                return breakdown;
-            };
-            
-            const chancesBreakdown = calculateChancesBreakdown(allEvents);
-
-            const passesCerto = count(myEvents, 'passe_certo'); const passesErrado = count(myEvents, 'passe_errado'); const totalPasses = passesCerto + passesErrado;
-            const percCerto = totalPasses > 0 ? `(${(passesCerto/totalPasses*100).toFixed(0)}%)` : ''; const percErrado = totalPasses > 0 ? `(${(passesErrado/totalPasses*100).toFixed(0)}%)` : '';
-            const duelosGanhos = count(myEvents, 'duelo', 'ganhou'); const duelosPerdidos = count(myEvents, 'duelo', 'perdeu'); const duelosTotais = duelosGanhos + duelosPerdidos;
-
-            let tableHTML = `<table class="w-full text-sm"><tbody>`;
-            const statsConfig = [
-                { label: 'Finalizações', action: 'finalizacao', oppAction: 'finalizacao_adv' },
-                { label: '• Dentro da Área', action: 'finalizacao', detail: 'dentro_area', oppAction: 'finalizacao_adv', oppDetail: 'dentro_area', isSub: true },
-                { label: '• Fora da Área', action: 'finalizacao', detail: 'fora_area', oppAction: 'finalizacao_adv', oppDetail: 'fora_area', isSub: true },
-                { label: '• Cabeceio', action: 'finalizacao', detail: 'cabeceio', oppAction: 'finalizacao_adv', oppDetail: 'cabeceio', isSub: true },
-                { label: 'Chances Claras', action: 'chance_clara', oppAction: 'chance_clara_adv', hasBreakdown: true },
-                { label: 'Total de Duelos', my: duelosTotais, opp: duelosTotais },
-                { label: '• Duelos Ganhos', my: duelosGanhos, opp: duelosPerdidos, isSub: true },
-                { label: '• Duelos Perdidos', my: duelosPerdidos, opp: duelosGanhos, isSub: true },
-                { label: 'Total de Passes', my: totalPasses, opp: '–' },
-                { label: '• Passes Certos', my: `${passesCerto} <span class="text-xs">${percCerto}</span>`, opp: '–', isSub: true },
-                { label: '• Passes Errados', my: `${passesErrado} <span class="text-xs">${percErrado}</span>`, opp: '–', isSub: true },
-                { label: 'Faltas Cometidas', action: 'falta_cometida', oppAction: 'falta_sofrida'},
-                { label: 'Faltas Sofridas', action: 'falta_sofrida', oppAction: 'falta_cometida' },
-                { label: 'Cruzamentos (Dir)', action: 'cruzamento_dir', opp: '–' },
-                { label: 'Cruzamentos (Esq)', action: 'cruzamento_esq', opp: '–' },
-            ];
-
-            let mainRowIndex = 0;
-            statsConfig.forEach(stat => {
-                const myVal = stat.my ?? count(myEvents, stat.action, stat.detail);
-                const oppVal = stat.opp ?? (stat.oppAction ? count(oppEvents, stat.oppAction, stat.oppDetail) : '–');
-                const rowClass = !stat.isSub && mainRowIndex++ % 2 === 0 ? 'bg-gray-50' : '';
-                
-                tableHTML += `<tr class="${rowClass}">
-                                <td class="p-2 ${stat.isSub ? 'pl-6 text-gray-600' : 'font-semibold border-t border-gray-200'}">${stat.label}</td>
-                                <td class="p-2 text-center font-medium ${stat.isSub ? 'text-gray-600' : 'border-t border-gray-200'}">${myVal}</td>
-                                <td class="p-2 text-center font-medium ${stat.isSub ? 'text-gray-600' : 'border-t border-gray-200'}">${oppVal}</td>
-                             </tr>`;
-                
-                if (stat.hasBreakdown) {
-                    const myChances = chancesBreakdown.myTeam;
-                    const oppChances = chancesBreakdown.opponent;
-                    const subRowClass = !stat.isSub && (mainRowIndex - 1) % 2 === 0 ? 'bg-gray-50' : '';
-                    
-                    tableHTML += `
-                        <tr class="${subRowClass}">
-                            <td class="pt-0 pb-1 px-2 pl-8 text-gray-500 text-xs font-normal">↳ Até 15'</td>
-                            <td class="pt-0 pb-1 px-2 text-center font-normal text-gray-500 text-xs">${myChances['0-15']}</td>
-                            <td class="pt-0 pb-1 px-2 text-center font-normal text-gray-500 text-xs">${oppChances['0-15']}</td>
-                        </tr>
-                        <tr class="${subRowClass}">
-                            <td class="pt-0 pb-1 px-2 pl-8 text-gray-500 text-xs font-normal">↳ 15' a 30'</td>
-                            <td class="pt-0 pb-1 px-2 text-center font-normal text-gray-500 text-xs">${myChances['15-30']}</td>
-                            <td class="pt-0 pb-1 px-2 text-center font-normal text-gray-500 text-xs">${oppChances['15-30']}</td>
-                        </tr>
-                        <tr class="${subRowClass}">
-                            <td class="pt-0 pb-1 px-2 pl-8 text-gray-500 text-xs font-normal">↳ Após 30'</td>
-                            <td class="pt-0 pb-1 px-2 text-center font-normal text-gray-500 text-xs">${myChances['30+']}</td>
-                            <td class="pt-0 pb-1 px-2 text-center font-normal text-gray-500 text-xs">${oppChances['30+']}</td>
-                        </tr>`;
-                }
-            });
-
-            tableHTML += `</tbody><thead class="text-xs text-gray-500"><tr><th class="p-2 text-left">Estatística</th><th class="p-2 text-center">${match.myTeamName}</th><th class="p-2 text-center">${match.opponentName}</th></tr></thead></table>`;
-            return tableHTML;
-        }
-
-
-        function renderReportSummaryTable(match, containerId, period) {
-            const container = document.getElementById(containerId);
-            if(!container) return;
-            container.innerHTML = getReportSummaryTableHTML(match, period);
-        }
-        
-        function renderReportContentForPDF(match, specificPeriod = null) {
+        function renderReportHTMLForDisplay(match, specificPeriod = null) {
             const logoDataUrl = appState.settings.logoDataUrl;
-            const logoImg = logoDataUrl ? `<img src="${logoDataUrl}" class="report-logo" crossorigin="anonymous" />` : '';
-            const reportHeader = `<div class="report-header">${logoImg}<p class="text-right text-xs text-gray-500">Relatório de Análise de Desempenho</p></div>`;
-            const reportFooter = `<div class="absolute bottom-0 left-1/2 -translate-x-1/2 text-center text-xs text-gray-400 p-2 w-full">Powered by Ciente - Inteligência Esportiva</div>`;
+            const logoImg = logoDataUrl ? `<img src="${logoDataUrl}" class="h-10" crossorigin="anonymous" />` : '';
+            const reportHeader = `<div class="flex justify-between items-center mb-4">${logoImg}<h1 class="text-2xl font-bold text-center flex-grow">Relatório de Análise de Desempenho</h1></div>`;
+            const reportFooter = `<div class="text-center text-xs text-gray-400 mt-8 pt-4 border-t">Powered by Ciente - Inteligência Esportiva</div>`;
             
             if (specificPeriod) {
-                const myTeamScore = match.events.filter(e => e.period == specificPeriod && e.action === 'gol').length;
+                 const myTeamScore = match.events.filter(e => e.period == specificPeriod && e.action === 'gol').length;
                 const opponentScore = match.events.filter(e => e.period == specificPeriod && e.action === 'gol_contra').length;
-                const summaryTableHTML = getReportSummaryTableHTML(match, specificPeriod);
-                
-                return `<div class="report-page">
+                return `
                     ${reportHeader}
-                    <div class="text-center mb-4"><h1 class="text-3xl font-bold">Relatório do ${specificPeriod}º Tempo</h1><p class="text-lg text-gray-600">${match.myTeamName} vs ${match.opponentName}</p></div>
-                    <div class="text-center mb-6"><h2 class="text-2xl font-bold">Placar do Período: ${myTeamScore} x ${opponentScore}</h2></div>
-                    <div class="space-y-8 report-section">
-                        <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Posse de Bola (1ºT)</h3><div class="chart-container h-20"><canvas id="possessionChart_${specificPeriod}T"></canvas></div></div>
-                        <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Resumo de Ações</h3>${summaryTableHTML}</div>
+                    <div class="text-center mb-4"><h2 class="text-xl font-bold">Relatório do ${specificPeriod}º Tempo</h2><p class="text-md text-gray-600">${match.myTeamName} vs ${match.opponentName}</p></div>
+                    <div class="text-center mb-6"><h3 class="text-lg font-bold">Placar do Período: ${myTeamScore} x ${opponentScore}</h3></div>
+                    <div class="space-y-6">
+                        <div class="bg-gray-50 p-3 rounded-lg border"><h4 class="text-lg font-bold text-center mb-2">Posse de Bola (${specificPeriod}ºT)</h4><div class="h-20"><canvas id="possessionChart_${specificPeriod}T"></canvas></div></div>
+                        <div class="bg-gray-50 p-3 rounded-lg border"><h4 class="text-lg font-bold text-center mb-2">Resumo de Ações (${specificPeriod}ºT)</h4>${getReportSummaryTableHTML(match, specificPeriod)}</div>
                     </div>
                      ${reportFooter}
+                `;
+            }
+
+            const page1 = `
+                ${reportHeader}
+                <div class="text-center mb-6"><h2 class="text-3xl font-bold">${match.myTeamName} ${match.myTeamScore} x ${match.opponentScore} ${match.opponentName}</h2><p class="text-lg text-gray-600">${new Date(match.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})} - ${match.location}</p></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-gray-50 p-4 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Posse de Bola (Total)</h3><div class="h-24"><canvas id="possessionChart"></canvas></div><p class="text-center text-sm text-gray-600 mt-2">Tempo Total: ${formatTime(match.timerSeconds || 0)}</p></div>
+                    <div class="bg-gray-50 p-4 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Destaque da Partida</h3>${getManOfTheMatchHTML(match)}</div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-gray-50 p-4 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Volume de Ações (Total)</h3><div style="background-color: #166534; min-height: 250px;"><canvas id="actionMapChart"></canvas></div></div>
+                    <div class="bg-gray-50 p-4 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Destaques Individuais</h3>${getTopStatsTableHTML(match)}</div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-gray-50 p-4 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Resumo de Ações (Total)</h3>${getReportSummaryTableHTML(match, null)}</div>
+                    <div class="bg-gray-50 p-4 rounded-lg border">${getFormationHTML(match)}</div>
                 </div>`;
-            }
             
-            const page1 = `<div class="report-page">
-                ${reportHeader}
-                <div class="text-center mb-6"><h1 class="text-4xl font-bold">${match.myTeamName} ${match.myTeamScore} x ${match.opponentScore} ${match.opponentName}</h1><p class="text-lg text-gray-600">${new Date(match.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})} - ${match.location}</p></div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 report-section">
-                    <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Posse de Bola (Total)</h3><div class="chart-container h-20"><canvas id="possessionChart"></canvas></div><p class="text-center text-sm text-gray-600 mt-2">Tempo Total: ${formatTime(match.timerSeconds || 0)}</p></div>
-                    <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Destaque da Partida</h3><div id="report-motm"></div></div>
+            const page2 = `<div class="mt-8 pt-8 border-t">
+                <div class="text-center mb-6"><h2 class="text-2xl font-bold">Análise por Período</h2></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div><h3 class="text-xl font-bold text-center mb-4">1º Tempo</h3><div class="bg-gray-50 p-4 rounded-lg border space-y-4"><div><h4 class="font-semibold text-center">Volume de Ações</h4><div style="background-color: #166534; min-height: 240px;"><canvas id="actionMapChart_1T"></canvas></div></div><div><h4 class="font-semibold text-center mt-4">Resumo</h4>${getReportSummaryTableHTML(match, 1)}</div></div></div>
+                    <div><h3 class="text-xl font-bold text-center mb-4">2º Tempo</h3><div class="bg-gray-50 p-4 rounded-lg border space-y-4"><div><h4 class="font-semibold text-center">Volume de Ações</h4><div style="background-color: #166534; min-height: 240px;"><canvas id="actionMapChart_2T"></canvas></div></div><div><h4 class="font-semibold text-center mt-4">Resumo</h4>${getReportSummaryTableHTML(match, 2)}</div></div></div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 report-section">
-                    <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-4">Volume de Ações (Total)</h3><div class="chart-container" style="background-color: #166534; min-height: 240px; height: 240px;"><canvas id="actionMapChart"></canvas></div><div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div></div>
-                    <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Destaques Individuais</h3><div id="report-top-stats"></div></div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 report-section">
-                    <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Resumo de Ações (Total)</h3><div id="report-summary-table"></div></div>
-                    <div class="bg-gray-50 p-3 rounded-lg border"><div id="report-formation"></div></div>
-                </div>
-                ${reportFooter}
             </div>`;
             
-            const page2 = `<div class="report-page">
-                ${reportHeader}
-                <div class="text-center mb-8 pt-8"><h1 class="text-3xl font-bold">Scout por Período</h1></div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 report-section">
-                    <div class="bg-gray-50 p-4 rounded-lg border"><h3 class="text-xl font-bold text-center mb-4">1º Tempo</h3><div class="chart-container" style="background-color: #166534; min-height: 240px;"><canvas id="actionMapChart_1T"></canvas></div><div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div><div id="report-summary-table-1T" class="mt-4"></div></div>
-                    <div class="bg-gray-50 p-4 rounded-lg border"><h3 class="text-xl font-bold text-center mb-4">2º Tempo</h3><div class="chart-container" style="background-color: #166534; min-height: 240px;"><canvas id="actionMapChart_2T"></canvas></div><div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div><div id="report-summary-table-2T" class="mt-4"></div></div>
-                </div>
-                ${reportFooter}
-            </div>`;
-            
-            return page1 + page2;
+            return page1 + page2 + reportFooter;
         }
 
-        function destroyCharts() { Object.values(charts).forEach(chart => chart?.destroy()); }
-        
-        const fieldLinesPlugin = { id: 'fieldLines', beforeDraw: (chart) => { const { ctx, chartArea: { top, bottom, left, right }, scales: { x } } = chart; ctx.save(); ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; ctx.lineWidth = 1; const defenseZoneEnd = x.getPixelForValue(1); const midfieldZoneEnd = x.getPixelForValue(2); ctx.beginPath(); ctx.moveTo(defenseZoneEnd, top); ctx.lineTo(defenseZoneEnd, bottom); ctx.moveTo(midfieldZoneEnd, top); ctx.lineTo(midfieldZoneEnd, bottom); ctx.stroke(); ctx.restore(); } };
-        
-        function renderPossessionChart(match, canvasId, possessionData) {
-            const ctx = document.getElementById(canvasId)?.getContext('2d');
-            if(!ctx) return;
-            const dataToUse = possessionData || {myTeam: 0, opponent: 0, stopped: 0};
-            charts[canvasId] = new Chart(ctx, { type: 'bar', data: { labels: ['Posse'], datasets: [ { label: match.myTeamName, data: [dataToUse.myTeam], backgroundColor: '#ef4444' }, { label: match.opponentName, data: [dataToUse.opponent], backgroundColor: '#3b82f6' } ]}, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true, display: false }, y: { stacked: true, display: false } }, plugins: { legend: { display: true, position: 'top', labels: {color: '#374151'} }, datalabels: { color: 'white', font: { weight: 'bold' }, formatter: (v,c) => { const t = c.chart.data.datasets.reduce((s, ds) => s + (ds.data[0]||0), 0); return t > 0 ? (v/t*100).toFixed(0)+'%' : '0%'; }}}}});
-        }
-
-        function renderActionMapChart(match, canvasId, period) {
-            const ctx = document.getElementById(canvasId)?.getContext('2d');
-            if(!ctx) return;
-            const events = period ? match.events.filter(e => e.period == period) : match.events;
-            if (events.length === 0) {
-                const chartContainer = ctx.canvas.parentElement;
-                if(chartContainer) chartContainer.innerHTML = '<p class="text-center text-gray-500 p-8 h-full flex items-center justify-center">Nenhuma ação registrada neste período.</p>';
-                return;
-            }
-            const sectorCounts = { defesa: 0, meio: 0, ataque: 0 };
-            events.forEach(e => { if (sectorCounts.hasOwnProperty(e.zone)) sectorCounts[e.zone]++; });
-            const maxActions = Math.max(...Object.values(sectorCounts), 1);
-            const getColor = (count) => `rgba(220, 38, 38, ${Math.min(0.2 + (count / maxActions) * 0.8, 1)})`;
-            const getRadius = (count) => 10 + Math.sqrt(count) * 4;
-            charts[canvasId] = new Chart(ctx, { type: 'bubble', plugins: [fieldLinesPlugin], data: { datasets: [{ label: 'Volume', data: [{ x: 0.5, y: 5, r: getRadius(sectorCounts.defesa) }, { x: 1.5, y: 5, r: getRadius(sectorCounts.meio) }, { x: 2.5, y: 5, r: getRadius(sectorCounts.ataque) }], backgroundColor: [getColor(sectorCounts.defesa), getColor(sectorCounts.meio), getColor(sectorCounts.ataque)], borderColor: 'rgba(153, 27, 27, 1)', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, layout: { padding: 10 }, scales: { x: { min: 0, max: 3, grid: { display: false }, ticks: { display: false } }, y: { display: false, min: 0, max: 10 } }, plugins: { legend: { display: false }, datalabels: { color: 'white', font: { weight: 'bold', size: 16 }, formatter: (v, c) => Object.values(sectorCounts)[c.dataIndex] }}}});
-        }
-        
-        function renderManOfTheMatch(match) {
-            const container = document.getElementById('report-motm');
-            if(!container || !match.ratings || Object.keys(match.ratings).length === 0) { if(container) container.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhuma avaliação registrada.</p>'; return; }
+        function getManOfTheMatchHTML(match) {
+            if(!match.ratings || Object.keys(match.ratings).length === 0) return '<p class="text-gray-500 text-center py-8">Nenhuma avaliação.</p>';
             const performers = Object.entries(match.ratings).filter(([,r]) => r.played).map(([pid, r]) => ({ pid, avg: (Object.values(r).filter(v => typeof v === 'string').reduce((a,b) => a + parseFloat(b), 0)) / 4, rates: r }));
-            if (performers.length === 0) { container.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhum jogador avaliado.</p>'; return; }
+            if (performers.length === 0) return '<p class="text-gray-500 text-center py-8">Nenhum jogador avaliado.</p>';
             const topPlayer = performers.reduce((a, b) => a.avg > b.avg ? a : b);
             const player = appState.players.find(p => p.id === topPlayer.pid);
-            if(player) { container.innerHTML = `<div class="flex flex-col items-center justify-center h-full bg-blue-50 rounded-lg p-3"><svg class="h-10 w-10 text-yellow-400 mb-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg><p class="text-xl font-bold text-gray-800">${player.name}</p><p class="text-md text-gray-600">Nota Média: <span class="font-bold text-blue-600">${topPlayer.avg.toFixed(1)}</span></p><div class="w-full grid grid-cols-2 gap-x-2 mt-2 text-xs text-left"><span class="font-semibold text-gray-500">Técnico:</span><span class="font-bold text-gray-700 text-right">${topPlayer.rates.tecnico}</span><span class="font-semibold text-gray-500">Tático:</span><span class="font-bold text-gray-700 text-right">${topPlayer.rates.tatico}</span><span class="font-semibold text-gray-500">Físico:</span><span class="font-bold text-gray-700 text-right">${topPlayer.rates.fisico}</span><span class="font-semibold text-gray-500">Comport.:</span><span class="font-bold text-gray-700 text-right">${topPlayer.rates.comportamental}</span></div></div>`; }
+            if(player) { return `<div class="flex flex-col items-center justify-center h-full"><svg class="h-12 w-12 text-yellow-400 mb-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg><p class="text-2xl font-bold text-gray-800">${player.name}</p><p class="text-lg text-gray-600">Nota: <span class="font-bold text-blue-600">${topPlayer.avg.toFixed(1)}</span></p></div>`; }
+            return '';
         }
-        
-        function renderTopStatsTable(match) {
-            const container = document.getElementById('report-top-stats');
-            if (!container) return;
 
+        function getTopStatsTableHTML(match) {
             const myEvents = match.events.filter(e => e.scoringTeam !== 'opponent' && !e.action.endsWith('_adv'));
-            const opponentGoalEvents = match.events.filter(e => e.action === 'gol_contra').sort((a,b) => a.time - b.time);
-
-            const goalEvents = myEvents.filter(e => e.action === 'gol').sort((a,b) => a.time - b.time);
-            let teamGoalsHTML = '';
-            if (goalEvents.length > 0) {
-                 teamGoalsHTML = goalEvents.map(goal => {
-                    const player = appState.players.find(p => p.id === goal.playerId);
-                    let minute;
-                    if(goal.period === 2 && match.secondHalfStartSeconds > -1) {
-                        minute = Math.floor((goal.time - match.secondHalfStartSeconds) / 60);
-                    } else {
-                        minute = Math.floor(goal.time / 60);
-                    }
-                    return `<li class="flex justify-between"><span>${player?.name || 'Desconhecido'}</span> <strong>${goal.period}T - ${minute}'</strong></li>`;
-                }).join('');
-            } else {
-                teamGoalsHTML = '<li>Nenhum gol marcado.</li>';
-            }
-
-            let opponentGoalsHTML = '';
-            if (opponentGoalEvents.length > 0) {
-                 opponentGoalsHTML = opponentGoalEvents.map(goal => {
-                    let minute;
-                     if(goal.period === 2 && match.secondHalfStartSeconds > -1) {
-                        minute = Math.floor((goal.time - match.secondHalfStartSeconds) / 60);
-                    } else {
-                        minute = Math.floor(goal.time / 60);
-                    }
-                    return `<li class="flex justify-between"><span>Adversário</span> <strong>${goal.period}T - ${minute}'</strong></li>`;
-                }).join('');
-            } else {
-                opponentGoalsHTML = '<li>Nenhum gol sofrido.</li>';
-            }
-
-            const getTopStats = (action, detail, key) => { const counts = myEvents.filter(e => e.action === action && (detail ? e.detail === detail : true) && e[key]).reduce((acc, e) => { acc[e[key]] = (acc[e[key]] || 0) + 1; return acc; }, {}); return Object.entries(counts).sort(([,a],[,b]) => b-a); };
-            const assists = getTopStats('gol', null, 'assistId'); 
-            const shots = getTopStats('finalizacao', null, 'playerId'); 
-            const duelsWon = getTopStats('duelo', 'ganhou', 'playerId');
-
-            const renderList = (title, data, icon) => { let listHTML = `<div class="bg-white p-3 rounded-lg shadow-sm"><div class="flex items-center gap-3 mb-2"><span class="bg-gray-200 p-2 rounded-full">${icon}</span><h4 class="font-semibold text-gray-800 text-lg">${title}</h4></div><ul class="text-sm text-gray-600 space-y-1 pl-1">`; if (data.length === 0) { listHTML += '<li>Nenhum registro.</li>'; } else { data.slice(0, 3).forEach(([id, count]) => { const player = appState.players.find(p => p.id === id); listHTML += `<li class="flex justify-between"><span>${player?.name || 'Desconhecido'}</span> <strong>${count}</strong></li>`; }); } listHTML += '</ul></div>'; return listHTML; };
-            const renderSingleStat = (title, data, icon) => { const [playerId, count] = data.length > 0 ? data[0] : [null, 0]; const player = appState.players.find(p => p.id === playerId); return `<div class="bg-white p-3 rounded-lg shadow-sm flex items-center gap-3"><span class="bg-gray-200 p-2 rounded-full">${icon}</span><div><h4 class="font-semibold text-gray-500 text-sm">${title}</h4><p class="font-bold text-gray-800 text-base">${player?.name || 'N/A'}</p></div><strong class="ml-auto text-xl font-black text-gray-800">${count > 0 ? count : '-'}</strong></div>`; };
+            const getPlayerName = (id) => appState.players.find(p => p.id === id)?.name || 'Desconhecido';
+            const getTopStats = (action, detail, key) => { const counts = myEvents.filter(e => e.action === action && (detail ? e.detail === detail : true) && e[key]).reduce((acc, e) => { acc[e[key]] = (acc[e[key]] || 0) + 1; return acc; }, {}); return Object.entries(counts).sort(([,a],[,b]) => b-a).map(([id, count])=>({name: getPlayerName(id), value: count})); };
             
-            const goalIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4c0-1.165.451-2.223 1.172-3.001L8.228 9z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18z" /></svg>`;
-            const assistIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" viewBox="0 0 24 24" fill="currentColor"><path d="M21.51,2.05A1.23,1.23,0,0,0,20.29,2L4.7,6.85a1.24,1.24,0,0,0-.7,2.2L9.45,11,7.21,14.49a1.24,1.24,0,0,0,.4,1.75l5.09,3.18a1.23,1.23,0,0,0,1.75-.4L22,3.76A1.24,1.24,0,0,0,21.51,2.05Z"/></svg>`;
-            const shotIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>`;
-            const duelIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>`;
-
-            container.innerHTML = `
-                <div class="space-y-3">
-                    <div class="bg-white p-3 rounded-lg shadow-sm">
-                        <div class="flex items-center gap-3 mb-2">
-                            <span class="bg-gray-200 p-2 rounded-full">${goalIcon}</span>
-                            <h4 class="font-semibold text-gray-800 text-lg">Gols da Equipe</h4>
-                        </div>
-                        <ul class="text-sm text-gray-600 space-y-1 pl-1">${teamGoalsHTML}</ul>
-                    </div>
-                     <div class="bg-white p-3 rounded-lg shadow-sm">
-                        <div class="flex items-center gap-3 mb-2">
-                            <span class="bg-gray-200 p-2 rounded-full">${goalIcon}</span>
-                            <h4 class="font-semibold text-gray-800 text-lg">Gols do Adversário</h4>
-                        </div>
-                        <ul class="text-sm text-gray-600 space-y-1 pl-1">${opponentGoalsHTML}</ul>
-                    </div>
-                    ${renderList('Assistências', assists, assistIcon)}
-                    ${renderSingleStat('Mais Finalizações', shots, shotIcon)}
-                    ${renderSingleStat('Mais Duelos Ganhos', duelsWon, duelIcon)}
-                </div>`;
+            const stats = [
+                { title: 'Gols', data: getTopStats('gol', null, 'playerId') },
+                { title: 'Assistências', data: getTopStats('gol', null, 'assistId') },
+                { title: 'Finalizações', data: getTopStats('finalizacao', null, 'playerId') },
+                { title: 'Duelos Ganhos', data: getTopStats('duelo', 'ganhou', 'playerId') }
+            ];
+            
+            let html = '<table class="w-full text-left">';
+            stats.forEach(stat => {
+                const topPerformer = stat.data[0] || { name: '-', value: '-' };
+                html += `<tr class="border-b"><td class="py-2 font-semibold">${stat.title}</td><td class="py-2">${topPerformer.name}</td><td class="py-2 text-right font-bold">${topPerformer.value}</td></tr>`;
+            });
+            html += '</table>';
+            return html;
         }
-        
-        function renderFormation(match) {
-            const container = document.getElementById('report-formation');
-            if (!container || !match.lineup || !match.squadPlayerIds) {
-                if (container) container.innerHTML = '<p class="text-gray-500 text-center p-4">Escalação não definida.</p>';
-                return;
-            }
 
+        function getFormationHTML(match) {
+            if (!match.lineup || !match.squadPlayerIds) return '<p class="text-gray-500 text-center p-4">Escalação não definida.</p>';
             const lineupOrder = ['gk', 'lb', 'lcb', 'rcb', 'rb', 'dm', 'lcm', 'rcm', 'lw', 'st', 'rw'];
             const lineupPlayerIds = new Set();
-            let startersHTML = '';
-
-            for (let i = 0; i < lineupOrder.length; i++) {
-                const posKey = lineupOrder[i];
-                const playerId = match.lineup[posKey];
-
-                if (playerId) {
-                    lineupPlayerIds.add(playerId);
-                }
-
-                const player = playerId ? appState.players.find(p => p.id === playerId) : null;
-
-                startersHTML += `<tr class="border-b border-white/20">
-                    <td class="p-1.5 font-bold text-center w-8">${i + 1}</td>
-                    <td class="p-1.5">${player ? player.name : '<i class="opacity-50">Vazio</i>'}</td>
-                </tr>`;
-            }
-
-            const substitutes = (match.squadPlayerIds || [])
-                .filter(pid => !lineupPlayerIds.has(pid))
-                .map(subId => appState.players.find(p => p.id === subId))
-                .filter(Boolean)
-                .sort((a, b) => a.name.localeCompare(b.name));
-
-            let reservesHTML = '';
-            for (let i = 0; i < 10; i++) {
-                const player = substitutes[i];
-                reservesHTML += `<tr class="border-b border-white/20">
-                    <td class="p-1.5 font-bold text-center w-8">${i + 12}</td>
-                    <td class="p-1.5">${player ? player.name : '<i class="opacity-50">Vazio</i>'}</td>
-                </tr>`;
-            }
-
-            const formationHTML = `<h4 class="text-center font-bold mb-3 text-xl">Escalação da Equipe</h4>
-                <div class="bg-green-800 p-3 rounded-lg text-white">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                        <div>
-                            <h5 class="font-bold text-center mb-2 pb-1 border-b border-white/30">TITULARES</h5>
-                            <table class="w-full text-left text-sm">${startersHTML}</table>
-                        </div>
-                        <div class="mt-4 sm:mt-0">
-                            <h5 class="font-bold text-center mb-2 pb-1 border-b border-white/30">RESERVAS</h5>
-                            <table class="w-full text-left text-sm">${reservesHTML}</table>
-                        </div>
-                    </div>
-                </div>`;
-
-            container.innerHTML = formationHTML;
+            const starters = lineupOrder.map(posKey => { const pId = match.lineup[posKey]; if(pId) lineupPlayerIds.add(pId); return appState.players.find(p => p.id === pId);});
+            const reserves = match.squadPlayerIds.filter(pid => !lineupPlayerIds.has(pid)).map(subId => appState.players.find(p => p.id === subId)).filter(Boolean).sort((a,b) => a.name.localeCompare(b.name));
+            const table = (title, players) => `<div class="flex-1"><h4 class="font-bold text-center mb-2 pb-1 border-b">${title}</h4><table class="w-full text-sm">${players.map((p, i) => `<tr><td class="py-1 pr-2 font-bold w-8">${title === 'TITULARES' ? i+1 : ''}</td><td class="py-1">${p?.name || 'Vazio'}</td></tr>`).join('')}</table></div>`;
+            return `<h3 class="text-xl font-bold text-center mb-4">Escalação da Equipe</h3><div class="flex gap-4">${table('TITULARES', starters)}${table('RESERVAS', reserves)}</div>`;
         }
-        
-       /**
-         * CORRIGIDO: Função de exportação de PDF para garantir que todo o conteúdo seja visível.
-         * A principal mudança é instruir o html2canvas a capturar a largura e altura total do conteúdo
-         * (scrollWidth/scrollHeight), evitando que informações sejam cortadas.
-         */
+
         async function exportReportToPDF() {
             const button = document.getElementById('pdf-export-button');
             const text = document.getElementById('pdf-export-text');
@@ -1818,48 +1563,111 @@
                 button.disabled = false;
                 return;
             }
-            
-            // Renderiza o conteúdo em um container visível para garantir a captura correta
-            generateReports(matchId); 
+
+            // Garante que os gráficos sejam renderizados na tela para podermos capturá-los
+            generateReports(matchId);
             await new Promise(resolve => setTimeout(resolve, 500));
-            
-            const reportContent = document.getElementById('report-content');
 
             try {
-                const pdf = new jsPDF({ orientation: 'l', unit: 'mm', format: 'a4' });
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: 'a4' });
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight();
+                const margin = 15;
+                let lastY = 0;
+
+                const addHeaderFooter = (pageNumber) => {
+                    if (appState.settings.logoDataUrl) {
+                        try { doc.addImage(appState.settings.logoDataUrl, 'PNG', margin, 5, 25, 8); } 
+                        catch (e) { console.error("Erro ao adicionar logo:", e); }
+                    }
+                    doc.setFontSize(9);
+                    doc.setTextColor(150);
+                    doc.text('Relatório de Análise de Desempenho', pageWidth - margin, 10, { align: 'right' });
+                    doc.setDrawColor(200);
+                    doc.line(margin, 14, pageWidth - margin, 14);
+                    doc.text(`Página ${pageNumber}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+                };
+
+                // --- PÁGINA 1: VISÃO GERAL ---
+                addHeaderFooter(1);
+                doc.setFontSize(20);
+                doc.setTextColor(0);
+                doc.text(`${match.myTeamName} ${match.myTeamScore} x ${match.opponentScore} ${match.opponentName}`, pageWidth / 2, 25, { align: 'center' });
+                doc.setFontSize(11);
+                doc.text(`${new Date(match.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})} - ${match.location}`, pageWidth / 2, 32, { align: 'center' });
+                lastY = 35;
+
+                // Coluna da Esquerda (Gráficos)
+                const leftColX = margin;
+                const colWidth = (pageWidth - margin * 3) / 2;
                 
-                // Usa a div 'report-content' como fonte para o canvas
-                const canvas = await html2canvas(reportContent, {
-                    scale: 2,
-                    useCORS: true,
-                    backgroundColor: '#ffffff',
-                    // Garante que a captura pegue todo o conteúdo rolável
-                    width: reportContent.scrollWidth,
-                    height: reportContent.scrollHeight
+                doc.setFontSize(12);
+                doc.text('Posse de Bola (Total)', leftColX, lastY + 5);
+                const possessionCanvas = document.getElementById('possessionChart');
+                if (possessionCanvas) doc.addImage(possessionCanvas.toDataURL('image/png'), 'PNG', leftColX, lastY + 7, colWidth, 25);
+                
+                doc.text('Volume de Ações (Total)', leftColX, lastY + 40);
+                const actionCanvas = document.getElementById('actionMapChart');
+                if (actionCanvas) doc.addImage(actionCanvas.toDataURL('image/png'), 'PNG', leftColX, lastY + 42, colWidth, 60);
+
+                // Coluna da Direita (Tabelas)
+                const rightColX = margin * 2 + colWidth;
+                
+                const summaryData = getReportSummaryTableHTML(match, null);
+                const summaryTableElement = document.createElement('div');
+                summaryTableElement.innerHTML = summaryTableElement; // Isso é um erro, deveria ser summaryData
+                 doc.autoTable({
+                    html: summaryTableElement.querySelector('table'),
+                    startY: lastY,
+                    theme: 'grid',
+                    margin: { left: rightColX },
+                    headStyles: { fillColor: [22, 160, 133] },
+                    styles: {fontSize: 7}
+                });
+
+                // --- PÁGINA 2: POR PERÍODO ---
+                doc.addPage();
+                addHeaderFooter(2);
+                doc.setFontSize(16);
+                doc.text('Análise por Período', pageWidth/2, 25, {align: 'center'});
+                lastY = 30;
+                
+                // Coluna Esquerda: 1º Tempo
+                doc.setFontSize(12);
+                doc.text('1º Tempo', leftColX + colWidth / 2, lastY, {align: 'center'});
+                const actionCanvas1T = document.getElementById('actionMapChart_1T');
+                if (actionCanvas1T) doc.addImage(actionCanvas1T.toDataURL('image/png'), 'PNG', leftColX, lastY + 5, colWidth, 60);
+
+                const summaryData1T = getReportSummaryTableHTML(match, 1);
+                const summaryTableElement1T = document.createElement('div');
+                summaryTableElement1T.innerHTML = summaryData1T;
+                 doc.autoTable({
+                    html: summaryTableElement1T.querySelector('table'),
+                    startY: lastY + 70,
+                    theme: 'striped',
+                    margin: { left: leftColX, right: pageWidth - leftColX - colWidth},
+                    styles: {fontSize: 7}
                 });
                 
-                const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                // Coluna Direita: 2º Tempo
+                doc.text('2º Tempo', rightColX + colWidth / 2, lastY, {align: 'center'});
+                 const actionCanvas2T = document.getElementById('actionMapChart_2T');
+                if (actionCanvas2T) doc.addImage(actionCanvas2T.toDataURL('image/png'), 'PNG', rightColX, lastY + 5, colWidth, 60);
 
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = pdf.internal.pageSize.getHeight();
-                
-                const canvasWidth = canvas.width;
-                const canvasHeight = canvas.height;
-                const canvasRatio = canvasWidth / canvasHeight;
+                const summaryData2T = getReportSummaryTableHTML(match, 2);
+                const summaryTableElement2T = document.createElement('div');
+                summaryTableElement2T.innerHTML = summaryData2T;
+                 doc.autoTable({
+                    html: summaryTableElement2T.querySelector('table'),
+                    startY: lastY + 70,
+                    theme: 'striped',
+                    margin: { left: rightColX },
+                    styles: {fontSize: 7}
+                });
 
-                let finalWidth = pdfWidth;
-                let finalHeight = pdfWidth / canvasRatio;
 
-                if (finalHeight > pdfHeight) {
-                    finalHeight = pdfHeight;
-                    finalWidth = pdfHeight * canvasRatio;
-                }
-                
-                const x = (pdfWidth - finalWidth) / 2;
-                const y = (pdfHeight - finalHeight) / 2;
-                
-                pdf.addImage(imgData, 'JPEG', x, y, finalWidth, finalHeight);
-                pdf.save(`Relatorio_${match.myTeamName}_vs_${match.opponentName}.pdf`);
+                doc.save(`Relatorio_${match.myTeamName}_vs_${match.opponentName}.pdf`);
 
             } catch (e) {
                 showErrorMessage("Erro ao gerar o arquivo PDF.", e);
@@ -1870,14 +1678,10 @@
                 button.disabled = false;
             }
         }
-        window.exportReportToPDF = exportReportToPDF;
         
         async function showHalftimeReport() {
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
-            if (!match) {
-                showErrorMessage("Nenhuma partida ativa para gerar relatório.");
-                return;
-            }
+            if (!match) return showErrorMessage("Nenhuma partida ativa para gerar relatório.");
             
             destroyCharts();
             
@@ -1887,16 +1691,14 @@
             if (eventsForPeriod.length === 0) {
                 contentContainer.innerHTML = `<div class="p-8 text-center text-gray-500">Nenhum dado registrado para o 1º tempo.</div>`;
             } else {
-                contentContainer.innerHTML = renderReportContentForPDF(match, 1);
+                contentContainer.innerHTML = renderReportHTMLForDisplay(match, 1);
             }
             
             openModal('halftime-report-modal');
 
             if (eventsForPeriod.length > 0) {
                 await new Promise(resolve => setTimeout(resolve, 200));
-                
-                const possession1T = match.possession1T || {myTeam: 0, opponent: 0, stopped: 0};
-                renderPossessionChart(match, `possessionChart_1T`, possession1T);
+                renderChartsForReport(match, 1);
             }
         }
         window.showHalftimeReport = showHalftimeReport;
