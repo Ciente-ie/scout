@@ -1512,6 +1512,79 @@
             container.innerHTML = getReportSummaryTableHTML(match, period);
         }
         
+        /**
+         * NOVO: Gera a tabela HTML para a linha do tempo de chances claras.
+         * @param {object} match - O objeto da partida.
+         * @returns {string} - A string HTML da tabela.
+         */
+        function renderClearChancesTimelineHTML(match) {
+            const chances = {
+                myTeam: { p1: { '0-15': 0, '15-30': 0, '30+': 0 }, p2: { '0-15': 0, '15-30': 0, '30+': 0 } },
+                opponent: { p1: { '0-15': 0, '15-30': 0, '30+': 0 }, p2: { '0-15': 0, '15-30': 0, '30+': 0 } }
+            };
+
+            (match.events || []).forEach(e => {
+                if (e.action !== 'chance_clara' && e.action !== 'chance_clara_adv') return;
+
+                const team = e.action === 'chance_clara' ? 'myTeam' : 'opponent';
+                const periodKey = e.period == 1 ? 'p1' : 'p2';
+                
+                let timeInPeriod = e.time;
+                if (e.period == 2 && match.secondHalfStartSeconds > -1) {
+                    timeInPeriod = e.time - match.secondHalfStartSeconds;
+                }
+                const minuteInPeriod = timeInPeriod / 60;
+
+                let bucket;
+                if (minuteInPeriod <= 15) bucket = '0-15';
+                else if (minuteInPeriod <= 30) bucket = '15-30';
+                else bucket = '30+';
+                
+                if (chances[team][periodKey] && chances[team][periodKey][bucket] !== undefined) {
+                    chances[team][periodKey][bucket]++;
+                }
+            });
+
+            const buildRow = (title, teamData) => `
+                <tr class="border-t">
+                    <td class="p-2 font-semibold border-r">${title}</td>
+                    <td class="p-2 text-center">${teamData.p1['0-15']}</td>
+                    <td class="p-2 text-center">${teamData.p1['15-30']}</td>
+                    <td class="p-2 text-center bg-gray-100">${teamData.p1['30+']}</td>
+                    <td class="p-2 text-center border-l-2 border-gray-400">${teamData.p2['0-15']}</td>
+                    <td class="p-2 text-center">${teamData.p2['15-30']}</td>
+                    <td class="p-2 text-center bg-gray-100">${teamData.p2['30+']}</td>
+                </tr>
+            `;
+
+            return `
+                <div class="report-section mt-8">
+                    <h3 class="text-xl font-bold text-center mb-2">Chances Claras por Período de Tempo</h3>
+                    <table class="w-full text-sm border-collapse border">
+                        <thead class="bg-gray-200 text-xs text-gray-600">
+                            <tr>
+                                <th rowspan="2" class="p-2 border-r">Equipe</th>
+                                <th colspan="3" class="p-2 border-b border-r">1º Tempo</th>
+                                <th colspan="3" class="p-2 border-b">2º Tempo</th>
+                            </tr>
+                            <tr>
+                                <th class="p-1 font-medium">0-15'</th>
+                                <th class="p-1 font-medium">15-30'</th>
+                                <th class="p-1 font-medium bg-gray-100">30+'</th>
+                                <th class="p-1 font-medium border-l-2 border-gray-400">0-15'</th>
+                                <th class="p-1 font-medium">15-30'</th>
+                                <th class="p-1 font-medium bg-gray-100">30+'</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white">
+                            ${buildRow(match.myTeamName, chances.myTeam)}
+                            ${buildRow(match.opponentName, chances.opponent)}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
         function renderReportContentForPDF(match, specificPeriod = null) {
             const logoDataUrl = appState.settings.logoDataUrl;
             const logoImg = logoDataUrl ? `<img src="${logoDataUrl}" class="report-logo" crossorigin="anonymous" />` : '';
@@ -1560,6 +1633,7 @@
                     <div class="bg-gray-50 p-4 rounded-lg border"><h3 class="text-xl font-bold text-center mb-4">1º Tempo</h3><div class="chart-container" style="background-color: #166534; min-height: 240px;"><canvas id="actionMapChart_1T"></canvas></div><div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div><div id="report-summary-table-1T" class="mt-4"></div></div>
                     <div class="bg-gray-50 p-4 rounded-lg border"><h3 class="text-xl font-bold text-center mb-4">2º Tempo</h3><div class="chart-container" style="background-color: #166534; min-height: 240px;"><canvas id="actionMapChart_2T"></canvas></div><div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div><div id="report-summary-table-2T" class="mt-4"></div></div>
                 </div>
+                ${renderClearChancesTimelineHTML(match)}
                 ${reportFooter}
             </div>`;
             
@@ -1746,29 +1820,29 @@
             container.innerHTML = formationHTML;
         }
         
+        /**
+         * CORRIGIDO: Função de exportação para PDF revisada para maior estabilidade.
+         */
         async function exportReportToPDF() {
             const reportContentWrapper = document.getElementById('report-content-wrapper');
             const button = document.getElementById('pdf-export-button');
             const text = document.getElementById('pdf-export-text');
             const loader = document.getElementById('pdf-export-loader');
 
-            // --- 1. Inicia o estado de carregamento da UI ---
             text.classList.add('hidden');
             loader.classList.remove('hidden');
             button.disabled = true;
             console.log("Exportação para PDF: Iniciando...");
 
-            // --- 2. Prepara o conteúdo para uma captura consistente ---
             const originalStyle = reportContentWrapper.style.cssText;
-            reportContentWrapper.style.width = '800px'; // Largura fixa para renderização consistente
-            Chart.defaults.animation = false; // Desativa animações dos gráficos
+            reportContentWrapper.style.width = '800px'; 
+            Chart.defaults.animation = false; 
             
             const matchId = document.getElementById('report-match-select').value;
             const match = appState.matches.find(m => m.id === matchId);
 
             if (!match) {
                 showErrorMessage("Partida não encontrada para exportar.");
-                // Reseta a UI em caso de erro
                 reportContentWrapper.style.cssText = originalStyle;
                 text.classList.remove('hidden');
                 loader.classList.add('hidden');
@@ -1777,55 +1851,33 @@
                 return;
             }
 
-            // --- 3. Renderiza novamente os gráficos para garantir que estão na tela ---
             try {
-                console.log("Exportação para PDF: Renderizando gráficos...");
+                // Renderiza os gráficos novamente para garantir que estão na tela
                 renderChartsForReport(match);
-            } catch (e) {
-                showErrorMessage("Erro ao preparar os gráficos para o PDF.", e);
-            }
-            
-            try {
-                // --- 4. Aguarda o carregamento de todas as imagens e a renderização final ---
-                const images = reportContentWrapper.querySelectorAll('img');
-                const imagePromises = [];
-                images.forEach(img => {
-                    // Verifica se a imagem não está completa ou não foi carregada corretamente
-                    if (!img.complete || img.naturalHeight === 0) {
-                        imagePromises.push(new Promise((resolve, reject) => {
-                            img.onload = resolve;
-                            img.onerror = reject;
-                        }));
-                    }
-                });
                 
-                await Promise.all(imagePromises);
-                console.log("Exportação para PDF: Todas as imagens foram carregadas.");
+                // Aguarda um tempo para a renderização completa (incluindo imagens e gráficos)
+                await new Promise(resolve => setTimeout(resolve, 1500)); 
+                console.log("Exportação para PDF: Renderização final aguardada.");
 
-                // Adiciona um pequeno atraso final para garantir que a renderização do canvas estabilizou
-                await new Promise(resolve => setTimeout(resolve, 750)); 
-                console.log("Exportação para PDF: Atraso de renderização final completo.");
-
-                // --- 5. Gera o PDF página por página ---
                 const pages = reportContentWrapper.querySelectorAll('.report-page');
                 const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
-                console.log(`Exportação para PDF: Encontradas ${pages.length} páginas para capturar.`);
                 
                 for (let i = 0; i < pages.length; i++) {
                     const page = pages[i];
                     console.log(`Exportação para PDF: Capturando página ${i + 1}...`);
                     
                     const canvas = await html2canvas(page, {
-                        scale: 2, // Escala 2 é um bom balanço entre qualidade e uso de memória
+                        scale: 2,
                         useCORS: true,
                         backgroundColor: '#ffffff',
-                        logging: false, // Ative para debug (true)
-                        // Corrige problemas de captura quando a página é rolada
-                        scrollX: 0,
-                        scrollY: -window.scrollY
+                        logging: false,
+                        scrollX: -window.scrollX,
+                        scrollY: -window.scrollY,
+                        windowWidth: page.scrollWidth,
+                        windowHeight: page.scrollHeight
                     });
                     
-                    const imgData = canvas.toDataURL('image/jpeg', 0.9);
+                    const imgData = canvas.toDataURL('image/jpeg', 0.95);
 
                     if (i > 0) {
                         pdf.addPage();
@@ -1839,7 +1891,6 @@
                     let finalWidth = pdfWidth;
                     let finalHeight = finalWidth * ratio;
 
-                    // Ajusta as dimensões para caber na página
                     if (finalHeight > pdfHeight) {
                         finalHeight = pdfHeight;
                         finalWidth = finalHeight / ratio;
@@ -1848,7 +1899,7 @@
                     const x = (pdfWidth - finalWidth) / 2;
                     const y = 0;
 
-                    pdf.addImage(imgData, 'JPEG', x, y, finalWidth, finalHeight);
+                    pdf.addImage(imgData, 'JPEG', x, y, finalWidth, finalHeight, undefined, 'FAST');
                 }
 
                 pdf.save(`Relatorio_${match.myTeamName}_vs_${match.opponentName}.pdf`);
@@ -1857,7 +1908,7 @@
                 showErrorMessage("Erro ao gerar o arquivo PDF. Verifique o console para mais detalhes.", e);
                 console.error("Falha na exportação para PDF:", e);
             } finally {
-                // --- 6. Reseta a UI para o estado original ---
+                // Reseta a UI para o estado original
                 console.log("Exportação para PDF: Finalizando e resetando UI.");
                 reportContentWrapper.style.cssText = originalStyle;
                 text.classList.remove('hidden');
@@ -1866,6 +1917,7 @@
                 Chart.defaults.animation = true;
             }
         }
+        window.exportReportToPDF = exportReportToPDF;
         
         async function showHalftimeReport() {
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
