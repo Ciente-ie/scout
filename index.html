@@ -1819,16 +1819,14 @@
         }
         
        /**
-         * CORRIGIDO: Função de exportação para PDF que clona o conteúdo, substitui
-         * gráficos de canvas por imagens estáticas e, em seguida, captura cada página
-         * individualmente para maior estabilidade.
+         * ATUALIZADO: Função de exportação para PDF revisada para escalar e centralizar
+         * corretamente a imagem capturada na página A4, evitando distorções.
          */
         async function exportReportToPDF() {
             const button = document.getElementById('pdf-export-button');
             const text = document.getElementById('pdf-export-text');
             const loader = document.getElementById('pdf-export-loader');
 
-            // 1. Set UI to loading state
             text.classList.add('hidden');
             loader.classList.remove('hidden');
             button.disabled = true;
@@ -1839,17 +1837,14 @@
 
             if (!match) {
                 showErrorMessage("Partida não encontrada para exportar.");
-                // Reset UI and abort
                 text.classList.remove('hidden');
                 loader.classList.add('hidden');
                 button.disabled = false;
                 return;
             }
-
-            // 2. Ensure the original report content is on the page and fully rendered
-            // This is important for the charts to be available in the `charts` object
+            
             generateReports(matchId); 
-            await new Promise(resolve => setTimeout(resolve, 300)); // Brief pause for DOM updates
+            await new Promise(resolve => setTimeout(resolve, 300));
 
             try {
                 const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
@@ -1858,67 +1853,82 @@
                 for (let i = 0; i < visiblePages.length; i++) {
                     const originalPage = visiblePages[i];
                     
-                    // 3. Clone the page to create a static version for capture
+                    const tempContainer = document.createElement('div');
+                    tempContainer.style.position = 'absolute';
+                    tempContainer.style.left = '-9999px';
+                    tempContainer.style.width = '800px'; 
+                    document.body.appendChild(tempContainer);
+
                     const pageClone = originalPage.cloneNode(true);
+                    tempContainer.appendChild(pageClone);
                     
-                    // 4. Replace canvas elements with static images in the clone
                     const originalCanvases = originalPage.querySelectorAll('canvas');
                     const clonedCanvases = pageClone.querySelectorAll('canvas');
 
                     for (let j = 0; j < clonedCanvases.length; j++) {
                         const canvasToReplace = clonedCanvases[j];
-                        const chartId = originalCanvases[j].id; // Get ID from the original canvas
-
+                        const chartId = originalCanvases[j].id;
                         if (charts[chartId] && charts[chartId].ctx) {
                             const imgData = charts[chartId].toBase64Image();
                             const img = document.createElement('img');
                             img.src = imgData;
                             img.style.width = '100%';
-                            img.style.height = '100%';
+                            img.style.height = 'auto';
                             img.style.display = 'block';
                             canvasToReplace.parentNode.replaceChild(img, canvasToReplace);
                         }
                     }
 
-                    // 5. Render the static clone off-screen for a clean capture
-                    const tempContainer = document.createElement('div');
-                    tempContainer.style.position = 'absolute';
-                    tempContainer.style.left = '-9999px';
-                    tempContainer.style.width = '800px'; // Consistent width for rendering
-                    tempContainer.appendChild(pageClone);
-                    document.body.appendChild(tempContainer);
-                    
-                    // Give the browser a moment to render the images in the temp container
                     await new Promise(resolve => setTimeout(resolve, 200));
 
                     console.log(`Exportação para PDF: Capturando página ${i + 1}...`);
-                    const canvas = await html2canvas(tempContainer, {
+                    const pageCanvas = await html2canvas(pageClone, {
                         scale: 2,
                         useCORS: true,
                         backgroundColor: '#ffffff'
                     });
-
-                    // 6. Cleanup the temporary container immediately after capture
+                    
                     document.body.removeChild(tempContainer);
+                    
+                    const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.92);
 
-                    // 7. Add the captured image to the PDF
-                    const pageImgData = canvas.toDataURL('image/jpeg', 0.92);
                     if (i > 0) {
                         pdf.addPage();
                     }
+
                     const pdfWidth = pdf.internal.pageSize.getWidth();
                     const pdfHeight = pdf.internal.pageSize.getHeight();
-                    pdf.addImage(pageImgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                    
+                    const canvasWidth = pageCanvas.width;
+                    const canvasHeight = pageCanvas.height;
+                    const canvasRatio = canvasWidth / canvasHeight;
+                    const pdfRatio = pdfWidth / pdfHeight;
+                    
+                    let finalWidth, finalHeight, x, y;
+
+                    if (canvasRatio > pdfRatio) {
+                        // Se a imagem for mais "larga" que a página
+                        finalWidth = pdfWidth;
+                        finalHeight = pdfWidth / canvasRatio;
+                        x = 0;
+                        y = (pdfHeight - finalHeight) / 2; // Centraliza verticalmente
+                    } else {
+                        // Se a imagem for mais "alta" que a página (comum em mobile)
+                        finalHeight = pdfHeight;
+                        finalWidth = pdfHeight * canvasRatio;
+                        x = (pdfWidth - finalWidth) / 2; // Centraliza horizontalmente
+                        y = 0;
+                    }
+
+                    pdf.addImage(pageImgData, 'JPEG', x, y, finalWidth, finalHeight);
                 }
 
-                // 8. Save the final PDF
                 pdf.save(`Relatorio_${match.myTeamName}_vs_${match.opponentName}.pdf`);
 
             } catch (e) {
                 showErrorMessage("Erro ao gerar o arquivo PDF. Tente novamente. Se o erro persistir, verifique o console para mais detalhes.", e);
                 console.error("Falha na exportação para PDF:", e);
             } finally {
-                // 9. Reset UI state
                 console.log("Exportação para PDF: Finalizando e resetando UI.");
                 text.classList.remove('hidden');
                 loader.classList.add('hidden');
