@@ -1819,8 +1819,9 @@
         }
         
        /**
-         * ATUALIZADO: Função de exportação para PDF revisada para escalar e centralizar
-         * corretamente a imagem capturada na página A4, evitando distorções.
+         * ATUALIZADO: Função de exportação para PDF que clona o conteúdo, substitui
+         * gráficos de canvas por imagens estáticas e, em seguida, captura cada página
+         * individualmente para maior estabilidade.
          */
         async function exportReportToPDF() {
             const button = document.getElementById('pdf-export-button');
@@ -1845,6 +1846,12 @@
             
             generateReports(matchId); 
             await new Promise(resolve => setTimeout(resolve, 300));
+            
+            const tempContainer = document.createElement('div');
+            tempContainer.style.position = 'absolute';
+            tempContainer.style.left = '-9999px';
+            tempContainer.style.width = '800px'; 
+            document.body.appendChild(tempContainer);
 
             try {
                 const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
@@ -1853,13 +1860,8 @@
                 for (let i = 0; i < visiblePages.length; i++) {
                     const originalPage = visiblePages[i];
                     
-                    const tempContainer = document.createElement('div');
-                    tempContainer.style.position = 'absolute';
-                    tempContainer.style.left = '-9999px';
-                    tempContainer.style.width = '800px'; 
-                    document.body.appendChild(tempContainer);
-
                     const pageClone = originalPage.cloneNode(true);
+                    tempContainer.innerHTML = '';
                     tempContainer.appendChild(pageClone);
                     
                     const originalCanvases = originalPage.querySelectorAll('canvas');
@@ -1888,8 +1890,6 @@
                         backgroundColor: '#ffffff'
                     });
                     
-                    document.body.removeChild(tempContainer);
-                    
                     const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.92);
 
                     if (i > 0) {
@@ -1902,24 +1902,22 @@
                     const canvasWidth = pageCanvas.width;
                     const canvasHeight = pageCanvas.height;
                     const canvasRatio = canvasWidth / canvasHeight;
-                    const pdfRatio = pdfWidth / pdfHeight;
-                    
-                    let finalWidth, finalHeight, x, y;
 
-                    if (canvasRatio > pdfRatio) {
-                        // Se a imagem for mais "larga" que a página
-                        finalWidth = pdfWidth;
-                        finalHeight = pdfWidth / canvasRatio;
-                        x = 0;
-                        y = (pdfHeight - finalHeight) / 2; // Centraliza verticalmente
-                    } else {
-                        // Se a imagem for mais "alta" que a página (comum em mobile)
+                    let finalWidth, finalHeight;
+                    
+                    // Ajusta a imagem à largura da página A4
+                    finalWidth = pdfWidth;
+                    finalHeight = finalWidth / canvasRatio;
+
+                    // Se a altura final exceder a página, recalcula com base na altura
+                    if (finalHeight > pdfHeight) {
                         finalHeight = pdfHeight;
-                        finalWidth = pdfHeight * canvasRatio;
-                        x = (pdfWidth - finalWidth) / 2; // Centraliza horizontalmente
-                        y = 0;
+                        finalWidth = finalHeight * canvasRatio;
                     }
 
+                    const x = (pdfWidth - finalWidth) / 2;
+                    const y = (pdfHeight - finalHeight) / 2;
+                    
                     pdf.addImage(pageImgData, 'JPEG', x, y, finalWidth, finalHeight);
                 }
 
@@ -1929,6 +1927,7 @@
                 showErrorMessage("Erro ao gerar o arquivo PDF. Tente novamente. Se o erro persistir, verifique o console para mais detalhes.", e);
                 console.error("Falha na exportação para PDF:", e);
             } finally {
+                document.body.removeChild(tempContainer);
                 console.log("Exportação para PDF: Finalizando e resetando UI.");
                 text.classList.remove('hidden');
                 loader.classList.add('hidden');
