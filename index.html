@@ -1819,9 +1819,8 @@
         }
         
        /**
-         * ATUALIZADO: Função de exportação para PDF que clona o conteúdo, substitui
-         * gráficos de canvas por imagens estáticas e, em seguida, captura cada página
-         * individualmente para maior estabilidade.
+         * ATUALIZADO: Função de exportação para PDF agora usa orientação paisagem ('l')
+         * e uma abordagem de renderização estática para garantir consistência e evitar cortes.
          */
         async function exportReportToPDF() {
             const button = document.getElementById('pdf-export-button');
@@ -1850,11 +1849,12 @@
             const tempContainer = document.createElement('div');
             tempContainer.style.position = 'absolute';
             tempContainer.style.left = '-9999px';
-            tempContainer.style.width = '800px'; 
+            tempContainer.style.width = '1122px'; // Largura para simular uma renderização de paisagem A4
             document.body.appendChild(tempContainer);
 
             try {
-                const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+                // MUDANÇA PRINCIPAL: Orientação definida para paisagem ('l')
+                const pdf = new jsPDF({ orientation: 'l', unit: 'mm', format: 'a4' });
                 const visiblePages = document.querySelectorAll('#report-content .report-page');
                 
                 for (let i = 0; i < visiblePages.length; i++) {
@@ -1903,16 +1903,12 @@
                     const canvasHeight = pageCanvas.height;
                     const canvasRatio = canvasWidth / canvasHeight;
 
-                    let finalWidth, finalHeight;
-                    
-                    // Ajusta a imagem à largura da página A4
-                    finalWidth = pdfWidth;
-                    finalHeight = finalWidth / canvasRatio;
+                    let finalWidth = pdfWidth;
+                    let finalHeight = pdfWidth / canvasRatio;
 
-                    // Se a altura final exceder a página, recalcula com base na altura
                     if (finalHeight > pdfHeight) {
                         finalHeight = pdfHeight;
-                        finalWidth = finalHeight * canvasRatio;
+                        finalWidth = pdfHeight * canvasRatio;
                     }
 
                     const x = (pdfWidth - finalWidth) / 2;
