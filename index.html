@@ -1543,6 +1543,46 @@
             const table = (title, players) => `<div class="flex-1"><h4 class="font-bold text-center mb-2 pb-1 border-b">${title}</h4><table class="w-full text-sm">${players.map((p, i) => `<tr><td class="py-1 pr-2 font-bold w-8">${title === 'TITULARES' ? i+1 : ''}</td><td class="py-1">${p?.name || 'Vazio'}</td></tr>`).join('')}</table></div>`;
             return `<h3 class="text-xl font-bold text-center mb-4">Escalação da Equipe</h3><div class="flex gap-4">${table('TITULARES', starters)}${table('RESERVAS', reserves)}</div>`;
         }
+        
+        function getReportSummaryTableHTML(match, period) {
+            const allEvents = period ? match.events.filter(e => e.period == period) : match.events;
+
+            if (allEvents.length === 0 && period) {
+                return '<p class="text-center text-gray-500 p-4">Nenhum dado neste período.</p>';
+            }
+
+            const myEvents = allEvents.filter(e => e.scoringTeam !== 'opponent' && !e.action.endsWith('_adv'));
+            const oppEvents = allEvents.filter(e => e.scoringTeam === 'opponent' || e.action.endsWith('_adv'));
+            const count = (arr, action, detail) => arr.filter(e => e.action === action && (detail ? e.detail === detail : true)).length;
+
+            const passesCerto = count(myEvents, 'passe_certo');
+            const passesErrado = count(myEvents, 'passe_errado');
+            const totalPasses = passesCerto + passesErrado;
+            const percCerto = totalPasses > 0 ? `(${(passesCerto / totalPasses * 100).toFixed(0)}%)` : '';
+            const percErrado = totalPasses > 0 ? `(${(passesErrado / totalPasses * 100).toFixed(0)}%)` : '';
+
+            const duelosGanhos = count(myEvents, 'duelo', 'ganhou');
+            const duelosPerdidos = count(myEvents, 'duelo', 'perdeu');
+            const duelosTotais = duelosGanhos + duelosPerdidos;
+
+            let tableHTML = `<table class="w-full text-sm text-left"><thead><tr><th class="p-2 font-semibold">${match.myTeamName}</th><th class="p-2 text-center font-semibold">vs</th><th class="p-2 font-semibold text-right">${match.opponentName}</th></tr></thead><tbody>`;
+            const statsConfig = [
+                { label: 'Finalizações', myAction: 'finalizacao', oppAction: 'finalizacao_adv' },
+                { label: 'Chances Claras', myAction: 'chance_clara', oppAction: 'chance_clara_adv' },
+                { label: 'Duelos Ganhos', myVal: duelosGanhos, oppVal: duelosPerdidos },
+                { label: 'Passes Certos', myVal: `${passesCerto} ${percCerto}`, oppVal: '–' },
+                { label: 'Faltas Cometidas', myAction: 'falta_cometida', oppAction: 'falta_sofrida' },
+            ];
+
+            statsConfig.forEach(stat => {
+                const myVal = stat.myVal ?? count(myEvents, stat.myAction, stat.myDetail);
+                const oppVal = stat.oppVal ?? (stat.oppAction ? count(oppEvents, stat.oppAction, stat.oppDetail) : '–');
+                tableHTML += `<tr class="border-t"><td class="p-2 font-bold">${myVal}</td><td class="p-2 text-center text-gray-500">${stat.label}</td><td class="p-2 text-right font-bold">${oppVal}</td></tr>`;
+            });
+
+            tableHTML += `</tbody></table>`;
+            return tableHTML;
+        }
 
         async function exportReportToPDF() {
             const button = document.getElementById('pdf-export-button');
@@ -1564,7 +1604,6 @@
                 return;
             }
 
-            // Garante que os gráficos sejam renderizados na tela para podermos capturá-los
             generateReports(matchId);
             await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -1616,14 +1655,15 @@
                 
                 const summaryData = getReportSummaryTableHTML(match, null);
                 const summaryTableElement = document.createElement('div');
-                summaryTableElement.innerHTML = summaryTableElement; // Isso é um erro, deveria ser summaryData
+                summaryTableElement.innerHTML = summaryData; // CORRIGIDO
                  doc.autoTable({
                     html: summaryTableElement.querySelector('table'),
                     startY: lastY,
                     theme: 'grid',
                     margin: { left: rightColX },
-                    headStyles: { fillColor: [22, 160, 133] },
-                    styles: {fontSize: 7}
+                    headStyles: { fillColor: [22, 160, 133], textColor: 255, halign: 'center' },
+                    styles: {fontSize: 8, cellPadding: 2},
+                    columnStyles: { 1: { halign: 'center', fontStyle: 'bold' } }
                 });
 
                 // --- PÁGINA 2: POR PERÍODO ---
@@ -1647,7 +1687,9 @@
                     startY: lastY + 70,
                     theme: 'striped',
                     margin: { left: leftColX, right: pageWidth - leftColX - colWidth},
-                    styles: {fontSize: 7}
+                    styles: {fontSize: 8, cellPadding: 2},
+                    headStyles: { halign: 'center'},
+                    columnStyles: { 1: { halign: 'center', fontStyle: 'bold' } }
                 });
                 
                 // Coluna Direita: 2º Tempo
@@ -1663,7 +1705,9 @@
                     startY: lastY + 70,
                     theme: 'striped',
                     margin: { left: rightColX },
-                    styles: {fontSize: 7}
+                    styles: {fontSize: 8, cellPadding: 2},
+                    headStyles: { halign: 'center'},
+                    columnStyles: { 1: { halign: 'center', fontStyle: 'bold' } }
                 });
 
 
