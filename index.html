@@ -1673,6 +1673,17 @@
             charts[canvasId] = new Chart(ctx, { type: 'bubble', plugins: [fieldLinesPlugin], data: { datasets: [{ label: 'Volume', data: [{ x: 0.5, y: 5, r: getRadius(sectorCounts.defesa) }, { x: 1.5, y: 5, r: getRadius(sectorCounts.meio) }, { x: 2.5, y: 5, r: getRadius(sectorCounts.ataque) }], backgroundColor: [getColor(sectorCounts.defesa), getColor(sectorCounts.meio), getColor(sectorCounts.ataque)], borderColor: 'rgba(153, 27, 27, 1)', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, layout: { padding: 10 }, scales: { x: { min: 0, max: 3, grid: { display: false }, ticks: { display: false } }, y: { display: false, min: 0, max: 10 } }, plugins: { legend: { display: false }, datalabels: { color: 'white', font: { weight: 'bold', size: 16 }, formatter: (v, c) => Object.values(sectorCounts)[c.dataIndex] }}}});
         }
         
+        // AJUSTE: Helper function para obter a legenda da nota
+        function getRatingLegend(score) {
+            const s = parseFloat(score);
+            if (s >= 9) return "Muito Acima";
+            if (s >= 7) return "Acima do Esperado";
+            if (s >= 5) return "Dentro do Esperado";
+            if (s >= 3) return "Abaixo";
+            if (s >= 1) return "Muito abaixo";
+            return ""; 
+        }
+
         function renderManOfTheMatch(match) {
             const container = document.getElementById('report-motm');
             if(!container || !match.ratings || Object.keys(match.ratings).length === 0) { if(container) container.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhuma avaliação registrada.</p>'; return; }
@@ -1680,26 +1691,21 @@
             if (performers.length === 0) { container.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhum jogador avaliado.</p>'; return; }
             const topPlayer = performers.reduce((a, b) => a.avg > b.avg ? a : b);
             const player = appState.players.find(p => p.id === topPlayer.pid);
-            if(player) { 
+            if(player) {
+                // AJUSTE: Adicionada a legenda dinâmica ao lado da nota
+                const legendText = getRatingLegend(topPlayer.avg);
                 container.innerHTML = `<div class="flex flex-col items-center justify-center h-full bg-blue-50 rounded-lg p-3">
                     <svg class="h-10 w-10 text-yellow-400 mb-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
                     <p class="text-xl font-bold text-gray-800">${player.name}</p>
-                    <p class="text-md text-gray-600">Nota Média: <span class="font-bold text-blue-600">${topPlayer.avg.toFixed(1)}</span></p>
-                    <div class="w-full grid grid-cols-2 gap-x-2 mt-2 text-xs text-left">
+                    <p class="text-md text-gray-600">
+                        Nota Média: <span class="font-bold text-blue-600">${topPlayer.avg.toFixed(1)}</span>
+                        <span class="text-sm text-gray-500 font-semibold">(${legendText})</span>
+                    </p>
+                    <div class="w-full grid grid-cols-2 gap-x-2 mt-2 pt-2 border-t border-gray-300 text-xs text-left">
                         <span class="font-semibold text-gray-500">Técnico:</span><span class="font-bold text-gray-700 text-right">${topPlayer.rates.tecnico}</span>
                         <span class="font-semibold text-gray-500">Tático:</span><span class="font-bold text-gray-700 text-right">${topPlayer.rates.tatico}</span>
                         <span class="font-semibold text-gray-500">Físico:</span><span class="font-bold text-gray-700 text-right">${topPlayer.rates.fisico}</span>
                         <span class="font-semibold text-gray-500">Comport.:</span><span class="font-bold text-gray-700 text-right">${topPlayer.rates.comportamental}</span>
-                    </div>
-                    <div class="mt-2 pt-2 border-t border-gray-300 w-full">
-                        <h5 class="font-bold text-gray-600 text-xs text-center mb-1">Legenda de Notas</h5>
-                        <p class="text-xs text-center text-gray-500">
-                            <span class="font-bold">9-10:</span> M. Acima | 
-                            <span class="font-bold">7-8:</span> Acima | 
-                            <span class="font-bold">5-6:</span> Esperado | 
-                            <span class="font-bold">3-4:</span> Abaixo | 
-                            <span class="font-bold">1-2:</span> M. Abaixo
-                        </p>
                     </div>
                 </div>`;
             }
@@ -1795,29 +1801,41 @@
                 return;
             }
 
-            // AJUSTE: Mapeamento de posições para números de camisa personalizados
+            // AJUSTE: Mapeamento de posições para a numeração correta.
             const shirtNumbers = {
-                gk: 1, rb: 2, rcb: 3, lcb: 4, lb: 6,
-                dm: 5, rcm: 8, lcm: 10, rw: 7, st: 9, lw: 11
+                gk: 1, rb: 2, rcb: 3, lcb: 4, dm: 5, lb: 6, rw: 7, rcm: 8, st: 9, lcm: 10, lw: 11
             };
-            // Mantém a ordem de exibição original da escalação para estabilidade
-            const lineupOrder = ['gk', 'lb', 'lcb', 'rcb', 'rb', 'dm', 'lcm', 'rcm', 'lw', 'st', 'rw'];
+            
             const lineupPlayerIds = new Set();
-            let startersHTML = '';
+            const startersList = [];
 
-            lineupOrder.forEach(posKey => {
+            // Popula a lista de titulares com os dados necessários para a ordenação
+            for (const posKey in match.lineup) {
                 const playerId = match.lineup[posKey];
                 if (playerId) {
                     lineupPlayerIds.add(playerId);
+                    startersList.push({
+                        playerId: playerId,
+                        shirtNumber: shirtNumbers[posKey] || '?'
+                    });
                 }
-                const player = playerId ? appState.players.find(p => p.id === playerId) : null;
-                const shirtNumber = shirtNumbers[posKey] || '?'; // Usa '?' se a posição não for mapeada
+            }
 
-                startersHTML += `<tr class="border-b border-white/20">
-                    <td class="p-1.5 font-bold text-center w-8">${shirtNumber}</td>
+            // Ordena a lista de titulares pelo número da camisa
+            startersList.sort((a, b) => a.shirtNumber - b.shirtNumber);
+            
+            // Gera o HTML a partir da lista já ordenada
+            let startersHTML = startersList.map(starter => {
+                const player = appState.players.find(p => p.id === starter.playerId);
+                return `<tr class="border-b border-white/20">
+                    <td class="p-1.5 font-bold text-center w-8">${starter.shirtNumber}</td>
                     <td class="p-1.5">${player ? player.name : '<i class="opacity-50">Vazio</i>'}</td>
                 </tr>`;
-            });
+            }).join('');
+            
+            if (startersList.length === 0) {
+                 startersHTML = '<tr><td colspan="2" class="text-center p-2 opacity-50">Nenhum titular definido.</td></tr>';
+            }
 
             const substitutes = (match.squadPlayerIds || [])
                 .filter(pid => !lineupPlayerIds.has(pid))
