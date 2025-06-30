@@ -1314,7 +1314,6 @@
                         const duelsWon = playerEvents.filter(e => e.action === 'duelo' && e.detail === 'ganhou').length;
                         const duelsLost = playerEvents.filter(e => e.action === 'duelo' && e.detail === 'perdeu').length;
                         
-                        // CORREÇÃO: Converte valores de string para número antes de somar
                         const avg = (parseFloat(rates.tecnico) + parseFloat(rates.tatico) + parseFloat(rates.fisico) + parseFloat(rates.comportamental)) / 4;
                         
                         performances[playerId].matchPerformances.push({
@@ -1681,7 +1680,29 @@
             if (performers.length === 0) { container.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhum jogador avaliado.</p>'; return; }
             const topPlayer = performers.reduce((a, b) => a.avg > b.avg ? a : b);
             const player = appState.players.find(p => p.id === topPlayer.pid);
-            if(player) { container.innerHTML = `<div class="flex flex-col items-center justify-center h-full bg-blue-50 rounded-lg p-3"><svg class="h-10 w-10 text-yellow-400 mb-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg><p class="text-xl font-bold text-gray-800">${player.name}</p><p class="text-md text-gray-600">Nota Média: <span class="font-bold text-blue-600">${topPlayer.avg.toFixed(1)}</span></p><div class="w-full grid grid-cols-2 gap-x-2 mt-2 text-xs text-left"><span class="font-semibold text-gray-500">Técnico:</span><span class="font-bold text-gray-700 text-right">${topPlayer.rates.tecnico}</span><span class="font-semibold text-gray-500">Tático:</span><span class="font-bold text-gray-700 text-right">${topPlayer.rates.tatico}</span><span class="font-semibold text-gray-500">Físico:</span><span class="font-bold text-gray-700 text-right">${topPlayer.rates.fisico}</span><span class="font-semibold text-gray-500">Comport.:</span><span class="font-bold text-gray-700 text-right">${topPlayer.rates.comportamental}</span></div></div>`; }
+            if(player) { 
+                container.innerHTML = `<div class="flex flex-col items-center justify-center h-full bg-blue-50 rounded-lg p-3">
+                    <svg class="h-10 w-10 text-yellow-400 mb-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                    <p class="text-xl font-bold text-gray-800">${player.name}</p>
+                    <p class="text-md text-gray-600">Nota Média: <span class="font-bold text-blue-600">${topPlayer.avg.toFixed(1)}</span></p>
+                    <div class="w-full grid grid-cols-2 gap-x-2 mt-2 text-xs text-left">
+                        <span class="font-semibold text-gray-500">Técnico:</span><span class="font-bold text-gray-700 text-right">${topPlayer.rates.tecnico}</span>
+                        <span class="font-semibold text-gray-500">Tático:</span><span class="font-bold text-gray-700 text-right">${topPlayer.rates.tatico}</span>
+                        <span class="font-semibold text-gray-500">Físico:</span><span class="font-bold text-gray-700 text-right">${topPlayer.rates.fisico}</span>
+                        <span class="font-semibold text-gray-500">Comport.:</span><span class="font-bold text-gray-700 text-right">${topPlayer.rates.comportamental}</span>
+                    </div>
+                    <div class="mt-2 pt-2 border-t border-gray-300 w-full">
+                        <h5 class="font-bold text-gray-600 text-xs text-center mb-1">Legenda de Notas</h5>
+                        <p class="text-xs text-center text-gray-500">
+                            <span class="font-bold">9-10:</span> M. Acima | 
+                            <span class="font-bold">7-8:</span> Acima | 
+                            <span class="font-bold">5-6:</span> Esperado | 
+                            <span class="font-bold">3-4:</span> Abaixo | 
+                            <span class="font-bold">1-2:</span> M. Abaixo
+                        </p>
+                    </div>
+                </div>`;
+            }
         }
         
         function renderTopStatsTable(match) {
@@ -1774,25 +1795,29 @@
                 return;
             }
 
+            // AJUSTE: Mapeamento de posições para números de camisa personalizados
+            const shirtNumbers = {
+                gk: 1, rb: 2, rcb: 3, lcb: 4, lb: 6,
+                dm: 5, rcm: 8, lcm: 10, rw: 7, st: 9, lw: 11
+            };
+            // Mantém a ordem de exibição original da escalação para estabilidade
             const lineupOrder = ['gk', 'lb', 'lcb', 'rcb', 'rb', 'dm', 'lcm', 'rcm', 'lw', 'st', 'rw'];
             const lineupPlayerIds = new Set();
             let startersHTML = '';
 
-            for (let i = 0; i < lineupOrder.length; i++) {
-                const posKey = lineupOrder[i];
+            lineupOrder.forEach(posKey => {
                 const playerId = match.lineup[posKey];
-
                 if (playerId) {
                     lineupPlayerIds.add(playerId);
                 }
-
                 const player = playerId ? appState.players.find(p => p.id === playerId) : null;
+                const shirtNumber = shirtNumbers[posKey] || '?'; // Usa '?' se a posição não for mapeada
 
                 startersHTML += `<tr class="border-b border-white/20">
-                    <td class="p-1.5 font-bold text-center w-8">${i + 1}</td>
+                    <td class="p-1.5 font-bold text-center w-8">${shirtNumber}</td>
                     <td class="p-1.5">${player ? player.name : '<i class="opacity-50">Vazio</i>'}</td>
                 </tr>`;
-            }
+            });
 
             const substitutes = (match.squadPlayerIds || [])
                 .filter(pid => !lineupPlayerIds.has(pid))
@@ -2005,7 +2030,6 @@
                      if (performances[playerId] && rates.played) {
                         const playerEvents = matchEvents.filter(e => e.playerId === playerId);
 
-                        // CORREÇÃO: Converte valores de string para número antes de somar
                         const avg = (parseFloat(rates.tecnico) + parseFloat(rates.tatico) + parseFloat(rates.fisico) + parseFloat(rates.comportamental)) / 4;
                         
                         performances[playerId].matchPerformances.push({
