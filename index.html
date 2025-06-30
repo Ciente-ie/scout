@@ -1478,6 +1478,12 @@
             }
         }
         
+        /**
+         * ATUALIZADO: Inclui a quebra de chances claras por tempo diretamente na tabela de resumo.
+         * @param {object} match - O objeto da partida.
+         * @param {?number} period - O período a ser analisado (1, 2 ou nulo para o total).
+         * @returns {string} - A string HTML da tabela.
+         */
         function getReportSummaryTableHTML(match, period) {
             const allEvents = period ? match.events.filter(e => e.period == period) : match.events;
 
@@ -1818,11 +1824,8 @@
             container.innerHTML = formationHTML;
         }
         
-       /**
-         * ATUALIZADO: Função de exportação para PDF agora usa orientação paisagem ('l')
-         * e uma abordagem de renderização estática para garantir consistência e evitar cortes.
-         */
         async function exportReportToPDF() {
+            const reportContentWrapper = document.getElementById('report-content-wrapper');
             const button = document.getElementById('pdf-export-button');
             const text = document.getElementById('pdf-export-text');
             const loader = document.getElementById('pdf-export-loader');
@@ -1832,65 +1835,50 @@
             button.disabled = true;
             console.log("Exportação para PDF: Iniciando...");
 
+            const originalStyle = reportContentWrapper.style.cssText;
+            reportContentWrapper.style.width = '800px'; 
+            Chart.defaults.animation = false; 
+            
             const matchId = document.getElementById('report-match-select').value;
             const match = appState.matches.find(m => m.id === matchId);
 
             if (!match) {
                 showErrorMessage("Partida não encontrada para exportar.");
+                reportContentWrapper.style.cssText = originalStyle;
                 text.classList.remove('hidden');
                 loader.classList.add('hidden');
                 button.disabled = false;
+                Chart.defaults.animation = true;
                 return;
             }
-            
-            generateReports(matchId); 
-            await new Promise(resolve => setTimeout(resolve, 300));
-            
-            const tempContainer = document.createElement('div');
-            tempContainer.style.position = 'absolute';
-            tempContainer.style.left = '-9999px';
-            tempContainer.style.width = '1122px'; // Largura para simular uma renderização de paisagem A4
-            document.body.appendChild(tempContainer);
 
             try {
-                // MUDANÇA PRINCIPAL: Orientação definida para paisagem ('l')
-                const pdf = new jsPDF({ orientation: 'l', unit: 'mm', format: 'a4' });
-                const visiblePages = document.querySelectorAll('#report-content .report-page');
+                // Renderiza os gráficos novamente para garantir que estão na tela
+                renderChartsForReport(match);
                 
-                for (let i = 0; i < visiblePages.length; i++) {
-                    const originalPage = visiblePages[i];
-                    
-                    const pageClone = originalPage.cloneNode(true);
-                    tempContainer.innerHTML = '';
-                    tempContainer.appendChild(pageClone);
-                    
-                    const originalCanvases = originalPage.querySelectorAll('canvas');
-                    const clonedCanvases = pageClone.querySelectorAll('canvas');
+                // Aguarda um tempo para a renderização completa (incluindo imagens e gráficos)
+                await new Promise(resolve => setTimeout(resolve, 1500)); 
+                console.log("Exportação para PDF: Renderização final aguardada.");
 
-                    for (let j = 0; j < clonedCanvases.length; j++) {
-                        const canvasToReplace = clonedCanvases[j];
-                        const chartId = originalCanvases[j].id;
-                        if (charts[chartId] && charts[chartId].ctx) {
-                            const imgData = charts[chartId].toBase64Image();
-                            const img = document.createElement('img');
-                            img.src = imgData;
-                            img.style.width = '100%';
-                            img.style.height = 'auto';
-                            img.style.display = 'block';
-                            canvasToReplace.parentNode.replaceChild(img, canvasToReplace);
-                        }
-                    }
-
-                    await new Promise(resolve => setTimeout(resolve, 200));
-
+                const pages = reportContentWrapper.querySelectorAll('.report-page');
+                const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+                
+                for (let i = 0; i < pages.length; i++) {
+                    const page = pages[i];
                     console.log(`Exportação para PDF: Capturando página ${i + 1}...`);
-                    const pageCanvas = await html2canvas(pageClone, {
+                    
+                    const canvas = await html2canvas(page, {
                         scale: 2,
                         useCORS: true,
-                        backgroundColor: '#ffffff'
+                        backgroundColor: '#ffffff',
+                        logging: false,
+                        scrollX: -window.scrollX,
+                        scrollY: -window.scrollY,
+                        windowWidth: page.scrollWidth,
+                        windowHeight: page.scrollHeight
                     });
                     
-                    const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.92);
+                    const imgData = canvas.toDataURL('image/jpeg', 0.95);
 
                     if (i > 0) {
                         pdf.addPage();
@@ -1898,36 +1886,36 @@
 
                     const pdfWidth = pdf.internal.pageSize.getWidth();
                     const pdfHeight = pdf.internal.pageSize.getHeight();
+                    const imgProps = pdf.getImageProperties(imgData);
+                    const ratio = imgProps.height / imgProps.width;
                     
-                    const canvasWidth = pageCanvas.width;
-                    const canvasHeight = pageCanvas.height;
-                    const canvasRatio = canvasWidth / canvasHeight;
-
                     let finalWidth = pdfWidth;
-                    let finalHeight = pdfWidth / canvasRatio;
+                    let finalHeight = finalWidth * ratio;
 
                     if (finalHeight > pdfHeight) {
                         finalHeight = pdfHeight;
-                        finalWidth = pdfHeight * canvasRatio;
+                        finalWidth = finalHeight / ratio;
                     }
 
                     const x = (pdfWidth - finalWidth) / 2;
-                    const y = (pdfHeight - finalHeight) / 2;
-                    
-                    pdf.addImage(pageImgData, 'JPEG', x, y, finalWidth, finalHeight);
+                    const y = 0;
+
+                    pdf.addImage(imgData, 'JPEG', x, y, finalWidth, finalHeight, undefined, 'FAST');
                 }
 
                 pdf.save(`Relatorio_${match.myTeamName}_vs_${match.opponentName}.pdf`);
 
             } catch (e) {
-                showErrorMessage("Erro ao gerar o arquivo PDF. Tente novamente. Se o erro persistir, verifique o console para mais detalhes.", e);
+                showErrorMessage("Erro ao gerar o arquivo PDF. Verifique o console para mais detalhes.", e);
                 console.error("Falha na exportação para PDF:", e);
             } finally {
-                document.body.removeChild(tempContainer);
+                // Reseta a UI para o estado original
                 console.log("Exportação para PDF: Finalizando e resetando UI.");
+                reportContentWrapper.style.cssText = originalStyle;
                 text.classList.remove('hidden');
                 loader.classList.add('hidden');
                 button.disabled = false;
+                Chart.defaults.animation = true;
             }
         }
         window.exportReportToPDF = exportReportToPDF;
@@ -1953,8 +1941,10 @@
             openModal('halftime-report-modal');
 
             if (eventsForPeriod.length > 0) {
+                // Increased delay to give the DOM more time to render the modal content
                 await new Promise(resolve => setTimeout(resolve, 200));
                 
+                // Ensure possession data for the first half is available before rendering the chart
                 const possession1T = match.possession1T || {myTeam: 0, opponent: 0, stopped: 0};
                 renderPossessionChart(match, `possessionChart_1T`, possession1T);
             }
