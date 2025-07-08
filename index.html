@@ -307,7 +307,7 @@
             </div>
             <div class="bg-gray-800 p-4 rounded-lg mb-6"><label for="report-match-select" class="mr-2 text-gray-300">Selecione uma Partida:</label><select id="report-match-select" class="w-full md:w-1/2 p-2 rounded mt-1" onchange="generateReports(this.value)"></select></div>
             <div id="report-content-wrapper" class="p-4 md:p-8 rounded-lg mt-6"><div id="report-content" class="hidden space-y-8"></div></div>
-            <div class="mt-6 flex justify-end gap-2 admin-only" id="reports-buttons" style="display: none;">
+            <div class="mt-6 flex justify-end gap-2" id="reports-buttons" style="display: none;">
                 <button id="txt-export-button" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg" onclick="exportActionsToTXT()">Exportar Ações (TXT)</button>
                 <button id="pdf-export-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center" onclick="exportReportToPDF()"><span id="pdf-export-text">Exportar Relatório (PDF)</span><div id="pdf-export-loader" class="hidden ml-2 w-5 h-5 border-2 border-gray-400 border-t-white border-solid rounded-full animate-spin"></div></button>
             </div>
