@@ -179,8 +179,7 @@
 
     <nav class="w-full bg-gray-900 shadow-md flex items-center justify-between p-3 flex-shrink-0 z-20">
         <div class="flex items-center gap-3">
-             <!-- AJUSTE: Logo fixa na barra de navegação -->
-            <span id="nav-logo-container">
+             <span id="nav-logo-container">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-9 w-9 text-blue-400">
                     <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
                     <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
@@ -207,7 +206,7 @@
     </nav>
     <div id="mobile-menu" class="hidden md:hidden bg-gray-800 p-2"></div>
 
-    <main class="flex-1 p-4 md:p-8 overflow-y-auto">
+<main class="flex-1 p-4 md:p-8 overflow-y-auto">
         <div id="dashboard" class="view active"></div>
         <div id="management" class="view">
             <h2 class="text-3xl font-bold text-white mb-6">Gerenciamento de Jogadores</h2>
@@ -307,14 +306,14 @@
             </div>
             <div class="bg-gray-800 p-4 rounded-lg mb-6"><label for="report-match-select" class="mr-2 text-gray-300">Selecione uma Partida:</label><select id="report-match-select" class="w-full md:w-1/2 p-2 rounded mt-1" onchange="generateReports(this.value)"></select></div>
             <div id="report-content-wrapper" class="p-4 md:p-8 rounded-lg mt-6"><div id="report-content" class="hidden space-y-8"></div></div>
-            <div class="mt-6 flex justify-end gap-2" id="reports-buttons" style="display: none;">
+            <div class="mt-6 flex justify-end gap-2 admin-only" id="reports-buttons" style="display: none;">
                 <button id="txt-export-button" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg" onclick="exportActionsToTXT()">Exportar Ações (TXT)</button>
                 <button id="pdf-export-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center" onclick="exportReportToPDF()"><span id="pdf-export-text">Exportar Relatório (PDF)</span><div id="pdf-export-loader" class="hidden ml-2 w-5 h-5 border-2 border-gray-400 border-t-white border-solid rounded-full animate-spin"></div></button>
             </div>
         </div>
     </main>
 
-    <footer class="fixed bottom-0 left-0 w-full bg-gray-900 z-10"><div class="text-center text-xs text-gray-400 p-2 border-t border-gray-700">Powered by Ciente - Inteligência Esportiva / Contato: assessoria@cienteesportes.com.br</div></footer>
+<footer class="fixed bottom-0 left-0 w-full bg-gray-900 z-10"><div class="text-center text-xs text-gray-400 p-2 border-t border-gray-700">Powered by Ciente - Inteligência Esportiva / Contato: assessoria@cienteesportes.com.br</div></footer>
     
     <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-50 hidden" onclick="closeAllModals(event)">
         <div id="new-match-modal" class="modal-content bg-gray-800 text-white rounded-lg w-full max-w-4xl hidden flex flex-col max-h-[90vh]">
@@ -332,6 +331,25 @@
             <div class="p-6 pt-4"><button type="submit" form="new-match-form" class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded text-lg font-bold">Criar Partida</button></div>
         </div>
         <div id="goal-modal" class="modal-content bg-gray-800 text-white rounded-lg p-6 w-full max-w-lg hidden"></div>
+        
+        <div id="substitution-modal" class="modal-content bg-gray-800 text-white rounded-lg p-6 w-full max-w-lg hidden">
+            <h3 class="text-2xl font-bold mb-4">Realizar Substituição</h3>
+            <form id="substitution-form" class="space-y-4">
+                <div>
+                    <label for="player-out" class="block mb-1 font-semibold text-gray-300">Sai:</label>
+                    <select id="player-out" class="w-full p-2.5" required></select>
+                </div>
+                <div>
+                    <label for="player-in" class="block mb-1 font-semibold text-gray-300">Entra:</label>
+                    <select id="player-in" class="w-full p-2.5" required></select>
+                </div>
+                <div class="flex gap-4 mt-6">
+                    <button type="button" class="w-full bg-gray-600 hover:bg-gray-700 p-2.5 rounded" onclick="closeModal('substitution-modal')">Cancelar</button>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 p-2.5 rounded">Confirmar</button>
+                </div>
+            </form>
+        </div>
+        
         <div id="rating-modal" class="modal-content bg-gray-800 text-white rounded-lg p-6 w-full max-w-4xl hidden">
             <h3 class="text-2xl font-bold mb-4">Avaliação de Desempenho Pós-Jogo</h3>
             <div id="rating-player-list" class="space-y-6 max-h-[60vh] overflow-y-auto p-2"></div>
@@ -371,7 +389,6 @@
         
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'scout-pro-futebol-v2';
         
-        // Helper function to display an error message directly in the UI.
         function showUserFacingError(viewId, message) {
             const container = document.getElementById(viewId);
             if (container) {
@@ -498,7 +515,6 @@
             let dataLoaded = { players: false, matches: false };
             let timeoutTriggered = false;
 
-            // Set a timeout to check if data has loaded.
             setTimeout(() => {
                 if (appState.isGuestMode && (!dataLoaded.players || !dataLoaded.matches)) {
                     timeoutTriggered = true;
@@ -862,13 +878,14 @@
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
             if (!match || !ui.liveMatch.header) return;
 
-            // Calculate display time for the timer
             let displaySeconds = liveState.seconds;
             if (liveState.currentPeriod === 2 && liveState.secondHalfStartSeconds !== -1) {
                 displaySeconds = liveState.seconds - liveState.secondHalfStartSeconds;
             }
 
-            ui.liveMatch.header.innerHTML = `<div class="flex justify-between items-center text-white gap-2"><div class="text-base font-bold text-center truncate flex-1">${match.myTeamName}</div><div class="text-2xl font-black whitespace-nowrap">${match.myTeamScore} - ${match.opponentScore}</div><div class="text-base font-bold text-center truncate flex-1">${match.opponentName}</div></div><div class="text-center text-5xl font-black text-white my-2" id="live-timer">${formatTime(displaySeconds)}</div><div class="flex justify-center items-center gap-2 flex-wrap"><button class="bg-green-600 px-2 py-1 rounded text-xs" onclick="timerControl('start1')">▶ 1ºT</button><button class="bg-yellow-500 px-2 py-1 rounded text-xs" onclick="timerControl('pause')">⏸ Int.</button><button class="bg-green-600 px-2 py-1 rounded text-xs" onclick="timerControl('start2')">▶ 2ºT</button><button class="bg-blue-600 px-2 py-1 rounded text-xs" onclick="showHalftimeReport()">Rel. 1ºT</button><button class="bg-red-600 px-2 py-1 rounded text-xs" onclick="timerControl('end')">⏹ Fim</button><button onclick="toggleFullScreen()" class="p-2 rounded-md text-gray-300 hover:bg-gray-700 md:hidden" title="Tela Cheia"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 110 2H5v2a1 1 0 11-2 0V4zm14 0a1 1 0 00-1-1h-4a1 1 0 100 2h3v2a1 1 0 102 0V4zm-2 10v2h-3a1 1 0 100 2h4a1 1 0 001-1v-4a1 1 0 10-2 0zM5 14v2h3a1 1 0 110 2H4a1 1 0 01-1-1v-4a1 1 0 112 0z" clip-rule="evenodd" /></svg></button></div><div class="flex gap-2 mt-2"><button class="w-1/2 bg-green-700 hover:bg-green-800 p-2 rounded-lg text-white font-bold" onclick="prepareGoalModal('myTeam')">GOL PRÓ</button><button class="w-1/2 bg-red-800 hover:bg-red-900 p-2 rounded-lg text-white font-bold" onclick="logGoal('opponent')">GOL CONTRA</button></div>`;
+            // MODIFICADO: Adicionado botão de substituição
+            ui.liveMatch.header.innerHTML = `<div class="flex justify-between items-center text-white gap-2"><div class="text-base font-bold text-center truncate flex-1">${match.myTeamName}</div><div class="text-2xl font-black whitespace-nowrap">${match.myTeamScore} - ${match.opponentScore}</div><div class="text-base font-bold text-center truncate flex-1">${match.opponentName}</div></div><div class="text-center text-5xl font-black text-white my-2" id="live-timer">${formatTime(displaySeconds)}</div><div class="flex justify-center items-center gap-2 flex-wrap"><button class="bg-green-600 px-2 py-1 rounded text-xs" onclick="timerControl('start1')">▶ 1ºT</button><button class="bg-yellow-500 px-2 py-1 rounded text-xs" onclick="timerControl('pause')">⏸ Int.</button><button class="bg-green-600 px-2 py-1 rounded text-xs" onclick="timerControl('start2')">▶ 2ºT</button><button class="bg-orange-500 px-2 py-1 rounded text-xs" onclick="prepareSubstitutionModal()">🔃 Substituição</button><button class="bg-blue-600 px-2 py-1 rounded text-xs" onclick="showHalftimeReport()">Rel. 1ºT</button><button class="bg-red-600 px-2 py-1 rounded text-xs" onclick="timerControl('end')">⏹ Fim</button><button onclick="toggleFullScreen()" class="p-2 rounded-md text-gray-300 hover:bg-gray-700 md:hidden" title="Tela Cheia"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 110 2H5v2a1 1 0 11-2 0V4zm14 0a1 1 0 00-1-1h-4a1 1 0 100 2h3v2a1 1 0 102 0V4zm-2 10v2h-3a1 1 0 100 2h4a1 1 0 001-1v-4a1 1 0 10-2 0zM5 14v2h3a1 1 0 110 2H4a1 1 0 01-1-1v-4a1 1 0 112 0z" clip-rule="evenodd" /></svg></button></div><div class="flex gap-2 mt-2"><button class="w-1/2 bg-green-700 hover:bg-green-800 p-2 rounded-lg text-white font-bold" onclick="prepareGoalModal('myTeam')">GOL PRÓ</button><button class="w-1/2 bg-red-800 hover:bg-red-900 p-2 rounded-lg text-white font-bold" onclick="logGoal('opponent')">GOL CONTRA</button></div>`;
+            
             const possessionArea = document.getElementById('possession-area');
             if (possessionArea) {
                 const myTeamActiveClass = liveState.currentPossessionHolder === 'myTeam' ? 'active' : '';
@@ -887,6 +904,77 @@
             }
         }
 
+        // NOVA FUNÇÃO: Lida com o envio do formulário de substituição
+        document.getElementById('substitution-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const match = appState.matches.find(m => m.id === appState.activeMatchId);
+            if (!match) return;
+
+            const playerOutId = document.getElementById('player-out').value;
+            const playerInId = document.getElementById('player-in').value;
+
+            if (playerOutId === playerInId) {
+                return showErrorMessage("O jogador que entra não pode ser o mesmo que sai.");
+            }
+
+            const playerOut = appState.players.find(p => p.id === playerOutId);
+            const playerIn = appState.players.find(p => p.id === playerInId);
+
+            const newEvent = {
+                time: liveState.seconds,
+                period: liveState.currentPeriod,
+                action: 'substituicao',
+                detail: `Sai ${playerOut?.name || 'N/A'}, Entra ${playerIn?.name || 'N/A'}`,
+                playerOutId: playerOutId,
+                playerInId: playerInId,
+                playerName: `Sai: ${playerOut?.name} / Entra: ${playerIn?.name}`
+            };
+            
+            try {
+                await updateMatchData(appState.activeMatchId, { events: [newEvent, ...(match.events || [])] });
+                closeModal('substitution-modal');
+            } catch (error) {
+                showErrorMessage("Não foi possível salvar a substituição.", error);
+            }
+        });
+
+        // NOVA FUNÇÃO: Retorna jogadores em campo e no banco
+        function getPlayersOnFieldAndBench(match) {
+            let onField = new Set(Object.values(match.lineup).filter(Boolean));
+            const subs = (match.events || []).filter(e => e.action === 'substituicao').sort((a,b) => a.time - b.time);
+
+            subs.forEach(sub => {
+                if (sub.playerOutId) onField.delete(sub.playerOutId);
+                if (sub.playerInId) onField.add(sub.playerInId);
+            });
+
+            const onBench = match.squadPlayerIds.filter(pid => !onField.has(pid));
+            
+            return { onField: Array.from(onField), onBench };
+        }
+
+        // NOVA FUNÇÃO: Prepara e abre o modal de substituição
+        window.prepareSubstitutionModal = function() {
+            const match = appState.matches.find(m => m.id === appState.activeMatchId);
+            if (!match || liveState.currentPeriod === 0) {
+                return showErrorMessage("Inicie o cronômetro para fazer substituições.");
+            }
+
+            const { onField, onBench } = getPlayersOnFieldAndBench(match);
+
+            const getPlayerOptions = (playerIds) => {
+                return playerIds.map(pid => {
+                    const player = appState.players.find(p => p.id === pid);
+                    return player ? `<option value="${pid}">${player.name}</option>` : '';
+                }).join('');
+            };
+
+            document.getElementById('player-out').innerHTML = getPlayerOptions(onField);
+            document.getElementById('player-in').innerHTML = getPlayerOptions(onBench);
+
+            openModal('substitution-modal');
+        }
+
         window.toggleLog = function() {
             const container = document.getElementById('live-log-container');
             const content = document.getElementById('live-log-content');
@@ -901,23 +989,23 @@
 
             if (action === 'start1') { 
                 liveState.currentPeriod = 1; 
-                liveState.secondHalfStartSeconds = -1; // Reset on 1st half start
+                liveState.secondHalfStartSeconds = -1;
                 updateMatchData(appState.activeMatchId, { secondHalfStartSeconds: -1 });
                 shouldStartTimer = true; 
             }
             else if (action === 'start2') { 
                 liveState.currentPeriod = 2; 
-                if (match && !match.possession1T) { // Save 1T possession if user clicks directly on "▶ 2ºT"
+                if (match && !match.possession1T) {
                     updateMatchData(appState.activeMatchId, { possession1T: match.possession });
                 }
-                if (liveState.secondHalfStartSeconds === -1) { // Set start time only once
+                if (liveState.secondHalfStartSeconds === -1) {
                     liveState.secondHalfStartSeconds = liveState.seconds;
                     updateMatchData(appState.activeMatchId, { secondHalfStartSeconds: liveState.seconds });
                 }
                 shouldStartTimer = true; 
             } 
             else if (action === 'pause') {
-                if (liveState.currentPeriod === 1 && match) { // Save possession at the end of 1st half
+                if (liveState.currentPeriod === 1 && match) {
                     updateMatchData(appState.activeMatchId, { possession1T: match.possession });
                 }
             }
@@ -1201,7 +1289,6 @@
             const finishedMatches = appState.matches.filter(m => m.status === 'finished');
             const totalGames = finishedMatches.length;
             
-            // General Stats
             const totalGoalsScored = finishedMatches.reduce((acc, m) => acc + (m.myTeamScore || 0), 0);
             const totalGoalsConceded = finishedMatches.reduce((acc, m) => acc + (m.opponentScore || 0), 0);
             let wins = 0, draws = 0, losses = 0;
@@ -1209,7 +1296,6 @@
             const aproveitamento = totalGames > 0 ? (((wins * 3 + draws) / (totalGames * 3)) * 100).toFixed(0) : 0;
             const last5Matches = [...finishedMatches].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0,5).map(m => { let result = 'E', color = 'bg-yellow-500'; if (m.myTeamScore > m.opponentScore) { result = 'V'; color = 'bg-green-500'; } if (m.myTeamScore < m.opponentScore) { result = 'D'; color = 'bg-red-500'; } return `<span class="w-8 h-8 flex items-center justify-center text-white font-bold rounded-full ${color}">${result}</span>`; }).join('');
             
-            // Advanced Stats Calculation
             let totalPossessionPercent = 0;
             let totalTeamShots = 0;
             let totalTeamClearChances = 0;
@@ -1218,7 +1304,7 @@
 
             finishedMatches.forEach(m => {
                 const possession = m.possession || { myTeam: 0, opponent: 0, stopped: 0 };
-                const totalPossessionSeconds = possession.myTeam + possession.opponent; // Only count active possession
+                const totalPossessionSeconds = possession.myTeam + possession.opponent;
                 if (totalPossessionSeconds > 0) {
                     totalPossessionPercent += (possession.myTeam / totalPossessionSeconds) * 100;
                 }
@@ -1236,7 +1322,6 @@
             const avgOpponentShots = totalGames > 0 ? (totalOpponentShots / totalGames).toFixed(1) : '0.0';
             const avgOpponentClearChances = totalGames > 0 ? (totalOpponentClearChances / totalGames).toFixed(1) : '0.0';
             
-            // Top Performances
             const allPerformances = [];
             finishedMatches.forEach(m => { 
                 if(!m.ratings) return; 
@@ -1292,6 +1377,53 @@
             }
         }
         
+        // NOVA FUNÇÃO: Calcula minutos jogados por cada jogador em uma partida.
+        function calculateMinutesPlayed(match) {
+            if (!match || !match.lineup || match.status !== 'finished') {
+                return {};
+            }
+
+            const playerMinutes = {};
+            const onFieldStints = {}; 
+
+            Object.values(match.lineup).forEach(playerId => {
+                if (playerId) {
+                    onFieldStints[playerId] = 0;
+                }
+            });
+
+            const subEvents = (match.events || [])
+                .filter(e => e.action === 'substituicao')
+                .sort((a, b) => a.time - b.time);
+
+            subEvents.forEach(sub => {
+                const { time, playerOutId, playerInId } = sub;
+
+                if (playerOutId && onFieldStints.hasOwnProperty(playerOutId)) {
+                    const duration = time - onFieldStints[playerOutId];
+                    playerMinutes[playerOutId] = (playerMinutes[playerOutId] || 0) + duration;
+                    delete onFieldStints[playerOutId];
+                }
+
+                if (playerInId) {
+                    onFieldStints[playerInId] = time;
+                }
+            });
+
+            const matchEndTime = match.timerSeconds || 0;
+            Object.keys(onFieldStints).forEach(playerId => {
+                const duration = matchEndTime - onFieldStints[playerId];
+                playerMinutes[playerId] = (playerMinutes[playerId] || 0) + duration;
+            });
+
+            for (const pid in playerMinutes) {
+                playerMinutes[pid] = Math.round(playerMinutes[pid] / 60);
+            }
+
+            return playerMinutes;
+        }
+
+        // MODIFICADO: renderPerformancePage agora calcula e exibe os minutos
         function renderPerformancePage() {
             const container = document.getElementById('performance');
             if (!container) return;
@@ -1302,9 +1434,15 @@
             });
 
             const finishedMatches = appState.matches.filter(m => m.status === 'finished' && m.ratings);
+            const minutesByMatch = finishedMatches.reduce((acc, match) => {
+                acc[match.id] = calculateMinutesPlayed(match);
+                return acc;
+            }, {});
 
             finishedMatches.forEach(match => {
                 const matchEvents = match.events || [];
+                const matchMinutes = minutesByMatch[match.id] || {};
+                
                 Object.entries(match.ratings).forEach(([playerId, rates]) => {
                     if (performances[playerId] && rates.played) {
                         const playerEvents = matchEvents.filter(e => e.playerId === playerId);
@@ -1320,6 +1458,7 @@
                             matchDate: new Date(match.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
                             opponentName: match.opponentName,
                             overall: avg,
+                            minutesPlayed: matchMinutes[playerId] || 0,
                             goals,
                             assists,
                             shots,
@@ -1333,17 +1472,18 @@
             const sortedPerformances = Object.values(performances).map(p => {
                 const overallScores = p.matchPerformances.map(mp => mp.overall);
                 const overallAvg = overallScores.length > 0 ? (overallScores.reduce((a, b) => a + b, 0) / overallScores.length) : 0;
+                const totalMinutesPlayed = p.matchPerformances.reduce((acc, mp) => acc + mp.minutesPlayed, 0);
                 const totalGoals = p.matchPerformances.reduce((acc, mp) => acc + mp.goals, 0);
                 const totalAssists = p.matchPerformances.reduce((acc, mp) => acc + mp.assists, 0);
                 const totalShots = p.matchPerformances.reduce((acc, mp) => acc + mp.shots, 0);
                 const totalDuelsWon = p.matchPerformances.reduce((acc, mp) => acc + mp.duelsWon, 0);
                 const totalDuelsLost = p.matchPerformances.reduce((acc, mp) => acc + mp.duelsLost, 0);
-                return { ...p, overallAvg, totalGoals, totalAssists, totalShots, totalDuelsWon, totalDuelsLost };
+                return { ...p, overallAvg, totalMinutesPlayed, totalGoals, totalAssists, totalShots, totalDuelsWon, totalDuelsLost };
             }).sort((a, b) => b.overallAvg - a.overallAvg);
 
             let tableHTML = '';
             if (sortedPerformances.length === 0 || finishedMatches.length === 0) {
-                 tableHTML = '<tbody><tr><td colspan="8" class="text-center p-8 text-gray-400">Nenhuma avaliação de desempenho encontrada. Finalize uma partida com avaliações para ver os dados.</td></tr></tbody>';
+                 tableHTML = '<tbody><tr><td colspan="9" class="text-center p-8 text-gray-400">Nenhuma avaliação de desempenho encontrada. Finalize uma partida com avaliações para ver os dados.</td></tr></tbody>';
             } else {
                  tableHTML = sortedPerformances.map(p => {
                     if (p.matchPerformances.length === 0) return '';
@@ -1353,6 +1493,7 @@
                             <td class="py-2 px-3 text-sm text-left">${mp.matchDate}</td>
                             <td class="py-2 px-3 text-sm text-left">${mp.opponentName}</td>
                             <td class="py-2 px-3 text-sm font-bold text-blue-300">${mp.overall.toFixed(1)}</td>
+                            <td class="py-2 px-3 text-sm">${mp.minutesPlayed}</td>
                             <td class="py-2 px-3 text-sm">${mp.goals}</td>
                             <td class="py-2 px-3 text-sm">${mp.assists}</td>
                             <td class="py-2 px-3 text-sm">${mp.shots}</td>
@@ -1365,6 +1506,7 @@
                                     <td class="p-3 font-semibold text-white">${p.name} <span class="text-xs text-gray-400">${p.position}</span></td>
                                     <td class="p-3 text-center font-bold text-blue-400">${p.overallAvg.toFixed(1)}</td>
                                     <td class="p-3 text-center">${p.matchPerformances.length}</td>
+                                    <td class="p-3 text-center">${p.totalMinutesPlayed}</td>
                                     <td class="p-3 text-center">${p.totalGoals}</td>
                                     <td class="p-3 text-center">${p.totalAssists}</td>
                                     <td class="p-3 text-center">${p.totalShots}</td>
@@ -1374,7 +1516,7 @@
                                     </td>
                                 </tr>
                                 <tr class="performance-details-row hidden">
-                                    <td colspan="8" class="p-0">
+                                    <td colspan="9">
                                         <div class="p-4 bg-gray-900">
                                             <table class="w-full text-left">
                                                 <thead class="text-xs text-gray-400 uppercase">
@@ -1382,6 +1524,7 @@
                                                         <th class="py-2 px-3 text-left">Data</th>
                                                         <th class="py-2 px-3 text-left">Adversário</th>
                                                         <th class="py-2 px-3">Nota</th>
+                                                        <th class="py-2 px-3">Minutos</th>
                                                         <th class="py-2 px-3">Gols</th>
                                                         <th class="py-2 px-3">Assist.</th>
                                                         <th class="py-2 px-3">FIN</th>
@@ -1411,6 +1554,7 @@
                                 <th class="p-3 w-1/3">Jogador</th>
                                 <th class="p-3 text-center">Média Geral</th>
                                 <th class="p-3 text-center">Jogos</th>
+                                <th class="p-3 text-center" title="Minutos Jogados">Minutos</th>
                                 <th class="p-3 text-center" title="Gols">Gols</th>
                                 <th class="p-3 text-center" title="Assistências">Assist.</th>
                                 <th class="p-3 text-center" title="Finalizações">FIN</th>
@@ -1423,7 +1567,6 @@
                 </div>
             `;
         }
-
 
         function renderReportMatchSelect() {
             const select = document.getElementById('report-match-select');
@@ -1584,7 +1727,6 @@
             return tableHTML;
         }
 
-
         function renderReportSummaryTable(match, containerId, period) {
             const container = document.getElementById(containerId);
             if(!container) return;
@@ -1656,7 +1798,6 @@
             charts[canvasId] = new Chart(ctx, { type: 'bar', data: { labels: ['Posse'], datasets: [ { label: match.myTeamName, data: [dataToUse.myTeam], backgroundColor: '#ef4444' }, { label: match.opponentName, data: [dataToUse.opponent], backgroundColor: '#3b82f6' } ]}, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true, display: false }, y: { stacked: true, display: false } }, plugins: { legend: { display: true, position: 'top', labels: {color: '#374151'} }, datalabels: { color: 'white', font: { weight: 'bold' }, formatter: (v,c) => { const t = c.chart.data.datasets.reduce((s, ds) => s + (ds.data[0]||0), 0); return t > 0 ? (v/t*100).toFixed(0)+'%' : '0%'; }}}}});
         }
 
-        // AJUSTE: Gráfico de volume de ações agora mostra o percentual
         function renderActionMapChart(match, canvasId, period) {
             const ctx = document.getElementById(canvasId)?.getContext('2d');
             if(!ctx) return;
@@ -1726,7 +1867,6 @@
             return ""; 
         }
 
-        // AJUSTE: Legendas para todas as notas individuais do destaque
         function renderManOfTheMatch(match) {
             const container = document.getElementById('report-motm');
             if(!container || !match.ratings || Object.keys(match.ratings).length === 0) { if(container) container.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhuma avaliação registrada.</p>'; return; }
@@ -1772,19 +1912,15 @@
             const myEvents = match.events.filter(e => e.scoringTeam !== 'opponent' && !e.action.endsWith('_adv'));
             const opponentGoalEvents = match.events.filter(e => e.action === 'gol_contra').sort((a,b) => a.time - b.time);
 
-            // --- Gols da Equipe (Formato: Jogador, Período - Minuto') ---
             const goalEvents = myEvents.filter(e => e.action === 'gol').sort((a,b) => a.time - b.time);
             let teamGoalsHTML = '';
             if (goalEvents.length > 0) {
                  teamGoalsHTML = goalEvents.map(goal => {
                     const player = appState.players.find(p => p.id === goal.playerId);
                     let minute;
-                    // Calcula o minuto baseado no período do jogo
                     if(goal.period === 2 && match.secondHalfStartSeconds > -1) {
-                        // Se for 2º tempo, calcula a partir do início do 2º tempo
                         minute = Math.floor((goal.time - match.secondHalfStartSeconds) / 60);
                     } else {
-                        // Para o 1º tempo, o cálculo é direto
                         minute = Math.floor(goal.time / 60);
                     }
                     return `<li class="flex justify-between"><span>${player?.name || 'Desconhecido'}</span> <strong>${goal.period}T - ${minute}'</strong></li>`;
@@ -1793,17 +1929,13 @@
                 teamGoalsHTML = '<li>Nenhum gol marcado.</li>';
             }
 
-            // --- Gols do Adversário (Formato: Adversário, Período - Minuto') ---
             let opponentGoalsHTML = '';
             if (opponentGoalEvents.length > 0) {
                  opponentGoalsHTML = opponentGoalEvents.map(goal => {
                     let minute;
-                    // Calcula o minuto baseado no período do jogo
                      if(goal.period === 2 && match.secondHalfStartSeconds > -1) {
-                        // Se for 2º tempo, calcula a partir do início do 2º tempo
                         minute = Math.floor((goal.time - match.secondHalfStartSeconds) / 60);
                     } else {
-                        // Para o 1º tempo, o cálculo é direto
                         minute = Math.floor(goal.time / 60);
                     }
                     return `<li class="flex justify-between"><span>Adversário</span> <strong>${goal.period}T - ${minute}'</strong></li>`;
@@ -1812,7 +1944,6 @@
                 opponentGoalsHTML = '<li>Nenhum gol sofrido.</li>';
             }
 
-            // --- Outras Estatísticas ---
             const getTopStats = (action, detail, key) => { const counts = myEvents.filter(e => e.action === action && (detail ? e.detail === detail : true) && e[key]).reduce((acc, e) => { acc[e[key]] = (acc[e[key]] || 0) + 1; return acc; }, {}); return Object.entries(counts).sort(([,a],[,b]) => b-a); };
             const assists = getTopStats('gol', null, 'assistId'); 
             const shots = getTopStats('finalizacao', null, 'playerId'); 
@@ -1919,10 +2050,6 @@
             container.innerHTML = formationHTML;
         }
         
-       /**
-         * ATUALIZADO: Função de exportação para PDF agora usa orientação paisagem ('l')
-         * e uma abordagem de renderização estática para garantir consistência e evitar cortes.
-         */
         async function exportReportToPDF() {
             const button = document.getElementById('pdf-export-button');
             const text = document.getElementById('pdf-export-text');
@@ -1950,11 +2077,10 @@
             const tempContainer = document.createElement('div');
             tempContainer.style.position = 'absolute';
             tempContainer.style.left = '-9999px';
-            tempContainer.style.width = '1122px'; // Largura para simular uma renderização de paisagem A4
+            tempContainer.style.width = '1122px';
             document.body.appendChild(tempContainer);
 
             try {
-                // MUDANÇA PRINCIPAL: Orientação definida para paisagem ('l')
                 const pdf = new jsPDF({ orientation: 'l', unit: 'mm', format: 'a4' });
                 const visiblePages = document.querySelectorAll('#report-content .report-page');
                 
@@ -2094,6 +2220,7 @@
             const finishedMatches = appState.matches.filter(m => m.status === 'finished' && m.ratings);
             finishedMatches.forEach(match => {
                  const matchEvents = match.events || [];
+                 const matchMinutes = calculateMinutesPlayed(match);
                  Object.entries(match.ratings).forEach(([playerId, rates]) => {
                      if (performances[playerId] && rates.played) {
                         const playerEvents = matchEvents.filter(e => e.playerId === playerId);
@@ -2102,6 +2229,7 @@
                         
                         performances[playerId].matchPerformances.push({
                             overall: avg,
+                            minutesPlayed: matchMinutes[playerId] || 0,
                             goals: playerEvents.filter(e => e.action === 'gol').length,
                             assists: matchEvents.filter(e => e.assistId === playerId).length,
                             shots: playerEvents.filter(e => e.action === 'finalizacao').length,
@@ -2115,15 +2243,16 @@
             const aggregatedPerformances = Object.values(performances).map(p => {
                 const overallScores = p.matchPerformances.map(mp => mp.overall);
                 const overallAvg = overallScores.length > 0 ? (overallScores.reduce((a, b) => a + b, 0) / overallScores.length) : 0;
+                const totalMinutesPlayed = p.matchPerformances.reduce((acc, mp) => acc + mp.minutesPlayed, 0);
                 const totalGoals = p.matchPerformances.reduce((acc, mp) => acc + mp.goals, 0);
                 const totalAssists = p.matchPerformances.reduce((acc, mp) => acc + mp.assists, 0);
                 const totalShots = p.matchPerformances.reduce((acc, mp) => acc + mp.shots, 0);
                 const totalDuelsWon = p.matchPerformances.reduce((acc, mp) => acc + mp.duelsWon, 0);
                 const totalDuelsLost = p.matchPerformances.reduce((acc, mp) => acc + mp.duelsLost, 0);
-                return { ...p, overallAvg, totalGoals, totalAssists, totalShots, totalDuelsWon, totalDuelsLost };
+                return { ...p, overallAvg, totalMinutesPlayed, totalGoals, totalAssists, totalShots, totalDuelsWon, totalDuelsLost };
             }).sort((a,b) => b.overallAvg - a.overallAvg);
 
-            const headers = ["Jogador", "Média Geral", "Posição", "Jogos", "Gols", "Assist.", "Finalizações", "Duelos Ganhos", "Duelos Perdidos"];
+            const headers = ["Jogador", "Média Geral", "Posição", "Jogos", "Minutos", "Gols", "Assist.", "Finalizações", "Duelos Ganhos", "Duelos Perdidos"];
             let txtContent = headers.join("\t") + "\r\n";
 
             aggregatedPerformances.forEach(p => {
@@ -2133,6 +2262,7 @@
                         p.overallAvg.toFixed(1),
                         p.position,
                         p.matchPerformances.length,
+                        p.totalMinutesPlayed,
                         p.totalGoals,
                         p.totalAssists,
                         p.totalShots,
@@ -2146,8 +2276,9 @@
             downloadFile(txtContent, 'historico_desempenho_jogadores.txt');
         }
 
-
         window.addEventListener('DOMContentLoaded', firebaseAuth);
     </script>
 </body>
 </html>
+
+
