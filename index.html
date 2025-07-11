@@ -2148,30 +2148,27 @@ window.undoLastAction = async function() {
                     const pdfWidth = pdf.internal.pageSize.getWidth
 ();
                     const pdfHeight = pdf.internal.pageSize.getHeight();
+                    
                     const canvasWidth = pageCanvas.width;
                     const canvasHeight = pageCanvas.height;
-                    const canvasRatio = canvasHeight / canvasWidth;
-                    
-                    let imgWidth = pdfWidth;
-                    let imgHeight = pdfWidth * canvasRatio;
-
-                    // Se a altura da imagem for maior que a altura do PDF, ajuste as dimensões
-                    if (imgHeight > pdfHeight) {
-                        imgHeight = pdfHeight;
-                        imgWidth = imgHeight / canvasRatio;
+                    const canvasRatio = canvasWidth / canvasHeight;
+                    let finalWidth = pdfWidth;
+                    let finalHeight = pdfWidth / canvasRatio;
+                    if (finalHeight > pdfHeight) {
+                        finalHeight = pdfHeight;
+                        finalWidth = pdfHeight * canvasRatio;
                     }
-                    
-                    const x = (pdfWidth - imgWidth) / 2;
-                    const y = (pdfHeight - imgHeight) / 2;
 
-                    pdf.addImage(pageImgData, 'JPEG', x, y, imgWidth, imgHeight);
+                    const x = (pdfWidth - finalWidth) / 2;
+                    const y = (pdfHeight - finalHeight) / 2;
+                    
+                    pdf.addImage(pageImgData, 'JPEG', x, y, finalWidth, finalHeight);
                 }
 
-                const fileName = `Relatorio_${match.myTeamName}_vs_${match.opponentName}_${match.date}.pdf`;
-                pdf.save(fileName);
-
-            } catch (error) {
-                showErrorMessage('Ocorreu um erro ao gerar o PDF.', error);
+                pdf.save(`Relatorio_${match.myTeamName}_vs_${match.opponentName}.pdf`);
+            } catch (e) {
+                showErrorMessage("Erro ao gerar o arquivo PDF. Tente novamente. Se o erro persistir, verifique o console para mais detalhes.", e);
+                console.error("Falha na exportação para PDF:", e);
             } finally {
                 document.body.removeChild(tempContainer);
                 text.classList.remove('hidden');
@@ -2179,127 +2176,78 @@ window.undoLastAction = async function() {
                 button.disabled = false;
             }
         }
+        window.exportReportToPDF = exportReportToPDF;
 
-        function renderOnFieldPlayers() {
-            const container = document.getElementById('on-field-players');
-            if (!container || !appState.activeMatchId) return;
-
+        async function showHalftimeReport() {
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
-            if (!match) return;
-
-            const { onField } = getPlayersOnFieldAndBench(match);
-            const sortedOnFieldPlayers = onField
-                .map(pid => appState.players.find(p => p.id === pid))
-                .filter(Boolean)
-                .sort((a, b) => a.name.localeCompare(b.name));
-
-            container.innerHTML = sortedOnFieldPlayers.map(player => 
-                `<button class="action-btn bg-gray-700 hover:bg-gray-600 text-white truncate" onclick="selectPlayerForAction('${player.id}')" title="${player.name}">
-                    ${player.name}
-                </button>`
-            ).join('');
-        }
-
-        window.showHalftimeReport = function() {
-            const match = appState.matches.find(m => m.id === appState.activeMatchId);
-            if (!match) return;
+            if (!match) {
+                showErrorMessage("Nenhuma partida ativa para gerar relatório.");
+                return;
+            }
             cancelPlayerSelection();
-
-            const contentContainer = document.getElementById('halftime-report-content');
-            if (!contentContainer) return;
             
+            destroyCharts();
+            const contentContainer = document.getElementById('halftime-report-content');
             contentContainer.innerHTML = renderReportContentForPDF(match, 1);
             
             openModal('halftime-report-modal');
 
-            setTimeout(() => {
-                destroyCharts(); 
-                renderChartsForReport(match, 1);
-            }, 100);
+            await new Promise(resolve => setTimeout(resolve, 200));
+            renderChartsForReport(match, 1);
+        }
+        window.showHalftimeReport = showHalftimeReport;
+
+        function downloadFile(content, fileName) {
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url); link.setAttribute("download", fileName);
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
         window.exportActionsToTXT = function() {
             const matchId = document.getElementById('report-match-select').value;
-            if (!matchId) return alert('Selecione uma partida primeiro.');
-
+            if (!matchId) return showErrorMessage("Por favor, selecione uma partida primeiro.");
             const match = appState.matches.find(m => m.id === matchId);
-            if (!match || !match.events) return alert('Nenhum evento encontrado para esta partida.');
-
-            let txtContent = `Relatório de Ações - ${match.myTeamName} vs ${match.opponentName} - ${new Date(match.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}\n`;
-            txtContent += "====================================================================\n";
-            txtContent += "Tempo | Período | Setor    | Ação               | Detalhe      | Jogador\n";
-            txtContent += "--------------------------------------------------------------------\n";
-
-            const sortedEvents = [...match.events].sort((a, b) => a.time - b.time);
-
-            sortedEvents.forEach(event => {
-                const timeStr = formatTime(event.time).padEnd(6);
-                const periodStr = (event.period + 'ºT').padEnd(8);
-                const zoneStr = (event.zone || 'N/A').padEnd(9);
-                const actionStr = (event.action || '').replace(/_/g, ' ').padEnd(19);
-                const detailStr = (event.detail && event.detail !== 'N/A' ? event.detail.replace(/_/g, ' ') : '').padEnd(13);
-                const playerStr = event.playerName || 'N/A';
-                txtContent += `${timeStr}| ${periodStr}| ${zoneStr}| ${actionStr}| ${detailStr}| ${playerStr}\n`;
+            if (!match || !match.events) return;
+            const headers = ["Tempo", "Periodo", "Setor", "Acao", "Detalhe", "Jogador", "Equipa"];
+            let txtContent = headers.join("\t") + "\r\n";
+            [...match.events].reverse().forEach(ev => {
+                const teamName = (ev.action.endsWith('_adv') || ev.scoringTeam === 'opponent') ? match.opponentName : match.myTeamName;
+                const row = [formatTime(ev.time), `${ev.period}T`, ev.zone, ev.action, ev.detail, ev.playerName, teamName];
+                txtContent += row.join("\t") + "\r\n";
             });
-
-            const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            const fileName = `Acoes_${match.myTeamName}_vs_${match.opponentName}_${match.date}.txt`;
-            link.setAttribute('download', fileName);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            downloadFile(txtContent, `historico_acoes_${match.myTeamName}_vs_${match.opponentName}.txt`);
         }
-
+        
         window.exportPerformancesToTXT = function() {
             const performances = {};
             appState.players.forEach(p => {
                 performances[p.id] = { name: p.name, position: p.position, matchPerformances: [] };
             });
-
             const finishedMatches = appState.matches.filter(m => m.status === 'finished' && m.ratings);
-            if (finishedMatches.length === 0) {
-                return alert("Nenhuma partida finalizada com avaliações para exportar.");
-            }
-
-            const minutesByMatch = finishedMatches.reduce((acc, match) => {
-                acc[match.id] = calculateMinutesPlayed(match);
-                return acc;
-            }, {});
-
             finishedMatches.forEach(match => {
-                const matchEvents = match.events || [];
-                const matchMinutes = minutesByMatch[match.id] || {};
-                
-                Object.entries(match.ratings).forEach(([playerId, rates]) => {
-                    if (performances[playerId] && rates.played) {
-                        const playerEvents = matchEvents.filter(e => e.playerId === playerId);
-                        const goals = playerEvents.filter(e => e.action === 'gol').length;
-                        const assists = matchEvents.filter(e => e.assistId === playerId).length;
-                        const shots = playerEvents.filter(e => e.action === 'finalizacao').length;
-                        const duelsWon = playerEvents.filter(e => e.action === 'duelo_ganho').length;
-                        const duelsLost = playerEvents.filter(e => e.action === 'duelo_perdido').length;
-   
+                 const matchEvents = match.events || [];
+                 const matchMinutes = calculateMinutesPlayed(match);
+                 Object.entries(match.ratings).forEach(([playerId, rates]) => {
+                     if (performances[playerId] && rates.played) {
+                         const playerEvents = matchEvents.filter(e => e.playerId === playerId);
+
                         const avg = (parseFloat(rates.tecnico) + parseFloat(rates.tatico) + parseFloat(rates.fisico) + parseFloat(rates.comportamental)) / 4;
-                        performances[playerId].matchPerformances.push({
-                            matchDate: new Date(match.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
-                            opponentName: match.opponentName,
+                        
+                         performances[playerId].matchPerformances.push({
                             overall: avg,
                             minutesPlayed: matchMinutes[playerId] || 0,
-                            goals,
-                            assists,
-                            shots,
-                            duelsWon,
-                            duelsLost
+                            goals: playerEvents.filter(e => e.action === 'gol').length,
+                            assists: matchEvents.filter(e => e.assistId === playerId).length,
+                            shots: playerEvents.filter(e => e.action === 'finalizacao').length,
+                            duelsWon: playerEvents.filter(e => e.action === 'duelo_ganho').length,
+                            duelsLost: playerEvents.filter(e => e.action === 'duelo_perdido').length,
                         });
                     }
-                });
+                 });
             });
-
-            const sortedPerformances = Object.values(performances).map(p => {
+            const aggregatedPerformances = Object.values(performances).map(p => {
                 const overallScores = p.matchPerformances.map(mp => mp.overall);
                 const overallAvg = overallScores.length > 0 ? (overallScores.reduce((a, b) => a + b, 0) / overallScores.length) : 0;
                 const totalMinutesPlayed = p.matchPerformances.reduce((acc, mp) => acc + mp.minutesPlayed, 0);
@@ -2309,51 +2257,60 @@ window.undoLastAction = async function() {
                 const totalDuelsWon = p.matchPerformances.reduce((acc, mp) => acc + mp.duelsWon, 0);
                 const totalDuelsLost = p.matchPerformances.reduce((acc, mp) => acc + mp.duelsLost, 0);
                 return { ...p, overallAvg, totalMinutesPlayed, totalGoals, totalAssists, totalShots, totalDuelsWon, totalDuelsLost };
-            }).sort((a, b) => b.overallAvg - a.overallAvg);
+            }).sort((a,b) => b.overallAvg - a.overallAvg);
 
-            let txtContent = "Relatório de Desempenho dos Jogadores\n";
-            txtContent += "========================================\n\n";
+            const headers = ["Jogador", "Média Geral", "Posição", "Jogos", "Minutos", "Gols", "Assist.", "Finalizações", "Duelos Ganhos", "Duelos Perdidos"];
+            let txtContent = headers.join("\t") + "\r\n";
 
-            sortedPerformances.forEach(p => {
-                if (p.matchPerformances.length === 0) return;
-
-                txtContent += `JOGADOR: ${p.name} (${p.position})\n`;
-                txtContent += `----------------------------------------\n`;
-                txtContent += `Média Geral: ${p.overallAvg.toFixed(1)}\n`;
-                txtContent += `Jogos: ${p.matchPerformances.length}\n`;
-                txtContent += `Minutos Jogados: ${p.totalMinutesPlayed}\n`;
-                txtContent += `Gols: ${p.totalGoals}\n`;
-                txtContent += `Assistências: ${p.totalAssists}\n`;
-                txtContent += `Finalizações: ${p.totalShots}\n`;
-                txtContent += `Duelos Ganhos / Perdidos: ${p.totalDuelsWon} / ${p.totalDuelsLost}\n\n`;
-                txtContent += "DETALHES POR PARTIDA:\n";
-                txtContent += "Data       | Adversário        | Nota | Min | G | A | Fin | Duelos G/P\n";
-                p.matchPerformances.forEach(mp => {
-                    const date = mp.matchDate.padEnd(11);
-                    const opponent = mp.opponentName.padEnd(18);
-                    const overall = mp.overall.toFixed(1).padEnd(5);
-                    const mins = String(mp.minutesPlayed).padEnd(4);
-                    const goals = String(mp.goals).padEnd(2);
-                    const assists = String(mp.assists).padEnd(2);
-                    const shots = String(mp.shots).padEnd(4);
-                    const duels = `${mp.duelsWon}/${mp.duelsLost}`;
-                    txtContent += `${date}| ${opponent}| ${overall}| ${mins}| ${goals}| ${assists}| ${shots}| ${duels}\n`;
-                });
-                txtContent += "\n========================================\n\n";
+            aggregatedPerformances.forEach(p => {
+                if(p.matchPerformances.length > 0) {
+                     const row = [
+                        p.name,
+                        p.overallAvg.toFixed(1),
+                        p.position,
+                        p.matchPerformances.length,
+                        p.totalMinutesPlayed,
+                        p.totalGoals,
+                        p.totalAssists,
+                        p.totalShots,
+                        p.totalDuelsWon,
+                        p.totalDuelsLost
+                     ];
+                     txtContent += row.join("\t") + "\r\n";
+                }
             });
+            downloadFile(txtContent, 'historico_desempenho_jogadores.txt');
+        }
 
-            const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            const fileName = `Desempenho_Jogadores_${new Date().toISOString().slice(0,10)}.txt`;
-            link.setAttribute('download', fileName);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+        function renderOnFieldPlayers() {
+            const match = appState.matches.find(m => m.id === appState.activeMatchId);
+            const container = document.getElementById('on-field-players');
+            if (!match || !container) return;
+    
+            container.innerHTML = '';
+    
+            const { onField } = getPlayersOnFieldAndBench(match);
+            const playersOnField = onField
+                .map(pid => appState.players.find(p => p.id === pid))
+                .filter(Boolean);
+    
+            playersOnField.sort((a,b) => a.name.localeCompare(b.name));
+    
+            if (playersOnField.length === 0) {
+                 container.innerHTML = '<p class="text-gray-400 text-center col-span-full">Nenhum jogador em campo.</p>';
+            } else {
+                 playersOnField.forEach(player => {
+                    const button = document.createElement('button');
+                    button.className = 'action-btn bg-gray-700 hover:bg-gray-600 text-white truncate';
+                    button.textContent = player.name;
+                    button.onclick = () => selectPlayerForAction(player.id);
+                    container.appendChild(button);
+                 });
+            }
         }
 
         firebaseAuth();
     </script>
+
 </body>
 </html>
