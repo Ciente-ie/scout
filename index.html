@@ -1820,52 +1820,50 @@ window.undoLastAction = async function() {
         }
         
         function renderActionListBySectorHTML(events) {
-            if (!events || events.length === 0) {
-                return '';
-            }
+            // 1. Define a ordem padrão e os rótulos corretos para as ações.
+            const standardActionOrder = [
+                { key: 'finalizacao', label: 'Finalizações' },
+                { key: 'chance_clara', label: 'Chances Claras' },
+                { key: 'duelo_ganho', label: 'Duelos Ganhos' },
+                { key: 'duelo_perdido', label: 'Duelos Perdidos' },
+                { key: 'passe_certo', label: 'Passes Certos' },
+                { key: 'passe_errado', label: 'Passes Errados' },
+                { key: 'cruzamento_dir', label: 'Cruzamentos Dir.' },
+                { key: 'cruzamento_esq', label: 'Cruzamentos Esq.' },
+                { key: 'falta_sofrida', label: 'Faltas Sofridas' },
+                { key: 'falta_cometida', label: 'Faltas Cometidas' }
+            ];
 
-            const actionLabels = {
-                finalizacao: 'Finalização', finalizacao_adv: 'Finalização Adv.',
-                chance_clara: 'Chance Clara', chance_clara_adv: 'Chance Adv.',
-                duelo_ganho: 'Duelo Ganho', duelo_perdido: 'Duelo Perdido',
-                falta_cometida: 'Falta Cometida', falta_sofrida: 'Falta Sofrida',
-                cruzamento_dir: 'Cruzamento (Dir)', cruzamento_esq: 'Cruzamento (Esq)',
-                passe_certo: 'Passe Certo', passe_errado: 'Passe Errado',
-                gol: 'GOL', gol_contra: 'Gol Contra'
-            };
+            // 2. Filtra apenas os eventos da sua equipe para a contagem.
+            const myTeamEvents = events.filter(e => e.scoringTeam !== 'opponent' && !e.action.endsWith('_adv'));
 
             const actionsBySector = { defesa: {}, meio: {}, ataque: {} };
 
-            // Agrega e conta as ações por tipo em cada setor
-            events.forEach(e => {
+            // 3. Agrega e conta as ações que ocorreram.
+            myTeamEvents.forEach(e => {
                 if (actionsBySector.hasOwnProperty(e.zone)) {
                     let actionKey = e.action;
-                    // Trata ações com detalhes que definem o tipo, como faltas e cruzamentos
-                    if(e.action === 'falta' || e.action === 'cruzamento') {
+                    if (e.action === 'falta' || e.action === 'cruzamento') {
                         actionKey = e.detail;
                     }
-                    
                     const sectorCounts = actionsBySector[e.zone];
                     sectorCounts[actionKey] = (sectorCounts[actionKey] || 0) + 1;
                 }
             });
 
+            // 4. Constrói o HTML final.
             return `
                 <div class="mt-3 p-2 border-t border-gray-200 text-xs text-gray-600 report-section">
                     <h4 class="font-semibold text-center text-sm text-gray-800 mb-2">Resumo de Ações por Setor</h4>
                     <div class="grid grid-cols-3 gap-3">
                         ${['defesa', 'meio', 'ataque'].map(sector => {
                             const counts = actionsBySector[sector];
-                            const sortedActions = Object.entries(counts).sort(([, a], [, b]) => b - a);
                             
-                            let listHTML = sortedActions.map(([key, count]) => {
-                                const label = actionLabels[key] || key.replace(/_/g, ' ');
-                                return `<li>${label} - <strong>${count}</strong></li>`;
+                            // 5. Gera a lista de ações na ordem padrão, mostrando 0 se não houver contagem.
+                            let listHTML = standardActionOrder.map(action => {
+                                const count = counts[action.key] || 0;
+                                return `<li>${action.label} - <strong>${count}</strong></li>`;
                             }).join('');
-
-                            if (!listHTML) {
-                                listHTML = '<li>Nenhuma ação</li>';
-                            }
 
                             return `
                                 <div>
