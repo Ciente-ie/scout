@@ -147,21 +147,34 @@
             display: inline-block !important; }
 
         /* --- NOVOS ESTILOS --- */
+        .field-zone-btn {
+            transition: all 0.3s ease;
+            transform: scale(1);
+        }
         .selected-zone {
             background-color: #f59e0b !important;
-            box-shadow: 0 0 0 3px #fbbf24;
-            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(251, 191, 36, 0.7);
+            color: #111827 !important;
+            transform: scale(1.08);
+            z-index: 10;
         }
         .flash-feedback {
-            animation: flash 0.5s ease-out;
+            animation: flash 0.4s ease-out;
         }
         @keyframes flash {
-            0% { background-color: #f59e0b; }
-            100% { /* Volta ao normal via JS */ }
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); background-color: #f59e0b; }
         }
-        .action-btn.waiting {
-            box-shadow: 0 0 0 4px #60a5fa;
-            transform: scale(1.1);
+        #live-player-list-container.awaiting-selection {
+            display: block !important;
+            border: 3px solid #60a5fa;
+            box-shadow: 0 0 20px rgba(96, 165, 250, 0.5);
+        }
+        #awaiting-action-info {
+            display: none;
+        }
+        #live-player-list-container.awaiting-selection #awaiting-action-info {
+             display: block;
         }
 
     </style>
@@ -213,10 +226,15 @@
             <div id="live-match-controls" class="space-y-2">
                 <div class="bg-gray-800 p-4 rounded-lg"></div> 
                 <div id="possession-area"></div>
-                <div id="live-player-list-container" class="bg-gray-900/70 p-3 rounded-lg mt-2">
-                    <h4 class="font-bold text-white text-sm text-center mb-2">SELECIONE O JOGADOR</h4>
+
+                <div id="live-player-list-container" class="bg-gray-900/70 p-3 rounded-lg mt-2 hidden">
+                    <div id="awaiting-action-info" class="p-2 mb-2 text-center bg-blue-900 rounded-md">
+                        <p class="font-bold text-white text-sm">SELECIONE O JOGADOR</p>
+                        <p id="awaiting-action-label" class="text-xs text-blue-200"></p>
+                    </div>
                     <div id="on-field-players" class="grid grid-cols-3 sm:grid-cols-4 gap-2">
                         </div>
+                    <button onclick="cancelPlayerSelection()" class="w-full mt-3 bg-red-800 hover:bg-red-700 text-white font-bold py-1 px-3 rounded-lg text-xs">Cancelar Ação</button>
                 </div>
                 <div id="sub-action-container"></div>
                 <div id="live-log-container" class="bg-gray-800 rounded-lg">
@@ -253,7 +271,7 @@
                             <div id="field-zone-defesa" class="field-zone-btn flex items-center justify-center rounded-l-lg cursor-pointer bg-blue-900/50 hover:bg-blue-800/80">
                                 <span class="label">Defesa</span>
                             </div>
-                            <div id="field-zone-meio" class="field-zone-btn flex items-center justify-center cursor-pointer bg-gray-900/50 hover:bg-gray-800/80 selected-zone">
+                            <div id="field-zone-meio" class="field-zone-btn flex items-center justify-center cursor-pointer bg-gray-900/50 hover:bg-gray-800/80">
                                 <span class="label">Meio</span>
                             </div>
                             <div id="field-zone-ataque" class="field-zone-btn flex items-center justify-center rounded-r-lg cursor-pointer bg-red-900/50 hover:bg-red-800/80">
@@ -269,7 +287,8 @@
                         <button class="action-btn bg-purple-600" onclick="logEvent(event, 'chance_clara_adv')">Chance Adv.</button>
                         <button class="action-btn bg-blue-500" onclick="logEvent(event, 'cruzamento')">Cruzamento</button>
                         <button class="action-btn bg-red-500" onclick="logEvent(event, 'falta')">Falta</button>
-                        <button class="action-btn bg-yellow-500" onclick="logEvent(event, 'duelo')">Duelo</button>
+                        <button class="action-btn bg-yellow-500" onclick="logEvent(event, 'duelo_ganho')">Duelo Ganho</button>
+                        <button class="action-btn bg-yellow-500" onclick="logEvent(event, 'duelo_perdido')">Duelo Perdido</button>
                         <div class="col-span-2 sm:col-span-4 grid grid-cols-2 gap-2 border-t-2 border-white/10 pt-2 mt-auto">
                             <button class="action-btn pass-btn" onclick="logEvent(event, 'passe_certo')">Passe Certo</button>
                             <button class="action-btn pass-btn-errado" onclick="logEvent(event, 'passe_errado')">Passe Errado</button>
@@ -361,7 +380,6 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         let appState = { players: [], matches: [], settings: {}, activeMatchId: null, currentView: 'dashboard', listenersAttached: false, isGuestMode: false };
-        // CÓDIGO MODIFICADO: liveState com novas propriedades
         let liveState = { timerInterval: null, possessionInterval: null, seconds: 0, currentPeriod: 0, currentPossessionHolder: null, activeSubAction: null, secondHalfStartSeconds: -1, awaitingPlayerSelection: null, selectedZone: 'meio', isFieldInverted: false };
         let charts = {};
         const { jsPDF } = window.jspdf;
@@ -409,8 +427,6 @@
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 
-                // --- INÍCIO DO NOVO CÓDIGO DO CAMPO INTERATIVO ---
-    
                 function setupInteractiveField() {
                     const zones = ['defesa', 'meio', 'ataque'];
                     
@@ -418,38 +434,40 @@
                         document.querySelectorAll('.field-zone-btn').forEach(btn => {
                             btn.classList.remove('selected-zone');
                         });
-                        document.getElementById(selectedZoneId).classList.add('selected-zone');
-                        liveState.selectedZone = selectedZoneId.split('-')[2];
+                        const selectedBtn = document.getElementById(selectedZoneId);
+                        if(selectedBtn) {
+                             selectedBtn.classList.add('selected-zone');
+                             liveState.selectedZone = selectedBtn.id.split('-')[2];
+                        }
                     };
 
                     document.querySelectorAll('.field-zone-btn').forEach(btn => {
                         btn.addEventListener('click', () => updateSelection(btn.id));
                     });
+                    
+                    updateSelection('field-zone-meio'); // Set initial selection
 
                     document.getElementById('invert-field-btn').addEventListener('click', () => {
                         liveState.isFieldInverted = !liveState.isFieldInverted;
                         const fieldContainer = document.getElementById('field-zones');
                         const zoneElements = Array.from(fieldContainer.children);
                         
-                        // Inverte a ordem dos elementos no DOM
                         zoneElements.reverse().forEach(el => fieldContainer.appendChild(el));
                         
-                        // Atualiza os IDs e labels para manter a lógica correta
+                        // Temporarily map original IDs to new positions
+                        const originalIds = zoneElements.map(el => el.id);
                         zoneElements.forEach((el, index) => {
-                            const originalZoneName = zones[index];
-                            el.id = `field-zone-${originalZoneName}`;
-                            el.querySelector('.label').textContent = originalZoneName.charAt(0).toUpperCase() + originalZoneName.slice(1);
+                            const newZoneName = liveState.isFieldInverted ? zones.slice().reverse()[index] : zones[index];
+                            el.id = `field-zone-${newZoneName}`;
+                            const labelEl = el.querySelector('.label');
+                            if(labelEl) labelEl.textContent = newZoneName.charAt(0).toUpperCase() + newZoneName.slice(1);
                         });
-
-                        // Mantém a seleção visual no setor correto
+                        
                         updateSelection(`field-zone-${liveState.selectedZone}`);
                     });
                 }
-
-                // Chama a função para configurar os botões assim que o DOM carregar
+                
                 document.addEventListener('DOMContentLoaded', setupInteractiveField);
-
-                // --- FIM DO NOVO CÓDIGO DO CAMPO INTERATIVO ---
 
                 auth = getAuth(app);
                 document.addEventListener('fullscreenchange', () => {
@@ -589,6 +607,7 @@ function setupUIMode() {
                     if (appState.activeMatchId) {
                         renderLiveScoreAndTimer();
                         renderLiveLog();
+                        renderOnFieldPlayers();
                     }
                     break;
                 case 'matches': renderMatchList(); break;
@@ -605,12 +624,14 @@ function setupUIMode() {
             liveMatch: {
                 header: document.querySelector('#live-match #live-match-controls > .bg-gray-800'),
                 logBody: document.getElementById('live-log-body'),
-                subActionContainer: document.getElementById('sub-action-container')
+                subActionContainer: document.getElementById('sub-action-container'),
+                playerListContainer: document.getElementById('live-player-list-container')
             }
         };
         window.navigateTo = function(viewId) {
             if (appState.currentView === 'live-match' && viewId !== 'live-match') {
                 appState.activeMatchId = null;
+                cancelPlayerSelection(); // Garante que o estado seja limpo ao sair
             }
             
             const blockGuest = ['management', 'matches', 'live-match'];
@@ -879,12 +900,11 @@ function setupUIMode() {
                 currentPossessionHolder: null, 
                 activeSubAction: null,
                 secondHalfStartSeconds: match.secondHalfStartSeconds || -1,
-                awaitingPlayerSelection: null, // Reset state
-                selectedZone: 'meio', // Reset state
-                isFieldInverted: false // Reset state
+                awaitingPlayerSelection: null, 
+                selectedZone: 'meio', 
+                isFieldInverted: false
             };
             navigateTo('live-match');
-            renderOnFieldPlayers(); // NOVO: Renderiza a lista de jogadores
         }
         
         function renderLiveScoreAndTimer() {
@@ -942,7 +962,7 @@ function setupUIMode() {
             try {
                 await updateMatchData(appState.activeMatchId, { events: [newEvent, ...(match.events || [])] });
                 closeModal('substitution-modal');
-                renderOnFieldPlayers(); // NOVO: Atualiza a lista de jogadores após a substituição
+                renderOnFieldPlayers();
             } catch (error) {
                 showErrorMessage("Não foi possível salvar a substituição.", error);
             }
@@ -965,6 +985,7 @@ function setupUIMode() {
             if (!match || liveState.currentPeriod === 0) {
                 return showErrorMessage("Inicie o cronômetro para fazer substituições.");
             }
+            cancelPlayerSelection();
 
             const { onField, onBench } = getPlayersOnFieldAndBench(match);
             const getPlayerOptions = (playerIds) => {
@@ -991,6 +1012,8 @@ function setupUIMode() {
             clearInterval(liveState.timerInterval);
             let shouldStartTimer = false;
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
+            cancelPlayerSelection();
+
             if (action === 'start1') { 
                 liveState.currentPeriod = 1;
                 liveState.secondHalfStartSeconds = -1;
@@ -1057,39 +1080,46 @@ function setupUIMode() {
         const eventConfig = {
             finalizacao: { title: "Finalização", player: true, sub: [{label: "Dentro da área", value: "dentro_area"},{label: "Fora da área", value: "fora_area"},{label: "Cabeceio", value: "cabeceio"}] },
             finalizacao_adv: { title: "Finalização Adv.", player: false, sub: [{label: "Dentro da Área", value: "dentro_area"},{label: "Fora da Área", value: "fora_area"},{label: "Cabeceio", value: "cabeceio"}] },
-            // CÓDIGO MODIFICADO: Duelo com novas opções
-            duelo: { 
-                title: "Duelo", 
-                player: true, 
-                sub: [
-                    {label: "Ganhou (Gramado)", value: "ganhou_gramado"},
-                    {label: "Ganhou (Alto)", value: "ganhou_alto"},
-                    {label: "Perdeu (Gramado)", value: "perdeu_gramado"},
-                    {label: "Perdeu (Alto)", value: "perdeu_alto"}
-                ] 
-            },
-            falta: { title: "Tipo de Falta", player: false, sub: [{label: "Sofrida", value: "falta_sofrida"}, {label:"Cometida", value:"falta_cometida"}] },
-            cruzamento: { title: "Lado do Cruzamento", player: false, sub: [{label: "Direita", value: "cruzamento_dir"}, {label:"Esquerda", value:"cruzamento_esq"}] },
-            passe_certo: { player: true }, // Adicionado para poder selecionar jogador
-            passe_errado: { player: true } // Adicionado para poder selecionar jogador
+            chance_clara: { title: "Chance Clara", player: true },
+            chance_clara_adv: { title: "Chance Adv.", player: false },
+            duelo_ganho: { title: "Duelo Ganho", player: true },
+            duelo_perdido: { title: "Duelo Perdido", player: true },
+            falta: { title: "Tipo de Falta", player: true, sub: [{label: "Sofrida", value: "falta_sofrida"}, {label:"Cometida", value:"falta_cometida"}] },
+            cruzamento: { title: "Lado do Cruzamento", player: true, sub: [{label: "Direita", value: "cruzamento_dir"}, {label:"Esquerda", value:"cruzamento_esq"}] },
+            passe_certo: { title: "Passe Certo", player: true },
+            passe_errado: { title: "Passe Errado", player: true }
         };
 
-        // CÓDIGO MODIFICADO: para pegar o setor do estado, não do botão
+        function flashButton(btn) {
+            if (!btn) return;
+            btn.classList.add('flash-feedback');
+            setTimeout(() => {
+                btn.classList.remove('flash-feedback');
+            }, 400);
+        }
+
         window.logEvent = (event, action) => {
-            const zone = liveState.selectedZone; // Pega o setor do estado global
+            const button = event.currentTarget;
+            flashButton(button);
+
+            const zone = liveState.selectedZone;
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
             if (!match || liveState.currentPeriod === 0) return showErrorMessage("Inicie o cronômetro para registrar eventos.");
-            const config = eventConfig[action];
-
-            // CÓDIGO MODIFICADO: Para também poder aguardar jogador em ações sem sub-menu
-            if (config && config.sub) {
-                liveState.activeSubAction = { zone, action, config, originalButton: event.currentTarget }; // Guarda o botão clicado
-                renderSubActions();
-            } else if (config && config.player) {
-                liveState.awaitingPlayerSelection = { zone, action, detail: 'N/A' };
-                event.currentTarget.classList.add('waiting');
+            
+            if (liveState.awaitingPlayerSelection) {
+                cancelPlayerSelection();
             }
-            else {
+
+            const config = eventConfig[action];
+            if (!config) return console.error(`Ação não configurada: ${action}`);
+
+            if (config.sub) {
+                liveState.activeSubAction = { zone, action, config };
+                renderSubActions();
+            } else if (config.player) {
+                liveState.awaitingPlayerSelection = { zone, action, detail: 'N/A', config };
+                showPlayerSelection();
+            } else {
                 finalizeEvent(zone, action, 'N/A', null);
             }
         };
@@ -1099,31 +1129,53 @@ function setupUIMode() {
             if (!liveState.activeSubAction) return;
             const { config } = liveState.activeSubAction;
             let subActionsHTML = `<div class="flex justify-center items-center gap-3 bg-gray-900 p-3 rounded-lg"><span class="font-bold text-white">${config.title}:</span>`;
-            config.sub.forEach(opt => { subActionsHTML += `<button class="action-btn bg-blue-600" onclick="handleSubActionClick('${opt.value}')">${opt.label}</button>`; });
+            config.sub.forEach(opt => { subActionsHTML += `<button class="action-btn bg-blue-600" onclick="handleSubActionClick(event, '${opt.value}')">${opt.label}</button>`; });
             subActionsHTML += `</div>`;
             ui.liveMatch.subActionContainer.innerHTML = subActionsHTML;
         }
 
-        // CÓDIGO MODIFICADO: para aguardar seleção de jogador da lista fixa
-        window.handleSubActionClick = (value) => {
-            const { zone, action, config, originalButton } = liveState.activeSubAction;
+        window.handleSubActionClick = (event, value) => {
+            flashButton(event.currentTarget);
+            const { zone, action, config } = liveState.activeSubAction;
             ui.liveMatch.subActionContainer.innerHTML = ''; 
 
             const isComplexAction = action === 'falta' || action === 'cruzamento';
             const finalAction = isComplexAction ? value : action;
             const finalDetail = isComplexAction ? 'N/A' : value;
+            const finalConfig = eventConfig[finalAction] || config;
 
-            if (config.player) {
-                // AVISA que estamos esperando la seleção de um jogador
-                liveState.awaitingPlayerSelection = { zone, action: finalAction, detail: finalDetail };
-                // Adiciona um feedback visual ao botão original para mostrar que está ativo
-                if(originalButton) originalButton.classList.add('waiting');
-
+            if (finalConfig.player) {
+                liveState.awaitingPlayerSelection = { zone, action: finalAction, detail: finalDetail, config: finalConfig };
+                showPlayerSelection();
             } else { 
                 finalizeEvent(zone, finalAction, finalDetail, null);
             }
-            liveState.activeSubAction = null; // Limpa a ação ativa
+            liveState.activeSubAction = null;
         }
+        
+        window.selectPlayerForAction = (playerId) => {
+            if (!liveState.awaitingPlayerSelection) return;
+            const { zone, action, detail } = liveState.awaitingPlayerSelection;
+            finalizeEvent(zone, action, detail, playerId);
+            cancelPlayerSelection(); // Limpa e esconde a lista
+        }
+
+        window.cancelPlayerSelection = () => {
+             liveState.awaitingPlayerSelection = null;
+             if (ui.liveMatch.playerListContainer) {
+                 ui.liveMatch.playerListContainer.classList.remove('awaiting-selection');
+             }
+        }
+
+        function showPlayerSelection() {
+            if (!ui.liveMatch.playerListContainer || !liveState.awaitingPlayerSelection) return;
+            const { config } = liveState.awaitingPlayerSelection;
+            const labelEl = document.getElementById('awaiting-action-label');
+            if(labelEl) labelEl.textContent = `AÇÃO: ${config.title}`;
+            ui.liveMatch.playerListContainer.classList.add('awaiting-selection');
+            ui.liveMatch.playerListContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
 
         async function finalizeEvent(zone, action, detail, playerId) {
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
@@ -1131,17 +1183,6 @@ function setupUIMode() {
             const player = playerId ? appState.players.find(p => p.id === playerId) : null;
             const newEvent = { time: liveState.seconds, period: liveState.currentPeriod, zone, action, detail, playerId, playerName: player?.name || 'N/A' };
             await updateMatchData(appState.activeMatchId, { events: [newEvent, ...(match.events || [])] });
-
-            // NOVO: Feedback visual no seletor de campo
-            const zoneId = `field-zone-${zone}`;
-            const zoneEl = document.getElementById(zoneId);
-            if (zoneEl) {
-                const originalColor = window.getComputedStyle(zoneEl).backgroundColor;
-                zoneEl.classList.add('flash-feedback');
-                setTimeout(() => {
-                    zoneEl.classList.remove('flash-feedback');
-                }, 500);
-            }
         }
 
         function renderLiveLog() {
@@ -1163,6 +1204,7 @@ window.undoLastAction = async function() {
                 alert("Nenhuma ação para desfazer.");
                 return;
             }
+            cancelPlayerSelection();
 
             const lastEvent = match.events[0];
             const updatedEvents = match.events.slice(1);
@@ -1186,6 +1228,7 @@ window.undoLastAction = async function() {
         window.logGoal = async (teamType) => {
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
             if(!match || liveState.currentPeriod === 0) return showErrorMessage("Inicie o cronômetro.");
+            cancelPlayerSelection();
             if (teamType === 'opponent') {
                 const newEvent = { time: liveState.seconds, period: liveState.currentPeriod, zone: 'ataque', action: 'gol_contra', detail: 'N/A', playerId: null, playerName: 'Adversário', scoringTeam: 'opponent' };
                 const updatedEvents = [newEvent, ...(match.events || [])];
@@ -1196,6 +1239,8 @@ window.undoLastAction = async function() {
         window.prepareGoalModal = (teamType) => {
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
             if(!match || liveState.currentPeriod === 0) return showErrorMessage("Inicie o cronômetro.");
+            cancelPlayerSelection();
+
             const modal = document.getElementById('goal-modal');
             const players = match.squadPlayerIds.map(pid => appState.players.find(p => p.id === pid)).filter(Boolean);
             const playerOptions = [...players].sort((a,b) => a.name.localeCompare(b.name)).map(p => `<option value="${p.id}">${p.name}</option>`).join('');
@@ -1455,8 +1500,8 @@ window.undoLastAction = async function() {
                         const goals = playerEvents.filter(e => e.action === 'gol').length;
                         const assists = matchEvents.filter(e => e.assistId === playerId).length;
                         const shots = playerEvents.filter(e => e.action === 'finalizacao').length;
-                        const duelsWon = playerEvents.filter(e => e.action === 'duelo' && e.detail.includes('ganhou')).length;
-                        const duelsLost = playerEvents.filter(e => e.action === 'duelo' && e.detail.includes('perdeu')).length;
+                        const duelsWon = playerEvents.filter(e => e.action === 'duelo_ganho').length;
+                        const duelsLost = playerEvents.filter(e => e.action === 'duelo_perdido').length;
    
                         const avg = (parseFloat(rates.tecnico) + parseFloat(rates.tatico) + parseFloat(rates.fisico) + parseFloat(rates.comportamental)) / 4;
                         performances[playerId].matchPerformances.push({
@@ -1665,8 +1710,8 @@ window.undoLastAction = async function() {
             const totalPasses = passesCerto + passesErrado;
             const percCerto = totalPasses > 0 ? `(${(passesCerto/totalPasses*100).toFixed(0)}%)` : '';
             const percErrado = totalPasses > 0 ? `(${(passesErrado/totalPasses*100).toFixed(0)}%)` : '';
-            const duelosGanhos = myEvents.filter(e => e.action === 'duelo' && e.detail.includes('ganhou')).length;
-            const duelosPerdidos = myEvents.filter(e => e.action === 'duelo' && e.detail.includes('perdeu')).length;
+            const duelosGanhos = count(myEvents, 'duelo_ganho');
+            const duelosPerdidos = count(myEvents, 'duelo_perdido');
             const duelosTotais = duelosGanhos + duelosPerdidos;
 
             let tableHTML = `<table class="w-full text-sm"><tbody>`;
@@ -1937,11 +1982,18 @@ window.undoLastAction = async function() {
                 opponentGoalsHTML = '<li>Nenhum gol sofrido.</li>';
             }
 
-            const getTopStats = (action, detail, key) => { const counts = myEvents.filter(e => e.action === action && (detail ? e.detail === detail : true) && e[key]).reduce((acc, e) => { acc[e[key]] = (acc[e[key]] || 0) + 1; return acc; }, {});
-            return Object.entries(counts).sort(([,a],[,b]) => b-a); };
-            const assists = getTopStats('gol', null, 'assistId'); 
-            const shots = getTopStats('finalizacao', null, 'playerId');
-            const duelsWon = getTopStats('duelo', 'ganhou', 'playerId');
+            const getTopStats = (action, key) => { 
+                const counts = myEvents
+                    .filter(e => e.action === action && e[key])
+                    .reduce((acc, e) => { 
+                        acc[e[key]] = (acc[e[key]] || 0) + 1; 
+                        return acc; 
+                    }, {});
+                return Object.entries(counts).sort(([,a],[,b]) => b-a); 
+            };
+            const assists = getTopStats('gol', 'assistId'); 
+            const shots = getTopStats('finalizacao', 'playerId');
+            const duelsWon = getTopStats('duelo_ganho', 'playerId');
 
             const renderList = (title, data, icon) => { let listHTML = `<div class="bg-white p-3 rounded-lg shadow-sm"><div class="flex items-center gap-3 mb-2"><span class="bg-gray-200 p-2 rounded-full">${icon}</span><h4 class="font-semibold text-gray-800 text-lg">${title}</h4></div><ul class="text-sm text-gray-600 space-y-1 pl-1">`;
             if (data.length === 0) { listHTML += '<li>Nenhum registro.</li>'; } else { data.slice(0, 3).forEach(([id, count]) => { const player = appState.players.find(p => p.id === id); listHTML += `<li class="flex justify-between"><span>${player?.name || 'Desconhecido'}</span> <strong>${count}</strong></li>`; });
@@ -2144,6 +2196,7 @@ window.undoLastAction = async function() {
                 showErrorMessage("Nenhuma partida ativa para gerar relatório.");
                 return;
             }
+            cancelPlayerSelection();
             
             destroyCharts();
             const contentContainer = document.getElementById('halftime-report-content');
@@ -2206,8 +2259,8 @@ window.undoLastAction = async function() {
                             goals: playerEvents.filter(e => e.action === 'gol').length,
                             assists: matchEvents.filter(e => e.assistId === playerId).length,
                             shots: playerEvents.filter(e => e.action === 'finalizacao').length,
-                            duelsWon: playerEvents.filter(e => e.action === 'duelo' && e.detail.includes('ganhou')).length,
-                            duelsLost: playerEvents.filter(e => e.action === 'duelo' && e.detail.includes('perdeu')).length,
+                            duelsWon: playerEvents.filter(e => e.action === 'duelo_ganho').length,
+                            duelsLost: playerEvents.filter(e => e.action === 'duelo_perdido').length,
                         });
                     }
                  });
@@ -2247,51 +2300,35 @@ window.undoLastAction = async function() {
             downloadFile(txtContent, 'historico_desempenho_jogadores.txt');
         }
 
-       // --- INÍCIO DO NOVO CÓDIGO PARA LISTA DE JOGADORES E LÓGICA DE EVENTOS ---
-
-        /**
-         * Renderiza os botões para cada jogador atualmente em campo.
-         */
         function renderOnFieldPlayers() {
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
             const container = document.getElementById('on-field-players');
             if (!match || !container) return;
     
-            container.innerHTML = ''; // Limpa a lista atual
+            container.innerHTML = '';
     
             const { onField } = getPlayersOnFieldAndBench(match);
-            const playersOnField = onField.map(pid => appState.players.find(p => p.id === pid)).filter(Boolean);
+            const playersOnField = onField
+                .map(pid => appState.players.find(p => p.id === pid))
+                .filter(Boolean);
     
-            playersOnField.sort((a, b) => a.name.localeCompare(b.name)).forEach(player => {
-                const btn = document.createElement('button');
-                btn.className = 'action-btn bg-indigo-600 hover:bg-indigo-700 text-sm p-1';
-                btn.textContent = player.name;
-                btn.onclick = () => selectPlayerForEventLive(player.id);
-                container.appendChild(btn);
-            });
+            playersOnField.sort((a,b) => a.name.localeCompare(b.name));
+    
+            if (playersOnField.length === 0) {
+                 container.innerHTML = '<p class="text-gray-400 text-center col-span-full">Nenhum jogador em campo.</p>';
+            } else {
+                 playersOnField.forEach(player => {
+                    const button = document.createElement('button');
+                    button.className = 'action-btn bg-gray-700 hover:bg-gray-600 text-white truncate';
+                    button.textContent = player.name;
+                    button.onclick = () => selectPlayerForAction(player.id);
+                    container.appendChild(button);
+                 });
+            }
         }
 
-        /**
-         * Lida com a seleção de um jogador na lista ao vivo para registrar um evento.
-         */
-        window.selectPlayerForEventLive = function(playerId) {
-            // Verifica se alguma ação está aguardando a seleção de um jogador
-            if (!liveState.awaitingPlayerSelection) return;
-
-            const { zone, action, detail } = liveState.awaitingPlayerSelection;
-            
-            // Finaliza o registro do evento com o ID do jogador selecionado
-            finalizeEvent(zone, action, detail, playerId);
-
-            // Limpa o estado e a interface
-            liveState.awaitingPlayerSelection = null;
-            document.querySelectorAll('.action-btn.waiting').forEach(b => b.classList.remove('waiting'));
-        }
-
-        // --- FIM DO NOVO CÓDIGO ---
-
-
-        window.addEventListener('DOMContentLoaded', firebaseAuth);
+        firebaseAuth();
     </script>
+
 </body>
 </html>
