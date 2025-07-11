@@ -1819,7 +1819,7 @@ window.undoLastAction = async function() {
             container.innerHTML = getReportSummaryTableHTML(match, period);
         }
         
-        function renderActionListBySectorHTML(events, allPlayers) {
+        function renderActionListBySectorHTML(events) {
             if (!events || events.length === 0) {
                 return '';
             }
@@ -1834,35 +1834,47 @@ window.undoLastAction = async function() {
                 gol: 'GOL', gol_contra: 'Gol Contra'
             };
 
-            const actionsBySector = { defesa: [], meio: [], ataque: [] };
-            
+            const actionsBySector = { defesa: {}, meio: {}, ataque: {} };
+
+            // Agrega e conta as ações por tipo em cada setor
             events.forEach(e => {
                 if (actionsBySector.hasOwnProperty(e.zone)) {
                     let actionKey = e.action;
-                    if(e.action === 'falta') actionKey = e.detail;
-                    if(e.action === 'cruzamento') actionKey = e.detail;
+                    // Trata ações com detalhes que definem o tipo, como faltas e cruzamentos
+                    if(e.action === 'falta' || e.action === 'cruzamento') {
+                        actionKey = e.detail;
+                    }
                     
-                    const label = actionLabels[actionKey] || actionKey.replace(/_/g, ' ');
-                    const player = allPlayers.find(p => p.id === e.playerId);
-                    const playerName = player ? ` (${player.name})` : '';
-                    const time = formatTime(e.time);
-                    
-                    actionsBySector[e.zone].push(`<li title="${time}">${label}${playerName}</li>`);
+                    const sectorCounts = actionsBySector[e.zone];
+                    sectorCounts[actionKey] = (sectorCounts[actionKey] || 0) + 1;
                 }
             });
 
             return `
                 <div class="mt-3 p-2 border-t border-gray-200 text-xs text-gray-600 report-section">
-                    <h4 class="font-semibold text-center text-sm text-gray-800 mb-2">Lista de Ações por Setor</h4>
+                    <h4 class="font-semibold text-center text-sm text-gray-800 mb-2">Resumo de Ações por Setor</h4>
                     <div class="grid grid-cols-3 gap-3">
-                        ${['defesa', 'meio', 'ataque'].map(sector => `
-                            <div>
-                                <h5 class="font-bold capitalize border-b border-gray-300 pb-1 mb-1">${sector}</h5>
-                                <ul class="space-y-1 list-disc list-inside opacity-80">
-                                    ${actionsBySector[sector].length > 0 ? actionsBySector[sector].join('') : '<li>Nenhuma ação</li>'}
-                                </ul>
-                            </div>
-                        `).join('')}
+                        ${['defesa', 'meio', 'ataque'].map(sector => {
+                            const counts = actionsBySector[sector];
+                            const sortedActions = Object.entries(counts).sort(([, a], [, b]) => b - a);
+                            
+                            let listHTML = sortedActions.map(([key, count]) => {
+                                const label = actionLabels[key] || key.replace(/_/g, ' ');
+                                return `<li>${label} - <strong>${count}</strong></li>`;
+                            }).join('');
+
+                            if (!listHTML) {
+                                listHTML = '<li>Nenhuma ação</li>';
+                            }
+
+                            return `
+                                <div>
+                                    <h5 class="font-bold capitalize border-b border-gray-300 pb-1 mb-1">${sector}</h5>
+                                    <ul class="space-y-1 opacity-90">
+                                        ${listHTML}
+                                    </ul>
+                                </div>`;
+                        }).join('')}
                     </div>
                 </div>
             `;
@@ -1901,7 +1913,7 @@ window.undoLastAction = async function() {
                         <h3 class="text-xl font-bold text-center mb-4">Volume de Ações (Total)</h3>
                         <div class="chart-container" style="background-color: #166534; min-height: 240px; height: 240px;"><canvas id="actionMapChart"></canvas></div>
                         <div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div>
-                        ${renderActionListBySectorHTML(match.events, appState.players)}
+                        ${renderActionListBySectorHTML(match.events)}
                     </div>
                     <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Destaques Individuais</h3><div id="report-top-stats"></div></div>
                 </div>
@@ -1925,7 +1937,7 @@ window.undoLastAction = async function() {
                             <h4 class="font-semibold text-center mb-2">Volume de Ações (1ºT)</h4>
                             <div class="chart-container" style="background-color: #166534; min-height: 240px;"><canvas id="actionMapChart_1T"></canvas></div>
                             <div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div>
-                            ${renderActionListBySectorHTML(match.events.filter(e => e.period == 1), appState.players)}
+                            ${renderActionListBySectorHTML(match.events.filter(e => e.period == 1))}
                         </div>
                         <div id="report-summary-table-1T" class="mt-4"></div>
                     </div>
@@ -1939,7 +1951,7 @@ window.undoLastAction = async function() {
                             <h4 class="font-semibold text-center mb-2">Volume de Ações (2ºT)</h4>
                             <div class="chart-container" style="background-color: #166534; min-height: 240px;"><canvas id="actionMapChart_2T"></canvas></div>
                             <div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div>
-                            ${renderActionListBySectorHTML(match.events.filter(e => e.period == 2), appState.players)}
+                            ${renderActionListBySectorHTML(match.events.filter(e => e.period == 2))}
                         </div>
                         <div id="report-summary-table-2T" class="mt-4"></div>
                     </div>
