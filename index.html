@@ -1081,8 +1081,8 @@ function setupUIMode() {
             finalizacao_adv: { title: "Finalização Adv.", player: false, sub: [{label: "Dentro da Área", value: "dentro_area"},{label: "Fora da Área", value: "fora_area"},{label: "Cabeceio", value: "cabeceio"}] },
             chance_clara: { title: "Chance Clara", player: false },
             chance_clara_adv: { title: "Chance Adv.", player: false },
-            duelo_ganho: { title: "Duelo Ganho", player: true, sub: [{label: "Por Baixo", value: "ganhou_baixo"},{label: "No Alto", value: "ganhou_alto"}] },
-            duelo_perdido: { title: "Duelo Perdido", player: true, sub: [{label: "Por Baixo", value: "perdeu_baixo"},{label: "No Alto", value: "perdeu_alto"}] },
+            duelo_ganho: { title: "Duelo Ganho", player: true, sub: [{label: "Por Baixo", value: "baixo"},{label: "No Alto", value: "alto"}] },
+            duelo_perdido: { title: "Duelo Perdido", player: true, sub: [{label: "Por Baixo", value: "baixo"},{label: "No Alto", value: "alto"}] },
             falta: { title: "Falta", player: false, sub: [{label: "Sofrida", value: "falta_sofrida"}, {label:"Cometida", value:"falta_cometida"}] },
             cruzamento: { title: "Cruzamento", player: false, sub: [{label: "Direita", value: "cruzamento_dir"}, {label:"Esquerda", value:"cruzamento_esq"}] },
             passe_certo: { title: "Passe Certo", player: false },
@@ -1684,8 +1684,12 @@ window.undoLastAction = async function() {
                 renderPossessionChart(match, 'possessionChart_2T_report', possession2T);
 
                 renderReportSummaryTable(match, 'report-summary-table', null);
+                document.getElementById('sector-details-total').innerHTML = getDetailedSectorActionListHTML(match, null);
                 renderReportSummaryTable(match, 'report-summary-table-1T', 1);
+                 document.getElementById('sector-details-1T').innerHTML = getDetailedSectorActionListHTML(match, 1);
                 renderReportSummaryTable(match, 'report-summary-table-2T', 2);
+                document.getElementById('sector-details-2T').innerHTML = getDetailedSectorActionListHTML(match, 2);
+
                 renderManOfTheMatch(match);
                 renderTopStatsTable(match);
                 renderFormation(match);
@@ -1797,6 +1801,59 @@ window.undoLastAction = async function() {
             container.innerHTML = getReportSummaryTableHTML(match, period);
         }
         
+        function getActionLabel(actionKey) {
+            const labels = {
+                finalizacao: 'Finalizações',
+                chance_clara: 'Chances Claras',
+                duelo_ganho: 'Duelos Ganhos',
+                duelo_perdido: 'Duelos Perdidos',
+                falta_sofrida: 'Faltas Sofridas',
+                falta_cometida: 'Faltas Cometidas',
+                cruzamento_dir: 'Cruzamentos (Dir)',
+                cruzamento_esq: 'Cruzamentos (Esq)',
+                passe_certo: 'Passes Certos',
+                passe_errado: 'Passes Errados',
+                gol: 'Gols'
+            };
+            return labels[actionKey] || actionKey.replace(/_/g, ' ');
+        }
+
+        function getDetailedSectorActionListHTML(match, period) {
+            const events = period ? match.events.filter(e => e.period == period) : match.events;
+            const myTeamEvents = events.filter(e => e.scoringTeam !== 'opponent' && !e.action.endsWith('_adv'));
+
+            const sectorData = { defesa: {}, meio: {}, ataque: {} };
+
+            myTeamEvents.forEach(event => {
+                if (sectorData[event.zone]) {
+                    sectorData[event.zone][event.action] = (sectorData[event.zone][event.action] || 0) + 1;
+                }
+            });
+
+            let html = '<div class="grid grid-cols-3 gap-4 text-xs mt-2">';
+            const zoneTitles = { defesa: 'Setor Defensivo', meio: 'Setor de Meio-Campo', ataque: 'Setor Ofensivo' };
+
+            for (const zone of ['defesa', 'meio', 'ataque']) {
+                html += '<div>';
+                html += `<h5 class="font-bold border-b border-gray-300 pb-1 mb-1">${zoneTitles[zone]}</h5>`;
+                const actions = sectorData[zone];
+                const sortedActions = Object.entries(actions).sort(([, a], [, b]) => b - a);
+
+                if (sortedActions.length > 0) {
+                    html += '<ul class="space-y-1">';
+                    sortedActions.forEach(([action, count]) => {
+                        html += `<li class="flex justify-between"><span>${getActionLabel(action)}:</span> <strong>${count}</strong></li>`;
+                    });
+                    html += '</ul>';
+                } else {
+                    html += '<p class="text-gray-500 italic">Nenhuma ação</p>';
+                }
+                html += '</div>';
+            }
+            html += '</div>';
+            return html;
+        }
+
         function renderReportContentForPDF(match, specificPeriod = null) {
             const logoDataUrl = appState.settings.logoDataUrl;
             const logoImg = logoDataUrl ? `<img src="${logoDataUrl}" class="report-logo" crossorigin="anonymous" />` : '';
@@ -1825,9 +1882,11 @@ window.undoLastAction = async function() {
                      <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Posse de Bola (Total)</h3><div class="chart-container h-20"><canvas id="possessionChart"></canvas></div><p class="text-center text-sm text-gray-600 mt-2">Tempo Total: ${formatTime(match.timerSeconds || 0)}</p></div>
                     <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Destaque da Partida</h3><div id="report-motm"></div></div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 report-section">
-                    <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-4">Volume de Ações (Total)</h3><div class="chart-container" style="background-color: #166534; min-height: 240px; height: 240px;"><canvas id="actionMapChart"></canvas></div><div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div></div>
-                    <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Destaques Individuais</h3><div id="report-top-stats"></div></div>
+                 <div class="bg-gray-50 p-3 rounded-lg border mb-4 report-section">
+                    <h3 class="text-xl font-bold text-center mb-4">Volume de Ações (Total)</h3>
+                    <div class="chart-container" style="background-color: #166534; min-height: 240px; height: 240px;"><canvas id="actionMapChart"></canvas></div>
+                    <div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div>
+                     <div id="sector-details-total"></div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 report-section">
                     <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Resumo de Ações (Total)</h3><div id="report-summary-table"></div></div>
@@ -1840,30 +1899,32 @@ window.undoLastAction = async function() {
                 <div class="text-center mb-8 pt-8"><h1 class="text-3xl font-bold">Scout por Período</h1></div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 report-section">
                     <div class="space-y-4">
-                        <h3 class="text-xl font-bold text-center mb-4">1º Tempo</h3>
+                        <h3 class="text-xl font-bold text-center">1º Tempo</h3>
                         <div class="bg-gray-50 p-4 rounded-lg border">
                              <h4 class="font-semibold text-center mb-2">Posse de Bola (1ºT)</h4>
                              <div class="chart-container h-20"><canvas id="possessionChart_1T_report"></canvas></div>
                         </div>
                         <div class="bg-gray-50 p-4 rounded-lg border">
                             <h4 class="font-semibold text-center mb-2">Volume de Ações (1ºT)</h4>
-                            <div class="chart-container" style="background-color: #166534; min-height: 240px;"><canvas id="actionMapChart_1T"></canvas></div>
-                            <div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div>
+                            <div class="chart-container" style="background-color: #166534; min-height: 200px;"><canvas id="actionMapChart_1T"></canvas></div>
+                            <div class="flex justify-between items-center mt-2 px-4 text-sm"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div>
+                            <div id="sector-details-1T"></div>
                         </div>
-                        <div id="report-summary-table-1T" class="mt-4"></div>
+                        <div id="report-summary-table-1T"></div>
                     </div>
                     <div class="space-y-4">
-                        <h3 class="text-xl font-bold text-center mb-4">2º Tempo</h3>
+                        <h3 class="text-xl font-bold text-center">2º Tempo</h3>
                          <div class="bg-gray-50 p-4 rounded-lg border">
                              <h4 class="font-semibold text-center mb-2">Posse de Bola (2ºT)</h4>
                              <div class="chart-container h-20"><canvas id="possessionChart_2T_report"></canvas></div>
                         </div>
                         <div class="bg-gray-50 p-4 rounded-lg border">
                             <h4 class="font-semibold text-center mb-2">Volume de Ações (2ºT)</h4>
-                            <div class="chart-container" style="background-color: #166534; min-height: 240px;"><canvas id="actionMapChart_2T"></canvas></div>
-                            <div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div>
+                            <div class="chart-container" style="background-color: #166534; min-height: 200px;"><canvas id="actionMapChart_2T"></canvas></div>
+                            <div class="flex justify-between items-center mt-2 px-4 text-sm"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div>
+                            <div id="sector-details-2T"></div>
                         </div>
-                        <div id="report-summary-table-2T" class="mt-4"></div>
+                        <div id="report-summary-table-2T"></div>
                     </div>
                 </div>
                 ${reportFooter}
@@ -2119,6 +2180,19 @@ window.undoLastAction = async function() {
                     <td class="p-1.5">${player ? player.name : '<i class="opacity-50">Vazio</i>'}</td>
                 </tr>`;
             }
+            
+            const subEvents = (match.events || []).filter(e => e.action === 'substituicao').sort((a,b) => a.time - b.time);
+            let subsHTML = '';
+            if (subEvents.length > 0) {
+                subsHTML += `<div class="mt-4 pt-2 border-t border-gray-400">
+                                <h5 class="font-bold text-center mb-2 text-white">Substituições</h5>
+                                <ul class="text-xs text-white space-y-1">`;
+                subEvents.forEach(sub => {
+                    subsHTML += `<li><strong>${formatTime(sub.time)}'</strong> - ${sub.detail}</li>`
+                });
+                subsHTML += '</ul></div>';
+            }
+
 
             const formationHTML = `<h4 class="text-center font-bold mb-3 text-xl">Escalação da Equipe</h4>
                 <div class="bg-green-800 p-3 rounded-lg text-white">
@@ -2132,6 +2206,7 @@ window.undoLastAction = async function() {
                             <table class="w-full text-left text-sm">${reservesHTML}</table>
                         </div>
                     </div>
+                    ${subsHTML}
                 </div>`;
             container.innerHTML = formationHTML;
         }
