@@ -17,67 +17,56 @@
         .view { display: none; }
         .view.active { display: block; }
         #live-match.active {
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
             gap: 1rem;
         }
         .nav-link-top {
-            transition: all 0.2s;
-            border-bottom: 3px solid transparent;
+            transition: all 0.2s; border-bottom: 3px solid transparent;
             padding: 0.5rem 1rem;
         }
         .nav-link-top:hover {
-            background-color: #1f2937;
-            border-bottom-color: #3b82f6;
+            background-color: #1f2937; border-bottom-color: #3b82f6;
         }
         .nav-link-top.active {
-            background-color: #111827;
-            color: white;
+            background-color: #111827; color: white;
             border-bottom-color: #60a5fa;
             font-weight: 600;
         }
         .field {
-            position: relative;
-            background-color: #166534;
+            position: relative; background-color: #166534;
             background-image:
                 linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px),
                 radial-gradient(circle at center, rgba(255,255,255,0.08) 0, rgba(255,255,255,0.08) 2px, transparent 2px),
                 radial-gradient(circle at center, rgba(255,255,255,0.1) 0, rgba(255,255,255,0.1) 1px, transparent 1px);
             background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%;
-            background-position: center center, center center, center center, center center;
-            border: 2px solid #a0aec0;
+            background-position: center center, center center, center center, center center; border: 2px solid #a0aec0;
             padding: 1rem;
         }
         .zone {
-            border: 1px dashed rgba(255,255,255,0.3);
-            padding: 0.5rem;
+            border: 1px dashed rgba(255,255,255,0.3); padding: 0.5rem;
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
         }
         .action-buttons-container {
-            flex-grow: 1;
-            display: grid;
+            flex-grow: 1; display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 0.5rem;
             align-content: end;
         }
         .pass-buttons {
-            border-top: 2px solid rgba(255,255,255,0.1);
-            padding-top: 0.5rem;
+            border-top: 2px solid rgba(255,255,255,0.1); padding-top: 0.5rem;
             margin-top: auto;
         }
         .action-btn {
-            transition: all 0.2s;
-            padding: 0.5rem 0.25rem;
+            transition: all 0.2s; padding: 0.5rem 0.25rem;
             font-size: 0.75rem;
             line-height: 1.2;
             font-weight: 600;
             border-radius: 0.375rem;
             width: 100%;
-            text-align: center;
-        }
+            text-align: center; }
         .action-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .action-btn.clicked { background-color: #f59e0b !important; transform: scale(1.05); }
         .pass-btn { background-color: #16a34a; color: white; }
@@ -103,74 +92,76 @@
         .performance-main-row.open .details-icon { transform: rotate(90deg); }
         
         #log-chevron {
-            transition: transform 0.3s;
-        }
+            transition: transform 0.3s; }
         #live-log-container.open #log-chevron {
-            transform: rotate(180deg);
-        }
+            transform: rotate(180deg); }
 
         /* --- Fullscreen Styles --- */
         body.fullscreen-active nav,
         body.fullscreen-active footer {
-            display: none;
-        }
+            display: none; }
         body.fullscreen-active main {
-            padding: 0;
-            height: 100vh;
+            padding: 0; height: 100vh;
             max-height: 100vh;
             overflow: hidden;
         }
 
         body.fullscreen-active #live-match.active {
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
             height: 100%;
             padding: 0.5rem;
             gap: 0.5rem;
-            overflow-y: auto;
-        }
+            overflow-y: auto; }
         body.fullscreen-active #live-match > * {
-            margin: 0 !important;
-        }
+            margin: 0 !important; }
         body.fullscreen-active #live-match > #live-match-controls {
-            flex-shrink: 0;
-        }
+            flex-shrink: 0; }
         body.fullscreen-active #live-match > .field {
-            flex-grow: 1;
-            min-height: 300px;
+            flex-grow: 1; min-height: 300px;
         }
         
         @media (orientation: landscape) {
             body.fullscreen-active #live-match.active {
-                display: grid;
-                overflow: hidden;
+                display: grid; overflow: hidden;
                 grid-template-columns: minmax(300px, 1fr) 2.5fr;
                 grid-template-rows: 1fr;
-                gap: 1rem;
-            }
+                gap: 1rem; }
             body.fullscreen-active #live-match-controls {
-                display: flex;
-                flex-direction: column;
+                display: flex; flex-direction: column;
                 min-height: 0;
                 gap: 0.5rem;
                 overflow-y: auto;
             }
              body.fullscreen-active #live-match .field {
-                height: 100%;
-                min-height: 0;
+                height: 100%; min-height: 0;
             }
              body.fullscreen-active #live-match .field > .grid {
-                height: 100%;
-            }
+                height: 100%; }
         }
 
         /* --- Role-based UI visibility --- */
         body:not(.is-admin) .admin-only {
-            display: none !important;
-        }
+            display: none !important; }
         /* Show performance tab for guests */
         body.is-guest #performance-nav-link {
-            display: inline-block !important;
+            display: inline-block !important; }
+
+        /* --- NOVOS ESTILOS --- */
+        .selected-zone {
+            background-color: #f59e0b !important;
+            box-shadow: 0 0 0 3px #fbbf24;
+            transform: scale(1.05);
+        }
+        .flash-feedback {
+            animation: flash 0.5s ease-out;
+        }
+        @keyframes flash {
+            0% { background-color: #f59e0b; }
+            100% { /* Volta ao normal via JS */ }
+        }
+        .action-btn.waiting {
+            box-shadow: 0 0 0 4px #60a5fa;
+            transform: scale(1.1);
         }
 
     </style>
@@ -220,7 +211,13 @@
         
         <div id="live-match" class="view">
             <div id="live-match-controls" class="space-y-2">
-                <div class="bg-gray-800 p-4 rounded-lg"></div> <div id="possession-area"></div>
+                <div class="bg-gray-800 p-4 rounded-lg"></div> 
+                <div id="possession-area"></div>
+                <div id="live-player-list-container" class="bg-gray-900/70 p-3 rounded-lg mt-2">
+                    <h4 class="font-bold text-white text-sm text-center mb-2">SELECIONE O JOGADOR</h4>
+                    <div id="on-field-players" class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                        </div>
+                </div>
                 <div id="sub-action-container"></div>
                 <div id="live-log-container" class="bg-gray-800 rounded-lg">
                     <div class="p-2 flex justify-between items-center cursor-pointer" onclick="toggleLog()">
@@ -236,53 +233,46 @@
                          <div class="p-2 border-t border-gray-700 overflow-y-auto" style="max-height: 150px;">
                             <table class="w-full text-left text-xs">
                                 <thead class="text-gray-400 sticky top-0 bg-gray-800">
-                                    <tr><th>Tempo</th><th>P.</th><th>Setor</th><th>Ação</th><th>Detalhe</th><th>Jogador</th></tr>
+                                     <tr><th>Tempo</th><th>P.</th><th>Setor</th><th>Ação</th><th>Detalhe</th><th>Jogador</th></tr>
                                 </thead>
                                 <tbody id="live-log-body" class="divide-y divide-gray-700"></tbody>
-                            </table>
+                             </table>
                          </div>
                     </div>
                 </div>
             </div>
 
             <div class="field rounded-lg">
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 h-full">
-                    <div class="zone rounded-lg">
-                        <h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">DEFESA</h4>
-                        <div class="action-buttons-container">
-                            <button class="action-btn bg-purple-600" onclick="logEvent(event, 'defesa', 'finalizacao_adv')">Fin. Adv.</button>
-                            <button class="action-btn bg-purple-600" onclick="logEvent(event, 'defesa', 'chance_clara_adv')">Chance Adv.</button>
-                            <button class="action-btn bg-red-500" onclick="logEvent(event, 'defesa', 'falta')">Falta</button>
-                            <button class="action-btn bg-yellow-500" onclick="logEvent(event, 'defesa', 'duelo')">Duelo</button>
+                <div class="flex flex-col h-full gap-4">
+                    <div id="interactive-field-selector" class="bg-green-900/50 border border-white/20 p-2 rounded-lg">
+                        <div class="flex justify-between items-center mb-1">
+                            <h4 class="text-center font-bold text-white text-xs tracking-wider">SELECIONE O SETOR DA AÇÃO</h4>
+                            <button id="invert-field-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-2 rounded-lg text-xs">Inverter Lado</button>
                         </div>
-                        <div class="pass-buttons grid grid-cols-2 gap-2">
-                            <button class="action-btn pass-btn" onclick="logEvent(event, 'defesa', 'passe_certo')">Passe Certo</button>
-                            <button class="action-btn pass-btn-errado" onclick="logEvent(event, 'defesa', 'passe_errado')">Passe Errado</button>
-                        </div>
-                    </div>
-                    <div class="zone rounded-lg">
-                        <h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">MEIO-CAMPO</h4>
-                        <div class="action-buttons-container">
-                            <button class="action-btn bg-red-500" onclick="logEvent(event, 'meio', 'falta')">Falta</button>
-                            <button class="action-btn bg-yellow-500" onclick="logEvent(event, 'meio', 'duelo')">Duelo</button>
-                        </div>
-                        <div class="pass-buttons grid grid-cols-2 gap-2">
-                            <button class="action-btn pass-btn" onclick="logEvent(event, 'meio', 'passe_certo')">Passe Certo</button>
-                            <button class="action-btn pass-btn-errado" onclick="logEvent(event, 'meio', 'passe_errado')">Passe Errado</button>
+                        <div id="field-zones" class="grid grid-cols-3 gap-1 h-12 text-white font-semibold">
+                            <div id="field-zone-defesa" class="field-zone-btn flex items-center justify-center rounded-l-lg cursor-pointer bg-blue-900/50 hover:bg-blue-800/80">
+                                <span class="label">Defesa</span>
+                            </div>
+                            <div id="field-zone-meio" class="field-zone-btn flex items-center justify-center cursor-pointer bg-gray-900/50 hover:bg-gray-800/80 selected-zone">
+                                <span class="label">Meio</span>
+                            </div>
+                            <div id="field-zone-ataque" class="field-zone-btn flex items-center justify-center rounded-r-lg cursor-pointer bg-red-900/50 hover:bg-red-800/80">
+                                <span class="label">Ataque</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="zone rounded-lg">
-                        <h4 class="text-center font-bold text-white mb-3 text-sm tracking-wider">ATAQUE</h4>
-                        <div class="action-buttons-container">
-                            <button class="action-btn bg-green-500" onclick="logEvent(event, 'ataque', 'finalizacao')">Finalização</button>
-                            <button class="action-btn bg-green-500" onclick="logEvent(event, 'ataque', 'chance_clara')">Chance Clara</button>
-                            <button class="action-btn bg-blue-500" onclick="logEvent(event, 'ataque', 'cruzamento')">Cruzamento</button>
-                            <button class="action-btn bg-red-500" onclick="logEvent(event, 'ataque', 'falta')">Falta</button>
-                            <button class="action-btn bg-yellow-500" onclick="logEvent(event, 'ataque', 'duelo')">Duelo</button>
-                        </div>
-                        <div class="pass-buttons grid grid-cols-2 gap-2">
-                            <button class="action-btn pass-btn" onclick="logEvent(event, 'ataque', 'passe_certo')">Passe Certo</button>
-                            <button class="action-btn pass-btn-errado" onclick="logEvent(event, 'ataque', 'passe_errado')">Passe Errado</button>
+            
+                    <div id="single-action-container" class="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <button class="action-btn bg-green-500" onclick="logEvent(event, 'finalizacao')">Finalização</button>
+                        <button class="action-btn bg-green-500" onclick="logEvent(event, 'chance_clara')">Chance Clara</button>
+                        <button class="action-btn bg-purple-600" onclick="logEvent(event, 'finalizacao_adv')">Fin. Adv.</button>
+                        <button class="action-btn bg-purple-600" onclick="logEvent(event, 'chance_clara_adv')">Chance Adv.</button>
+                        <button class="action-btn bg-blue-500" onclick="logEvent(event, 'cruzamento')">Cruzamento</button>
+                        <button class="action-btn bg-red-500" onclick="logEvent(event, 'falta')">Falta</button>
+                        <button class="action-btn bg-yellow-500" onclick="logEvent(event, 'duelo')">Duelo</button>
+                        <div class="col-span-2 sm:col-span-4 grid grid-cols-2 gap-2 border-t-2 border-white/10 pt-2 mt-auto">
+                            <button class="action-btn pass-btn" onclick="logEvent(event, 'passe_certo')">Passe Certo</button>
+                            <button class="action-btn pass-btn-errado" onclick="logEvent(event, 'passe_errado')">Passe Errado</button>
                         </div>
                     </div>
                 </div>
@@ -370,14 +360,13 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
         let appState = { players: [], matches: [], settings: {}, activeMatchId: null, currentView: 'dashboard', listenersAttached: false, isGuestMode: false };
-        let liveState = { timerInterval: null, possessionInterval: null, seconds: 0, currentPeriod: 0, currentPossessionHolder: null, activeSubAction: null, secondHalfStartSeconds: -1 };
+        // CÓDIGO MODIFICADO: liveState com novas propriedades
+        let liveState = { timerInterval: null, possessionInterval: null, seconds: 0, currentPeriod: 0, currentPossessionHolder: null, activeSubAction: null, secondHalfStartSeconds: -1, awaitingPlayerSelection: null, selectedZone: 'meio', isFieldInverted: false };
         let charts = {};
         const { jsPDF } = window.jspdf;
         let userId;
         let db, auth;
-
         const firebaseConfig = {
           apiKey: "AIzaSyCSxaH-QFQbhrCttS-J8KmVN1MXmjXqY1s",
           authDomain: "meu-scout-pro.firebaseapp.com",
@@ -386,9 +375,7 @@
           messagingSenderId: "303977649743",
           appId: "1:303977649743:web:4e81e55c7180390ec97c3a"
         };
-        
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'scout-pro-futebol-v2';
-        
         function showUserFacingError(viewId, message) {
             const container = document.getElementById(viewId);
             if (container) {
@@ -421,8 +408,50 @@
 
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
-                auth = getAuth(app);
                 
+                // --- INÍCIO DO NOVO CÓDIGO DO CAMPO INTERATIVO ---
+    
+                function setupInteractiveField() {
+                    const zones = ['defesa', 'meio', 'ataque'];
+                    
+                    const updateSelection = (selectedZoneId) => {
+                        document.querySelectorAll('.field-zone-btn').forEach(btn => {
+                            btn.classList.remove('selected-zone');
+                        });
+                        document.getElementById(selectedZoneId).classList.add('selected-zone');
+                        liveState.selectedZone = selectedZoneId.split('-')[2];
+                    };
+
+                    document.querySelectorAll('.field-zone-btn').forEach(btn => {
+                        btn.addEventListener('click', () => updateSelection(btn.id));
+                    });
+
+                    document.getElementById('invert-field-btn').addEventListener('click', () => {
+                        liveState.isFieldInverted = !liveState.isFieldInverted;
+                        const fieldContainer = document.getElementById('field-zones');
+                        const zoneElements = Array.from(fieldContainer.children);
+                        
+                        // Inverte a ordem dos elementos no DOM
+                        zoneElements.reverse().forEach(el => fieldContainer.appendChild(el));
+                        
+                        // Atualiza os IDs e labels para manter a lógica correta
+                        zoneElements.forEach((el, index) => {
+                            const originalZoneName = zones[index];
+                            el.id = `field-zone-${originalZoneName}`;
+                            el.querySelector('.label').textContent = originalZoneName.charAt(0).toUpperCase() + originalZoneName.slice(1);
+                        });
+
+                        // Mantém a seleção visual no setor correto
+                        updateSelection(`field-zone-${liveState.selectedZone}`);
+                    });
+                }
+
+                // Chama a função para configurar os botões assim que o DOM carregar
+                document.addEventListener('DOMContentLoaded', setupInteractiveField);
+
+                // --- FIM DO NOVO CÓDIGO DO CAMPO INTERATIVO ---
+
+                auth = getAuth(app);
                 document.addEventListener('fullscreenchange', () => {
                     document.body.classList.toggle('fullscreen-active', !!document.fullscreenElement);
                     if (appState.currentView === 'live-match') {
@@ -455,7 +484,6 @@
                         console.log("Auth state changed. User is not authenticated. Waiting for sign-in...");
                     }
                 });
-
                 if (!auth.currentUser) {
                     if (appState.isGuestMode) {
                         console.log("Guest mode: signing in anonymously.");
@@ -478,10 +506,8 @@
                 }
             }
         }
-
-        function setupUIMode() {
+function setupUIMode() {
             const mobileMenu = document.getElementById('mobile-menu');
-
             if (appState.isGuestMode) {
                 document.body.classList.add('is-guest');
                 document.body.classList.remove('is-admin');
@@ -514,7 +540,6 @@
             console.log(`Setting up listeners for userId: ${userId}`);
             let dataLoaded = { players: false, matches: false };
             let timeoutTriggered = false;
-
             setTimeout(() => {
                 if (appState.isGuestMode && (!dataLoaded.players || !dataLoaded.matches)) {
                     timeoutTriggered = true;
@@ -524,7 +549,6 @@
                     showUserFacingError('reports', 'Não foi possível carregar os dados para os relatórios.');
                 }
             }, 5000);
-
             onSnapshot(collection(db, "artifacts", appId, "users", userId, "players"), (snapshot) => {
                 if (timeoutTriggered) return;
                 console.log(`Players snapshot received. Found ${snapshot.docs.length} players.`);
@@ -535,7 +559,6 @@
                 console.error("Erro ao carregar jogadores (verifique as regras de segurança do Firestore):", error);
                 showUserFacingError('dashboard', `Erro ao carregar dados: ${error.message}`);
             });
-
             onSnapshot(query(collection(db, "artifacts", appId, "users", userId, "matches")), (snapshot) => {
                 if (timeoutTriggered) return;
                 console.log(`Matches snapshot received. Found ${snapshot.docs.length} matches.`);
@@ -546,7 +569,6 @@
                 console.error("Erro ao carregar partidas (verifique as regras de segurança do Firestore):", error);
                 showUserFacingError('dashboard', `Erro ao carregar dados: ${error.message}`);
             });
-            
             onSnapshot(doc(db, "artifacts", appId, "users", userId, "settings", "profile"), (doc) => {
                 if (timeoutTriggered) return;
                 console.log(`Settings snapshot received. Document exists: ${doc.exists()}`);
@@ -559,14 +581,13 @@
         
         function refreshCurrentView() {
             if (!appState.currentView) return;
-            
             const activeView = document.getElementById(appState.currentView);
             if (!activeView || !activeView.classList.contains('active')) return;
 
             switch(appState.currentView) {
                 case 'live-match': 
                     if (appState.activeMatchId) {
-                        renderLiveScoreAndTimer(); 
+                        renderLiveScoreAndTimer();
                         renderLiveLog();
                     }
                     break;
@@ -587,7 +608,6 @@
                 subActionContainer: document.getElementById('sub-action-container')
             }
         };
-
         window.navigateTo = function(viewId) {
             if (appState.currentView === 'live-match' && viewId !== 'live-match') {
                 appState.activeMatchId = null;
@@ -605,11 +625,9 @@
             }
             
             appState.currentView = viewId;
-
             document.querySelectorAll('.view').forEach(v => {
                  v.classList.remove('active');
             });
-            
             const targetView = document.getElementById(viewId);
             if(targetView){
                 targetView.classList.add('active');
@@ -621,7 +639,6 @@
             document.querySelectorAll('.nav-link-top').forEach(l => { 
                 l.classList.toggle('active', l.getAttribute('data-view') === viewId);
             });
-
             refreshCurrentView();
         }
 
@@ -665,7 +682,6 @@
                 form.querySelector('#player-id').value = '';
             } catch (error) { showErrorMessage("Não foi possível salvar o jogador", error); }
         });
-        
         window.saveTeamSettings = function() {
             const fileInput = document.getElementById('team-logo-upload');
             const file = fileInput.files[0];
@@ -705,8 +721,6 @@
                 preview.classList.add('hidden');
             }
         });
-
-
         function renderPlayersTable() {
             const tableBody = document.getElementById('players-table');
             if(!tableBody) return;
@@ -733,7 +747,6 @@
         }
         
         const lineupPositions = { gk: 'Goleiro', rb: 'Lateral Direito', rcb: 'Zagueiro (Dir)', lcb: 'Zagueiro (Esq)', lb: 'Lateral Esquerdo', dm: 'Volante', rcm: 'Meia (Dir)', lcm: 'Meia (Esq)', rw: 'Atacante (Dir)', st: 'Centroavante', lw: 'Atacante (Esq)' };
-        
         function prepareNewMatchModal() {
             document.getElementById('new-match-form').reset();
             const squadList = document.getElementById('match-squad-list');
@@ -768,12 +781,10 @@
                 const selectId = `lineup-${key}`;
                 return `<div class="grid grid-cols-3 items-center gap-2"><label for="${selectId}" class="text-sm col-span-1">${label}:</label><select id="${selectId}" class="w-full p-2 mt-1 col-span-2" onchange="updateMatchCreationLists()"><option value="">Selecione...</option>${renderOptions(selectId)}</select></div>`;
             }).join('');
-            
             substitutesContainer.innerHTML = Array.from({length: 10}).map((_, i) => {
                 const selectId = `sub-${i}`;
                 return `<div class="grid grid-cols-3 items-center gap-2"><label for="${selectId}" class="text-sm col-span-1">Reserva ${i+1}:</label><select id="${selectId}" class="w-full p-2 mt-1 col-span-2" onchange="updateMatchCreationLists()"><option value="">Vazio</option>${renderOptions(selectId)}</select></div>`;
             }).join('');
-
             selections.forEach((playerId, selectId) => {
                 const selectElement = document.getElementById(selectId);
                 if (selectElement) selectElement.value = playerId;
@@ -812,7 +823,6 @@
                 possession: { myTeam: 0, opponent: 0, stopped: 0 }, 
                 ratings: {} 
             };
-
             try { await addDoc(collection(db, "artifacts", appId, "users", userId, "matches"), matchData); e.target.reset(); closeModal('new-match-modal'); } 
             catch (error) { showErrorMessage("Não foi possível criar a partida.", error); }
         });
@@ -856,7 +866,6 @@
             }
         }
         window.toggleFullScreen = toggleFullScreen;
-
         window.startLiveMatch = async function(matchId) {
             appState.activeMatchId = matchId;
             const match = appState.matches.find(m => m.id === matchId);
@@ -869,9 +878,13 @@
                 currentPeriod: match.timerPeriod || 0, 
                 currentPossessionHolder: null, 
                 activeSubAction: null,
-                secondHalfStartSeconds: match.secondHalfStartSeconds || -1
+                secondHalfStartSeconds: match.secondHalfStartSeconds || -1,
+                awaitingPlayerSelection: null, // Reset state
+                selectedZone: 'meio', // Reset state
+                isFieldInverted: false // Reset state
             };
             navigateTo('live-match');
+            renderOnFieldPlayers(); // NOVO: Renderiza a lista de jogadores
         }
         
         function renderLiveScoreAndTimer() {
@@ -883,9 +896,7 @@
                 displaySeconds = liveState.seconds - liveState.secondHalfStartSeconds;
             }
 
-            // MODIFICADO: Adicionado botão de substituição
             ui.liveMatch.header.innerHTML = `<div class="flex justify-between items-center text-white gap-2"><div class="text-base font-bold text-center truncate flex-1">${match.myTeamName}</div><div class="text-2xl font-black whitespace-nowrap">${match.myTeamScore} - ${match.opponentScore}</div><div class="text-base font-bold text-center truncate flex-1">${match.opponentName}</div></div><div class="text-center text-5xl font-black text-white my-2" id="live-timer">${formatTime(displaySeconds)}</div><div class="flex justify-center items-center gap-2 flex-wrap"><button class="bg-green-600 px-2 py-1 rounded text-xs" onclick="timerControl('start1')">▶ 1ºT</button><button class="bg-yellow-500 px-2 py-1 rounded text-xs" onclick="timerControl('pause')">⏸ Int.</button><button class="bg-green-600 px-2 py-1 rounded text-xs" onclick="timerControl('start2')">▶ 2ºT</button><button class="bg-orange-500 px-2 py-1 rounded text-xs" onclick="prepareSubstitutionModal()">🔃 Substituição</button><button class="bg-blue-600 px-2 py-1 rounded text-xs" onclick="showHalftimeReport()">Rel. 1ºT</button><button class="bg-red-600 px-2 py-1 rounded text-xs" onclick="timerControl('end')">⏹ Fim</button><button onclick="toggleFullScreen()" class="p-2 rounded-md text-gray-300 hover:bg-gray-700 md:hidden" title="Tela Cheia"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 110 2H5v2a1 1 0 11-2 0V4zm14 0a1 1 0 00-1-1h-4a1 1 0 100 2h3v2a1 1 0 102 0V4zm-2 10v2h-3a1 1 0 100 2h4a1 1 0 001-1v-4a1 1 0 10-2 0zM5 14v2h3a1 1 0 110 2H4a1 1 0 01-1-1v-4a1 1 0 112 0z" clip-rule="evenodd" /></svg></button></div><div class="flex gap-2 mt-2"><button class="w-1/2 bg-green-700 hover:bg-green-800 p-2 rounded-lg text-white font-bold" onclick="prepareGoalModal('myTeam')">GOL PRÓ</button><button class="w-1/2 bg-red-800 hover:bg-red-900 p-2 rounded-lg text-white font-bold" onclick="logGoal('opponent')">GOL CONTRA</button></div>`;
-            
             const possessionArea = document.getElementById('possession-area');
             if (possessionArea) {
                 const myTeamActiveClass = liveState.currentPossessionHolder === 'myTeam' ? 'active' : '';
@@ -899,12 +910,11 @@
                             <button id="possession-opponent" onclick="togglePossession('opponent')" class="possession-btn main-team bg-blue-600 text-white rounded flex-grow text-base py-2 ${opponentActiveClass}">${match.opponentName}</button>
                             <button id="possession-stopped" onclick="togglePossession('stopped')" class="possession-btn bg-gray-500 text-white rounded px-4 ${stoppedActiveClass}">Parada</button>
                         </div>
-                        <h3 class="text-center text-sm font-bold text-white mt-2">Controle de Posse de Bola</h3>
+                         <h3 class="text-center text-sm font-bold text-white mt-2">Controle de Posse de Bola</h3>
                     </div>`;
             }
         }
 
-        // NOVA FUNÇÃO: Lida com o envio do formulário de substituição
         document.getElementById('substitution-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
@@ -929,31 +939,27 @@
                 playerInId: playerInId,
                 playerName: `Sai: ${playerOut?.name} / Entra: ${playerIn?.name}`
             };
-            
             try {
                 await updateMatchData(appState.activeMatchId, { events: [newEvent, ...(match.events || [])] });
                 closeModal('substitution-modal');
+                renderOnFieldPlayers(); // NOVO: Atualiza a lista de jogadores após a substituição
             } catch (error) {
                 showErrorMessage("Não foi possível salvar a substituição.", error);
             }
         });
 
-        // NOVA FUNÇÃO: Retorna jogadores em campo e no banco
         function getPlayersOnFieldAndBench(match) {
             let onField = new Set(Object.values(match.lineup).filter(Boolean));
             const subs = (match.events || []).filter(e => e.action === 'substituicao').sort((a,b) => a.time - b.time);
-
             subs.forEach(sub => {
                 if (sub.playerOutId) onField.delete(sub.playerOutId);
                 if (sub.playerInId) onField.add(sub.playerInId);
             });
-
             const onBench = match.squadPlayerIds.filter(pid => !onField.has(pid));
             
             return { onField: Array.from(onField), onBench };
         }
 
-        // NOVA FUNÇÃO: Prepara e abre o modal de substituição
         window.prepareSubstitutionModal = function() {
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
             if (!match || liveState.currentPeriod === 0) {
@@ -961,7 +967,6 @@
             }
 
             const { onField, onBench } = getPlayersOnFieldAndBench(match);
-
             const getPlayerOptions = (playerIds) => {
                 return playerIds.map(pid => {
                     const player = appState.players.find(p => p.id === pid);
@@ -986,15 +991,14 @@
             clearInterval(liveState.timerInterval);
             let shouldStartTimer = false;
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
-
             if (action === 'start1') { 
-                liveState.currentPeriod = 1; 
+                liveState.currentPeriod = 1;
                 liveState.secondHalfStartSeconds = -1;
                 updateMatchData(appState.activeMatchId, { secondHalfStartSeconds: -1 });
-                shouldStartTimer = true; 
+                shouldStartTimer = true;
             }
             else if (action === 'start2') { 
-                liveState.currentPeriod = 2; 
+                liveState.currentPeriod = 2;
                 if (match && !match.possession1T) {
                     updateMatchData(appState.activeMatchId, { possession1T: match.possession });
                 }
@@ -1002,7 +1006,7 @@
                     liveState.secondHalfStartSeconds = liveState.seconds;
                     updateMatchData(appState.activeMatchId, { secondHalfStartSeconds: liveState.seconds });
                 }
-                shouldStartTimer = true; 
+                shouldStartTimer = true;
             } 
             else if (action === 'pause') {
                 if (liveState.currentPeriod === 1 && match) {
@@ -1010,7 +1014,7 @@
                 }
             }
             else if (action === 'end') { 
-                togglePossession(null); 
+                togglePossession(null);
                 updateMatchData(appState.activeMatchId, { timerSeconds: liveState.seconds, timerPeriod: liveState.currentPeriod }); 
                 prepareRatingModal(); 
                 openModal('rating-modal'); 
@@ -1045,7 +1049,7 @@
                     if(match) { const updatedPossession = { ...match.possession }; updatedPossession[team]++; updateMatchData(appState.activeMatchId, { possession: updatedPossession }); }
                 }, 1000);
             } else { 
-                liveState.currentPossessionHolder = null; 
+                liveState.currentPossessionHolder = null;
             }
             renderLiveScoreAndTimer();
         }
@@ -1053,17 +1057,41 @@
         const eventConfig = {
             finalizacao: { title: "Finalização", player: true, sub: [{label: "Dentro da área", value: "dentro_area"},{label: "Fora da área", value: "fora_area"},{label: "Cabeceio", value: "cabeceio"}] },
             finalizacao_adv: { title: "Finalização Adv.", player: false, sub: [{label: "Dentro da Área", value: "dentro_area"},{label: "Fora da Área", value: "fora_area"},{label: "Cabeceio", value: "cabeceio"}] },
-            duelo: { title: "Duelo", player: true, sub: [{label: "Ganhou", value: "ganhou"}, {label:"Perdeu", value:"perdeu"}] },
+            // CÓDIGO MODIFICADO: Duelo com novas opções
+            duelo: { 
+                title: "Duelo", 
+                player: true, 
+                sub: [
+                    {label: "Ganhou (Gramado)", value: "ganhou_gramado"},
+                    {label: "Ganhou (Alto)", value: "ganhou_alto"},
+                    {label: "Perdeu (Gramado)", value: "perdeu_gramado"},
+                    {label: "Perdeu (Alto)", value: "perdeu_alto"}
+                ] 
+            },
             falta: { title: "Tipo de Falta", player: false, sub: [{label: "Sofrida", value: "falta_sofrida"}, {label:"Cometida", value:"falta_cometida"}] },
-            cruzamento: { title: "Lado do Cruzamento", player: false, sub: [{label: "Direita", value: "cruzamento_dir"}, {label:"Esquerda", value:"cruzamento_esq"}] }
+            cruzamento: { title: "Lado do Cruzamento", player: false, sub: [{label: "Direita", value: "cruzamento_dir"}, {label:"Esquerda", value:"cruzamento_esq"}] },
+            passe_certo: { player: true }, // Adicionado para poder selecionar jogador
+            passe_errado: { player: true } // Adicionado para poder selecionar jogador
         };
-        
-        window.logEvent = (event, zone, action) => {
+
+        // CÓDIGO MODIFICADO: para pegar o setor do estado, não do botão
+        window.logEvent = (event, action) => {
+            const zone = liveState.selectedZone; // Pega o setor do estado global
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
             if (!match || liveState.currentPeriod === 0) return showErrorMessage("Inicie o cronômetro para registrar eventos.");
             const config = eventConfig[action];
-            if (config && config.sub) { liveState.activeSubAction = { zone, action, config }; renderSubActions(); } 
-            else { finalizeEvent(zone, action, 'N/A', null); }
+
+            // CÓDIGO MODIFICADO: Para também poder aguardar jogador em ações sem sub-menu
+            if (config && config.sub) {
+                liveState.activeSubAction = { zone, action, config, originalButton: event.currentTarget }; // Guarda o botão clicado
+                renderSubActions();
+            } else if (config && config.player) {
+                liveState.awaitingPlayerSelection = { zone, action, detail: 'N/A' };
+                event.currentTarget.classList.add('waiting');
+            }
+            else {
+                finalizeEvent(zone, action, 'N/A', null);
+            }
         };
 
         function renderSubActions() {
@@ -1076,39 +1104,26 @@
             ui.liveMatch.subActionContainer.innerHTML = subActionsHTML;
         }
 
+        // CÓDIGO MODIFICADO: para aguardar seleção de jogador da lista fixa
         window.handleSubActionClick = (value) => {
-            const { zone, action, config } = liveState.activeSubAction;
+            const { zone, action, config, originalButton } = liveState.activeSubAction;
             ui.liveMatch.subActionContainer.innerHTML = ''; 
-            
+
             const isComplexAction = action === 'falta' || action === 'cruzamento';
             const finalAction = isComplexAction ? value : action;
             const finalDetail = isComplexAction ? 'N/A' : value;
 
-            if (config.player) { 
-                renderPlayerListForEvent(zone, finalAction, finalDetail); 
-            } else { 
-                finalizeEvent(zone, finalAction, finalDetail, null); 
-            }
-        }
+            if (config.player) {
+                // AVISA que estamos esperando la seleção de um jogador
+                liveState.awaitingPlayerSelection = { zone, action: finalAction, detail: finalDetail };
+                // Adiciona um feedback visual ao botão original para mostrar que está ativo
+                if(originalButton) originalButton.classList.add('waiting');
 
-        function renderPlayerListForEvent(zone, action, detail) {
-            const match = appState.matches.find(m => m.id === appState.activeMatchId);
-            if (!match) return;
-            const squad = match.squadPlayerIds.map(pid => appState.players.find(p => p.id === pid)).filter(Boolean);
-            let listHTML = `<div class="bg-gray-900 p-3 rounded-lg"><h4 class="text-white font-bold mb-3 text-center">Selecionar Jogador:</h4><div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">`;
-            squad.sort((a,b) => a.name.localeCompare(b.name)).forEach(player => {
-                listHTML += `<button class="action-btn bg-indigo-600 hover:bg-indigo-700 text-sm p-2" onclick="selectPlayerForEvent('${zone}', '${action}', '${detail}', '${player.id}')">${player.name}</button>`;
-            });
-            listHTML += `<button class="action-btn bg-gray-500 hover:bg-gray-600 text-sm p-2" onclick="closePlayerList()">Cancelar</button></div></div>`;
-            ui.liveMatch.subActionContainer.innerHTML = listHTML;
+            } else { 
+                finalizeEvent(zone, finalAction, finalDetail, null);
+            }
+            liveState.activeSubAction = null; // Limpa a ação ativa
         }
-        
-        window.selectPlayerForEvent = (zone, action, detail, playerId) => {
-            finalizeEvent(zone, action, detail, playerId);
-            closePlayerList();
-        }
-        
-        window.closePlayerList = () => { ui.liveMatch.subActionContainer.innerHTML = ''; }
 
         async function finalizeEvent(zone, action, detail, playerId) {
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
@@ -1116,6 +1131,17 @@
             const player = playerId ? appState.players.find(p => p.id === playerId) : null;
             const newEvent = { time: liveState.seconds, period: liveState.currentPeriod, zone, action, detail, playerId, playerName: player?.name || 'N/A' };
             await updateMatchData(appState.activeMatchId, { events: [newEvent, ...(match.events || [])] });
+
+            // NOVO: Feedback visual no seletor de campo
+            const zoneId = `field-zone-${zone}`;
+            const zoneEl = document.getElementById(zoneId);
+            if (zoneEl) {
+                const originalColor = window.getComputedStyle(zoneEl).backgroundColor;
+                zoneEl.classList.add('flash-feedback');
+                setTimeout(() => {
+                    zoneEl.classList.remove('flash-feedback');
+                }, 500);
+            }
         }
 
         function renderLiveLog() {
@@ -1123,18 +1149,15 @@
             if (!match || !match.events || !ui.liveMatch.logBody) return;
             ui.liveMatch.logBody.innerHTML = '';
 
-            const eventsToShow = match.events; 
-
+            const eventsToShow = match.events;
             eventsToShow.forEach(ev => {
                 const row = ui.liveMatch.logBody.insertRow();
                 const detailText = (ev.detail && ev.detail !== 'N/A') ? ev.detail.replace(/_/g, ' ') : '';
                 row.innerHTML = `<td class="p-1 text-xs">${formatTime(ev.time)}</td><td class="p-1 text-xs">${ev.period}ºT</td><td class="p-1 text-xs">${ev.zone}</td><td class="p-1 text-xs">${(ev.action || '').replace(/_/g, ' ')}</td><td class="p-1 text-xs">${detailText}</td><td class="p-1 text-xs">${ev.playerName}</td>`;
             });
         }
-
-        window.undoLastAction = async function() {
+window.undoLastAction = async function() {
             if (!appState.activeMatchId) return;
-
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
             if (!match || !match.events || match.events.length === 0) {
                 alert("Nenhuma ação para desfazer.");
@@ -1147,7 +1170,6 @@
             const updateData = {
                 events: updatedEvents
             };
-
             if (lastEvent.action === 'gol') {
                 updateData.myTeamScore = Math.max(0, match.myTeamScore - 1);
             } else if (lastEvent.action === 'gol_contra') {
@@ -1184,6 +1206,7 @@
                 const data = { goalPlayerId: e.target.elements['goal-player'].value, assistPlayerId: e.target.elements['goal-assist'].value, goalType: e.target.elements['goal-type'].value };
                 const goalPlayer = appState.players.find(p => p.id === data.goalPlayerId);
                 const assistPlayer = data.assistPlayerId ? appState.players.find(p => p.id === data.assistPlayerId) : null;
+   
                 const newEvent = { time: liveState.seconds, period: liveState.currentPeriod, zone: 'ataque', action: 'gol', detail: data.goalType, playerId: data.goalPlayerId, playerName: goalPlayer?.name || 'N/A', assistId: data.assistPlayerId || null, assistName: assistPlayer?.name || null, scoringTeam: 'myTeam' };
                 await updateMatchData(appState.activeMatchId, { events: [newEvent, ...(match.events || [])], myTeamScore: match.myTeamScore + 1 });
                 closeModal('goal-modal');
@@ -1221,13 +1244,11 @@
                     return appState.players.find(p => p.id === playerId);
                 })
                 .filter(Boolean);
-
             const substitutes = match.squadPlayerIds
                 .filter(playerId => !lineupPlayerIds.has(playerId))
                 .map(playerId => appState.players.find(p => p.id === playerId))
                 .filter(Boolean)
                 .sort((a, b) => a.name.localeCompare(b.name));
-
             const orderedPlayers = [...starters, ...substitutes];
             
             const listEl = document.getElementById('rating-player-list');
@@ -1235,10 +1256,10 @@
                 <div class="bg-gray-700 p-3 rounded-lg">
                     <div class="flex items-center justify-between mb-2">
                          <h4 class="text-lg font-bold">${p.name}</h4>
-                         <div class="flex items-center">
+                        <div class="flex items-center">
                             <label for="did-not-play-${p.id}" class="text-sm mr-2 text-gray-300">Não jogou</label>
                             <input type="checkbox" id="did-not-play-${p.id}" onchange="togglePlayerRatingInputs('${p.id}')" class="h-4 w-4">
-                         </div>
+                        </div>
                     </div>
                     <div id="rating-inputs-${p.id}" class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2 transition-opacity duration-300">
                         ${['Técnico', 'Tático', 'Físico', 'Comportamental'].map(cat => `
@@ -1277,7 +1298,6 @@
             
             closeModal('rating-modal'); 
             navigateTo('matches');
-            
             if (document.fullscreenElement) {
                 document.exitFullscreen();
             }
@@ -1288,20 +1308,17 @@
             if(!container) return;
             const finishedMatches = appState.matches.filter(m => m.status === 'finished');
             const totalGames = finishedMatches.length;
-            
             const totalGoalsScored = finishedMatches.reduce((acc, m) => acc + (m.myTeamScore || 0), 0);
             const totalGoalsConceded = finishedMatches.reduce((acc, m) => acc + (m.opponentScore || 0), 0);
             let wins = 0, draws = 0, losses = 0;
             finishedMatches.forEach(m => { if (m.myTeamScore > m.opponentScore) wins++; else if (m.myTeamScore < m.opponentScore) losses++; else draws++; });
             const aproveitamento = totalGames > 0 ? (((wins * 3 + draws) / (totalGames * 3)) * 100).toFixed(0) : 0;
             const last5Matches = [...finishedMatches].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0,5).map(m => { let result = 'E', color = 'bg-yellow-500'; if (m.myTeamScore > m.opponentScore) { result = 'V'; color = 'bg-green-500'; } if (m.myTeamScore < m.opponentScore) { result = 'D'; color = 'bg-red-500'; } return `<span class="w-8 h-8 flex items-center justify-center text-white font-bold rounded-full ${color}">${result}</span>`; }).join('');
-            
             let totalPossessionPercent = 0;
             let totalTeamShots = 0;
             let totalTeamClearChances = 0;
             let totalOpponentShots = 0;
             let totalOpponentClearChances = 0;
-
             finishedMatches.forEach(m => {
                 const possession = m.possession || { myTeam: 0, opponent: 0, stopped: 0 };
                 const totalPossessionSeconds = possession.myTeam + possession.opponent;
@@ -1315,7 +1332,6 @@
                     totalOpponentClearChances += m.events.filter(e => e.action === 'chance_clara_adv').length;
                 }
             });
-
             const avgPossession = totalGames > 0 ? (totalPossessionPercent / totalGames).toFixed(1) : '0.0';
             const avgTeamShots = totalGames > 0 ? (totalTeamShots / totalGames).toFixed(1) : '0.0';
             const avgTeamClearChances = totalGames > 0 ? (totalTeamClearChances / totalGames).toFixed(1) : '0.0';
@@ -1333,7 +1349,6 @@
                 }); 
             });
             const topPerformances = [...allPerformances].sort((a,b) => b.score - a.score).slice(0, 5).map(p => `<li class="flex justify-between items-center text-gray-300 py-1"><div>${p.name}<p class="text-xs text-gray-500">${new Date(p.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</p></div><strong class="text-white">Nota ${p.score.toFixed(1)}</strong></li>`).join('');
-            
             container.innerHTML = `<h2 class="text-3xl font-bold text-white mb-6">Dashboard</h2>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div id="team-stats-card" class="lg:col-span-3 dashboard-card p-6 rounded-lg flex flex-col items-center gap-6">
@@ -1346,9 +1361,9 @@
                                 <div><p class="text-4xl font-extrabold">${totalGames}</p><p class="text-gray-400">Jogos</p></div><div class="text-green-400"><p class="text-4xl font-extrabold">${wins}</p><p class="text-gray-400">Vitórias</p></div><div class="text-yellow-400"><p class="text-4xl font-extrabold">${draws}</p><p class="text-gray-400">Empates</p></div><div class="text-red-400"><p class="text-4xl font-extrabold">${losses}</p><p class="text-gray-400">Derrotas</p></div><div class="text-blue-400"><p class="text-4xl font-extrabold">${aproveitamento}%</p><p class="text-gray-400">Aproveitamento</p></div><div><p class="text-4xl font-extrabold text-green-400">${totalGoalsScored}</p><p class="text-gray-400">Gols Marcados</p></div><div><p class="text-4xl font-extrabold text-red-400">${totalGoalsConceded}</p><p class="text-gray-400">Gols Sofridos</p></div><div><p class="text-4xl font-extrabold">${(totalGames > 0 ? (totalGoalsScored/totalGames).toFixed(2) : '0.00')}</p><p class="text-gray-400">Gols p/ Jogo</p></div><div><p class="text-4xl font-extrabold">${(totalGames > 0 ? (totalGoalsConceded/totalGames).toFixed(2) : '0.00')}</p><p class="text-gray-400">Sofridos p/ Jogo</p></div>
                             </div>
                             <div class="mt-6 pt-4 border-t border-gray-700 w-full">
-                                <button onclick="toggleAdvancedStats()" id="advanced-stats-toggle" class="text-blue-400 hover:text-blue-300 w-full text-center p-2 bg-gray-800 rounded-md transition">Ver Estatísticas Avançadas ▼</button>
+                                 <button onclick="toggleAdvancedStats()" id="advanced-stats-toggle" class="text-blue-400 hover:text-blue-300 w-full text-center p-2 bg-gray-800 rounded-md transition">Ver Estatísticas Avançadas ▼</button>
                                 <div id="advanced-stats-container" class="hidden mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 text-center">
-                                    <div><p class="text-3xl font-bold">${avgPossession}%</p><p class="text-gray-400 text-sm">Posse/Jogo</p></div>
+                                     <div><p class="text-3xl font-bold">${avgPossession}%</p><p class="text-gray-400 text-sm">Posse/Jogo</p></div>
                                     <div><p class="text-3xl font-bold text-green-400">${avgTeamShots}</p><p class="text-gray-400 text-sm">Finalizações/Jogo</p></div>
                                     <div><p class="text-3xl font-bold text-green-400">${avgTeamClearChances}</p><p class="text-gray-400 text-sm">Chances Claras/Jogo</p></div>
                                     <div><p class="text-3xl font-bold text-red-400">${avgOpponentShots}</p><p class="text-gray-400 text-sm">Fin. Adv./Jogo</p></div>
@@ -1360,7 +1375,6 @@
                     <div class="dashboard-card p-6 rounded-lg lg:col-span-1"><h3 class="font-bold text-lg mb-4">Últimos 5 Resultados</h3><div class="flex justify-center gap-3">${last5Matches || '<p class="text-gray-400">Nenhuma partida finalizada.</p>'}</div></div>
                     <div id="performance-history-card" class="dashboard-card p-6 rounded-lg lg:col-span-2"><h3 class="font-bold text-lg mb-4">Melhores Desempenhos Recentes</h3><ul class="space-y-2">${topPerformances || '<p class="text-gray-400">Nenhuma avaliação registrada.</p>'}</ul></div>
                 </div>`;
-            
             const logoContainer = document.getElementById('dashboard-logo-container');
             const logoImg = document.getElementById('dashboard-logo');
             if (appState.settings.logoDataUrl && logoContainer && logoImg) {
@@ -1377,25 +1391,21 @@
             }
         }
         
-        // NOVA FUNÇÃO: Calcula minutos jogados por cada jogador em uma partida.
         function calculateMinutesPlayed(match) {
             if (!match || !match.lineup || match.status !== 'finished') {
                 return {};
             }
 
             const playerMinutes = {};
-            const onFieldStints = {}; 
-
+            const onFieldStints = {};
             Object.values(match.lineup).forEach(playerId => {
                 if (playerId) {
                     onFieldStints[playerId] = 0;
                 }
             });
-
             const subEvents = (match.events || [])
                 .filter(e => e.action === 'substituicao')
                 .sort((a, b) => a.time - b.time);
-
             subEvents.forEach(sub => {
                 const { time, playerOutId, playerInId } = sub;
 
@@ -1415,7 +1425,6 @@
                 const duration = matchEndTime - onFieldStints[playerId];
                 playerMinutes[playerId] = (playerMinutes[playerId] || 0) + duration;
             });
-
             for (const pid in playerMinutes) {
                 playerMinutes[pid] = Math.round(playerMinutes[pid] / 60);
             }
@@ -1423,7 +1432,6 @@
             return playerMinutes;
         }
 
-        // MODIFICADO: renderPerformancePage agora calcula e exibe os minutos
         function renderPerformancePage() {
             const container = document.getElementById('performance');
             if (!container) return;
@@ -1432,13 +1440,11 @@
             appState.players.forEach(p => {
                 performances[p.id] = { name: p.name, position: p.position, matchPerformances: [] };
             });
-
             const finishedMatches = appState.matches.filter(m => m.status === 'finished' && m.ratings);
             const minutesByMatch = finishedMatches.reduce((acc, match) => {
                 acc[match.id] = calculateMinutesPlayed(match);
                 return acc;
             }, {});
-
             finishedMatches.forEach(match => {
                 const matchEvents = match.events || [];
                 const matchMinutes = minutesByMatch[match.id] || {};
@@ -1449,11 +1455,10 @@
                         const goals = playerEvents.filter(e => e.action === 'gol').length;
                         const assists = matchEvents.filter(e => e.assistId === playerId).length;
                         const shots = playerEvents.filter(e => e.action === 'finalizacao').length;
-                        const duelsWon = playerEvents.filter(e => e.action === 'duelo' && e.detail === 'ganhou').length;
-                        const duelsLost = playerEvents.filter(e => e.action === 'duelo' && e.detail === 'perdeu').length;
-                        
+                        const duelsWon = playerEvents.filter(e => e.action === 'duelo' && e.detail.includes('ganhou')).length;
+                        const duelsLost = playerEvents.filter(e => e.action === 'duelo' && e.detail.includes('perdeu')).length;
+   
                         const avg = (parseFloat(rates.tecnico) + parseFloat(rates.tatico) + parseFloat(rates.fisico) + parseFloat(rates.comportamental)) / 4;
-                        
                         performances[playerId].matchPerformances.push({
                             matchDate: new Date(match.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
                             opponentName: match.opponentName,
@@ -1468,7 +1473,6 @@
                     }
                 });
             });
-
             const sortedPerformances = Object.values(performances).map(p => {
                 const overallScores = p.matchPerformances.map(mp => mp.overall);
                 const overallAvg = overallScores.length > 0 ? (overallScores.reduce((a, b) => a + b, 0) / overallScores.length) : 0;
@@ -1500,7 +1504,6 @@
                             <td class="py-2 px-3 text-sm">${mp.duelsWon} / ${mp.duelsLost}</td>
                         </tr>
                     `).join('');
-
                     return `<tbody class="border-b border-gray-700">
                                 <tr class="performance-main-row" onclick="togglePerformanceDetails(this)">
                                     <td class="p-3 font-semibold text-white">${p.name} <span class="text-xs text-gray-400">${p.position}</span></td>
@@ -1512,21 +1515,21 @@
                                     <td class="p-3 text-center">${p.totalShots}</td>
                                     <td class="p-3 text-center">${p.totalDuelsWon} / ${p.totalDuelsLost}</td>
                                     <td class="p-3 text-center">
-                                        <svg class="details-icon h-5 w-5 text-gray-400 inline-block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+                                         <svg class="details-icon h-5 w-5 text-gray-400 inline-block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
                                     </td>
-                                </tr>
+                               </tr>
                                 <tr class="performance-details-row hidden">
                                     <td colspan="9">
                                         <div class="p-4 bg-gray-900">
                                             <table class="w-full text-left">
-                                                <thead class="text-xs text-gray-400 uppercase">
+                                                 <thead class="text-xs text-gray-400 uppercase">
                                                     <tr class="text-center">
-                                                        <th class="py-2 px-3 text-left">Data</th>
-                                                        <th class="py-2 px-3 text-left">Adversário</th>
+                                                         <th class="py-2 px-3 text-left">Data</th>
+                                                         <th class="py-2 px-3 text-left">Adversário</th>
                                                         <th class="py-2 px-3">Nota</th>
-                                                        <th class="py-2 px-3">Minutos</th>
+                                                         <th class="py-2 px-3">Minutos</th>
                                                         <th class="py-2 px-3">Gols</th>
-                                                        <th class="py-2 px-3">Assist.</th>
+                                                         <th class="py-2 px-3">Assist.</th>
                                                         <th class="py-2 px-3">FIN</th>
                                                         <th class="py-2 px-3">Duelos G/P</th>
                                                     </tr>
@@ -1589,22 +1592,19 @@
         }
         
         Chart.register(ChartDataLabels);
-        
         window.generateReports = function(matchId) {
             destroyCharts();
             const reportContentEl = document.getElementById('report-content');
             const reportsButtons = document.getElementById('reports-buttons');
             if (!matchId) { 
-                hideReportContent(); 
+                hideReportContent();
                 return; 
             }
             reportContentEl.classList.remove('hidden');
             reportsButtons.style.display = 'flex';
-            
             const match = appState.matches.find(m => m.id === matchId);
             if (!match) return;
             reportContentEl.innerHTML = renderReportContentForPDF(match);
-            
             setTimeout(() => {
                 renderChartsForReport(match);
             }, 100);
@@ -1615,7 +1615,6 @@
             const possessionData = period == 1 ? match.possession1T : match.possession;
             renderPossessionChart(match, `possessionChart${suffix}`, possessionData);
             renderActionMapChart(match, `actionMapChart${suffix}`, period);
-
             if (!period) {
                 renderActionMapChart(match, 'actionMapChart_1T', 1);
                 renderActionMapChart(match, 'actionMapChart_2T', 2);
@@ -1638,14 +1637,12 @@
             const myEvents = allEvents.filter(e => e.scoringTeam !== 'opponent' && !e.action.endsWith('_adv'));
             const oppEvents = allEvents.filter(e => e.scoringTeam === 'opponent' || e.action.endsWith('_adv'));
             const count = (arr, action, detail) => arr.filter(e => e.action === action && (detail ? e.detail === detail : true)).length;
-
             const calculateChancesBreakdown = (eventsToAnalyze) => {
                 const breakdown = {
                     myTeam: { '0-15': 0, '15-30': 0, '30+': 0 },
                     opponent: { '0-15': 0, '15-30': 0, '30+': 0 }
                 };
                 const chanceEvents = eventsToAnalyze.filter(e => e.action === 'chance_clara' || e.action === 'chance_clara_adv');
-
                 chanceEvents.forEach(e => {
                     const team = e.action === 'chance_clara' ? 'myTeam' : 'opponent';
                     let timeInPeriod = e.time;
@@ -1664,9 +1661,13 @@
             
             const chancesBreakdown = calculateChancesBreakdown(allEvents);
 
-            const passesCerto = count(myEvents, 'passe_certo'); const passesErrado = count(myEvents, 'passe_errado'); const totalPasses = passesCerto + passesErrado;
-            const percCerto = totalPasses > 0 ? `(${(passesCerto/totalPasses*100).toFixed(0)}%)` : ''; const percErrado = totalPasses > 0 ? `(${(passesErrado/totalPasses*100).toFixed(0)}%)` : '';
-            const duelosGanhos = count(myEvents, 'duelo', 'ganhou'); const duelosPerdidos = count(myEvents, 'duelo', 'perdeu'); const duelosTotais = duelosGanhos + duelosPerdidos;
+            const passesCerto = count(myEvents, 'passe_certo'); const passesErrado = count(myEvents, 'passe_errado');
+            const totalPasses = passesCerto + passesErrado;
+            const percCerto = totalPasses > 0 ? `(${(passesCerto/totalPasses*100).toFixed(0)}%)` : '';
+            const percErrado = totalPasses > 0 ? `(${(passesErrado/totalPasses*100).toFixed(0)}%)` : '';
+            const duelosGanhos = myEvents.filter(e => e.action === 'duelo' && e.detail.includes('ganhou')).length;
+            const duelosPerdidos = myEvents.filter(e => e.action === 'duelo' && e.detail.includes('perdeu')).length;
+            const duelosTotais = duelosGanhos + duelosPerdidos;
 
             let tableHTML = `<table class="w-full text-sm"><tbody>`;
             const statsConfig = [
@@ -1703,7 +1704,6 @@
                     const myChances = chancesBreakdown.myTeam;
                     const oppChances = chancesBreakdown.opponent;
                     const subRowClass = !stat.isSub && (mainRowIndex - 1) % 2 === 0 ? 'bg-gray-50' : '';
-                    
                     tableHTML += `
                         <tr class="${subRowClass}">
                             <td class="pt-0 pb-1 px-2 pl-8 text-gray-500 text-xs font-normal">↳ Até 15'</td>
@@ -1711,18 +1711,17 @@
                             <td class="pt-0 pb-1 px-2 text-center font-normal text-gray-500 text-xs">${oppChances['0-15']}</td>
                         </tr>
                         <tr class="${subRowClass}">
-                            <td class="pt-0 pb-1 px-2 pl-8 text-gray-500 text-xs font-normal">↳ 15' a 30'</td>
+                             <td class="pt-0 pb-1 px-2 pl-8 text-gray-500 text-xs font-normal">↳ 15' a 30'</td>
                             <td class="pt-0 pb-1 px-2 text-center font-normal text-gray-500 text-xs">${myChances['15-30']}</td>
                             <td class="pt-0 pb-1 px-2 text-center font-normal text-gray-500 text-xs">${oppChances['15-30']}</td>
-                        </tr>
+                         </tr>
                         <tr class="${subRowClass}">
                             <td class="pt-0 pb-1 px-2 pl-8 text-gray-500 text-xs font-normal">↳ Após 30'</td>
-                            <td class="pt-0 pb-1 px-2 text-center font-normal text-gray-500 text-xs">${myChances['30+']}</td>
+                             <td class="pt-0 pb-1 px-2 text-center font-normal text-gray-500 text-xs">${myChances['30+']}</td>
                             <td class="pt-0 pb-1 px-2 text-center font-normal text-gray-500 text-xs">${oppChances['30+']}</td>
                         </tr>`;
                 }
             });
-
             tableHTML += `</tbody><thead class="text-xs text-gray-500"><tr><th class="p-2 text-left">Estatística</th><th class="p-2 text-center">${match.myTeamName}</th><th class="p-2 text-center">${match.opponentName}</th></tr></thead></table>`;
             return tableHTML;
         }
@@ -1738,21 +1737,19 @@
             const logoImg = logoDataUrl ? `<img src="${logoDataUrl}" class="report-logo" crossorigin="anonymous" />` : '';
             const reportHeader = `<div class="report-header">${logoImg}<p class="text-right text-xs text-gray-500">Relatório de Análise de Desempenho</p></div>`;
             const reportFooter = `<div class="absolute bottom-0 left-1/2 -translate-x-1/2 text-center text-xs text-gray-400 p-2 w-full">Powered by Ciente - Inteligência Esportiva</div>`;
-            
             if (specificPeriod) {
                 const myTeamScore = match.events.filter(e => e.period == specificPeriod && e.action === 'gol').length;
                 const opponentScore = match.events.filter(e => e.period == specificPeriod && e.action === 'gol_contra').length;
                 const summaryTableHTML = getReportSummaryTableHTML(match, specificPeriod);
-                
                 return `<div class="report-page">
                     ${reportHeader}
                     <div class="text-center mb-4"><h1 class="text-3xl font-bold">Relatório do ${specificPeriod}º Tempo</h1><p class="text-lg text-gray-600">${match.myTeamName} vs ${match.opponentName}</p></div>
                     <div class="text-center mb-6"><h2 class="text-2xl font-bold">Placar do Período: ${myTeamScore} x ${opponentScore}</h2></div>
-                    <div class="space-y-8 report-section">
+                     <div class="space-y-8 report-section">
                         <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Posse de Bola (1ºT)</h3><div class="chart-container h-20"><canvas id="possessionChart_${specificPeriod}T"></canvas></div></div>
                         <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Resumo de Ações</h3>${summaryTableHTML}</div>
                     </div>
-                     ${reportFooter}
+                    ${reportFooter}
                 </div>`;
             }
             
@@ -1760,7 +1757,7 @@
                 ${reportHeader}
                 <div class="text-center mb-6"><h1 class="text-4xl font-bold">${match.myTeamName} ${match.myTeamScore} x ${match.opponentScore} ${match.opponentName}</h1><p class="text-lg text-gray-600">${new Date(match.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})} - ${match.location}</p></div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 report-section">
-                    <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Posse de Bola (Total)</h3><div class="chart-container h-20"><canvas id="possessionChart"></canvas></div><p class="text-center text-sm text-gray-600 mt-2">Tempo Total: ${formatTime(match.timerSeconds || 0)}</p></div>
+                     <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Posse de Bola (Total)</h3><div class="chart-container h-20"><canvas id="possessionChart"></canvas></div><p class="text-center text-sm text-gray-600 mt-2">Tempo Total: ${formatTime(match.timerSeconds || 0)}</p></div>
                     <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Destaque da Partida</h3><div id="report-motm"></div></div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 report-section">
@@ -1773,7 +1770,6 @@
                 </div>
                 ${reportFooter}
             </div>`;
-            
             const page2 = `<div class="report-page">
                 ${reportHeader}
                 <div class="text-center mb-8 pt-8"><h1 class="text-3xl font-bold">Scout por Período</h1></div>
@@ -1789,8 +1785,8 @@
 
         function destroyCharts() { Object.values(charts).forEach(chart => chart?.destroy()); }
         
-        const fieldLinesPlugin = { id: 'fieldLines', beforeDraw: (chart) => { const { ctx, chartArea: { top, bottom, left, right }, scales: { x } } = chart; ctx.save(); ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; ctx.lineWidth = 1; const defenseZoneEnd = x.getPixelForValue(1); const midfieldZoneEnd = x.getPixelForValue(2); ctx.beginPath(); ctx.moveTo(defenseZoneEnd, top); ctx.lineTo(defenseZoneEnd, bottom); ctx.moveTo(midfieldZoneEnd, top); ctx.lineTo(midfieldZoneEnd, bottom); ctx.stroke(); ctx.restore(); } };
-        
+        const fieldLinesPlugin = { id: 'fieldLines', beforeDraw: (chart) => { const { ctx, chartArea: { top, bottom, left, right }, scales: { x } } = chart; ctx.save(); ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; ctx.lineWidth = 1; const defenseZoneEnd = x.getPixelForValue(1);
+        const midfieldZoneEnd = x.getPixelForValue(2); ctx.beginPath(); ctx.moveTo(defenseZoneEnd, top); ctx.lineTo(defenseZoneEnd, bottom); ctx.moveTo(midfieldZoneEnd, top); ctx.lineTo(midfieldZoneEnd, bottom); ctx.stroke(); ctx.restore(); } };
         function renderPossessionChart(match, canvasId, possessionData) {
             const ctx = document.getElementById(canvasId)?.getContext('2d');
             if(!ctx) return;
@@ -1810,11 +1806,9 @@
             const sectorCounts = { defesa: 0, meio: 0, ataque: 0 };
             events.forEach(e => { if (sectorCounts.hasOwnProperty(e.zone)) sectorCounts[e.zone]++; });
             const totalActions = Object.values(sectorCounts).reduce((a, b) => a + b, 0);
-
             const maxActions = Math.max(...Object.values(sectorCounts), 1);
             const getColor = (count) => `rgba(220, 38, 38, ${Math.min(0.2 + (count / maxActions) * 0.8, 1)})`;
             const getRadius = (count) => 10 + Math.sqrt(count) * 4;
-
             charts[canvasId] = new Chart(ctx, { 
                 type: 'bubble', 
                 plugins: [fieldLinesPlugin], 
@@ -1879,7 +1873,7 @@
                 container.innerHTML = `<div class="flex flex-col items-center justify-center h-full bg-blue-50 rounded-lg p-3">
                     <svg class="h-10 w-10 text-yellow-400 mb-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
                     <p class="text-xl font-bold text-gray-800">${player.name}</p>
-                    <p class="text-md text-gray-600">
+                     <p class="text-md text-gray-600">
                         Nota Média: <span class="font-bold text-blue-600">${topPlayer.avg.toFixed(1)}</span>
                         <span class="text-sm text-gray-500 font-semibold">(${legendText})</span>
                     </p>
@@ -1893,11 +1887,11 @@
                             <span class="font-bold text-gray-700 text-right">${topPlayer.rates.tatico} (${getRatingLegend(topPlayer.rates.tatico)})</span>
                         </div>
                         <div class="flex justify-between items-center">
-                            <span class="font-semibold text-gray-500">Físico:</span>
+                             <span class="font-semibold text-gray-500">Físico:</span>
                             <span class="font-bold text-gray-700 text-right">${topPlayer.rates.fisico} (${getRatingLegend(topPlayer.rates.fisico)})</span>
                         </div>
                         <div class="flex justify-between items-center">
-                            <span class="font-semibold text-gray-500">Comport.:</span>
+                             <span class="font-semibold text-gray-500">Comport.:</span>
                             <span class="font-bold text-gray-700 text-right">${topPlayer.rates.comportamental} (${getRatingLegend(topPlayer.rates.comportamental)})</span>
                         </div>
                     </div>
@@ -1911,7 +1905,6 @@
 
             const myEvents = match.events.filter(e => e.scoringTeam !== 'opponent' && !e.action.endsWith('_adv'));
             const opponentGoalEvents = match.events.filter(e => e.action === 'gol_contra').sort((a,b) => a.time - b.time);
-
             const goalEvents = myEvents.filter(e => e.action === 'gol').sort((a,b) => a.time - b.time);
             let teamGoalsHTML = '';
             if (goalEvents.length > 0) {
@@ -1944,19 +1937,21 @@
                 opponentGoalsHTML = '<li>Nenhum gol sofrido.</li>';
             }
 
-            const getTopStats = (action, detail, key) => { const counts = myEvents.filter(e => e.action === action && (detail ? e.detail === detail : true) && e[key]).reduce((acc, e) => { acc[e[key]] = (acc[e[key]] || 0) + 1; return acc; }, {}); return Object.entries(counts).sort(([,a],[,b]) => b-a); };
+            const getTopStats = (action, detail, key) => { const counts = myEvents.filter(e => e.action === action && (detail ? e.detail === detail : true) && e[key]).reduce((acc, e) => { acc[e[key]] = (acc[e[key]] || 0) + 1; return acc; }, {});
+            return Object.entries(counts).sort(([,a],[,b]) => b-a); };
             const assists = getTopStats('gol', null, 'assistId'); 
-            const shots = getTopStats('finalizacao', null, 'playerId'); 
+            const shots = getTopStats('finalizacao', null, 'playerId');
             const duelsWon = getTopStats('duelo', 'ganhou', 'playerId');
 
-            const renderList = (title, data, icon) => { let listHTML = `<div class="bg-white p-3 rounded-lg shadow-sm"><div class="flex items-center gap-3 mb-2"><span class="bg-gray-200 p-2 rounded-full">${icon}</span><h4 class="font-semibold text-gray-800 text-lg">${title}</h4></div><ul class="text-sm text-gray-600 space-y-1 pl-1">`; if (data.length === 0) { listHTML += '<li>Nenhum registro.</li>'; } else { data.slice(0, 3).forEach(([id, count]) => { const player = appState.players.find(p => p.id === id); listHTML += `<li class="flex justify-between"><span>${player?.name || 'Desconhecido'}</span> <strong>${count}</strong></li>`; }); } listHTML += '</ul></div>'; return listHTML; };
-            const renderSingleStat = (title, data, icon) => { const [playerId, count] = data.length > 0 ? data[0] : [null, 0]; const player = appState.players.find(p => p.id === playerId); return `<div class="bg-white p-3 rounded-lg shadow-sm flex items-center gap-3"><span class="bg-gray-200 p-2 rounded-full">${icon}</span><div><h4 class="font-semibold text-gray-500 text-sm">${title}</h4><p class="font-bold text-gray-800 text-base">${player?.name || 'N/A'}</p></div><strong class="ml-auto text-xl font-black text-gray-800">${count > 0 ? count : '-'}</strong></div>`; };
-            
+            const renderList = (title, data, icon) => { let listHTML = `<div class="bg-white p-3 rounded-lg shadow-sm"><div class="flex items-center gap-3 mb-2"><span class="bg-gray-200 p-2 rounded-full">${icon}</span><h4 class="font-semibold text-gray-800 text-lg">${title}</h4></div><ul class="text-sm text-gray-600 space-y-1 pl-1">`;
+            if (data.length === 0) { listHTML += '<li>Nenhum registro.</li>'; } else { data.slice(0, 3).forEach(([id, count]) => { const player = appState.players.find(p => p.id === id); listHTML += `<li class="flex justify-between"><span>${player?.name || 'Desconhecido'}</span> <strong>${count}</strong></li>`; });
+            } listHTML += '</ul></div>'; return listHTML; };
+            const renderSingleStat = (title, data, icon) => { const [playerId, count] = data.length > 0 ? data[0] : [null, 0]; const player = appState.players.find(p => p.id === playerId);
+            return `<div class="bg-white p-3 rounded-lg shadow-sm flex items-center gap-3"><span class="bg-gray-200 p-2 rounded-full">${icon}</span><div><h4 class="font-semibold text-gray-500 text-sm">${title}</h4><p class="font-bold text-gray-800 text-base">${player?.name || 'N/A'}</p></div><strong class="ml-auto text-xl font-black text-gray-800">${count > 0 ? count : '-'}</strong></div>`; };
             const goalIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4c0-1.165.451-2.223 1.172-3.001L8.228 9z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18z" /></svg>`;
             const assistIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" viewBox="0 0 24 24" fill="currentColor"><path d="M21.51,2.05A1.23,1.23,0,0,0,20.29,2L4.7,6.85a1.24,1.24,0,0,0-.7,2.2L9.45,11,7.21,14.49a1.24,1.24,0,0,0,.4,1.75l5.09,3.18a1.23,1.23,0,0,0,1.75-.4L22,3.76A1.24,1.24,0,0,0,21.51,2.05Z"/></svg>`;
             const shotIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>`;
             const duelIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>`;
-
             container.innerHTML = `
                 <div class="space-y-3">
                     <div class="bg-white p-3 rounded-lg shadow-sm">
@@ -1989,7 +1984,6 @@
             const shirtNumbers = {
                 gk: 1, rb: 2, rcb: 3, lcb: 4, dm: 5, lb: 6, rw: 7, rcm: 8, st: 9, lcm: 10, lw: 11
             };
-            
             const lineupPlayerIds = new Set();
             const startersList = [];
 
@@ -2005,15 +1999,13 @@
             }
 
             startersList.sort((a, b) => a.shirtNumber - b.shirtNumber);
-            
             let startersHTML = startersList.map(starter => {
                 const player = appState.players.find(p => p.id === starter.playerId);
                 return `<tr class="border-b border-white/20">
                     <td class="p-1.5 font-bold text-center w-8">${starter.shirtNumber}</td>
                     <td class="p-1.5">${player ? player.name : '<i class="opacity-50">Vazio</i>'}</td>
-                </tr>`;
+                 </tr>`;
             }).join('');
-            
             if (startersList.length === 0) {
                  startersHTML = '<tr><td colspan="2" class="text-center p-2 opacity-50">Nenhum titular definido.</td></tr>';
             }
@@ -2023,7 +2015,6 @@
                 .map(subId => appState.players.find(p => p.id === subId))
                 .filter(Boolean)
                 .sort((a, b) => a.name.localeCompare(b.name));
-
             let reservesHTML = '';
             for (let i = 0; i < 10; i++) {
                 const player = substitutes[i];
@@ -2037,16 +2028,15 @@
                 <div class="bg-green-800 p-3 rounded-lg text-white">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
                         <div>
-                            <h5 class="font-bold text-center mb-2 pb-1 border-b border-white/30">TITULARES</h5>
+                             <h5 class="font-bold text-center mb-2 pb-1 border-b border-white/30">TITULARES</h5>
                             <table class="w-full text-left text-sm">${startersHTML}</table>
                         </div>
-                        <div class="mt-4 sm:mt-0">
+                         <div class="mt-4 sm:mt-0">
                             <h5 class="font-bold text-center mb-2 pb-1 border-b border-white/30">RESERVAS</h5>
                             <table class="w-full text-left text-sm">${reservesHTML}</table>
                         </div>
                     </div>
                 </div>`;
-
             container.innerHTML = formationHTML;
         }
         
@@ -2059,10 +2049,8 @@
             loader.classList.remove('hidden');
             button.disabled = true;
             console.log("Exportação para PDF: Iniciando...");
-
             const matchId = document.getElementById('report-match-select').value;
             const match = appState.matches.find(m => m.id === matchId);
-
             if (!match) {
                 showErrorMessage("Partida não encontrada para exportar.");
                 text.classList.remove('hidden');
@@ -2071,7 +2059,7 @@
                 return;
             }
             
-            generateReports(matchId); 
+            generateReports(matchId);
             await new Promise(resolve => setTimeout(resolve, 300));
             
             const tempContainer = document.createElement('div');
@@ -2079,21 +2067,18 @@
             tempContainer.style.left = '-9999px';
             tempContainer.style.width = '1122px';
             document.body.appendChild(tempContainer);
-
             try {
                 const pdf = new jsPDF({ orientation: 'l', unit: 'mm', format: 'a4' });
                 const visiblePages = document.querySelectorAll('#report-content .report-page');
                 
                 for (let i = 0; i < visiblePages.length; i++) {
                     const originalPage = visiblePages[i];
-                    
                     const pageClone = originalPage.cloneNode(true);
                     tempContainer.innerHTML = '';
                     tempContainer.appendChild(pageClone);
                     
                     const originalCanvases = originalPage.querySelectorAll('canvas');
                     const clonedCanvases = pageClone.querySelectorAll('canvas');
-
                     for (let j = 0; j < clonedCanvases.length; j++) {
                         const canvasToReplace = clonedCanvases[j];
                         const chartId = originalCanvases[j].id;
@@ -2109,7 +2094,6 @@
                     }
 
                     await new Promise(resolve => setTimeout(resolve, 200));
-
                     console.log(`Exportação para PDF: Capturando página ${i + 1}...`);
                     const pageCanvas = await html2canvas(pageClone, {
                         scale: 2,
@@ -2118,7 +2102,6 @@
                     });
                     
                     const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.92);
-
                     if (i > 0) {
                         pdf.addPage();
                     }
@@ -2129,10 +2112,8 @@
                     const canvasWidth = pageCanvas.width;
                     const canvasHeight = pageCanvas.height;
                     const canvasRatio = canvasWidth / canvasHeight;
-
                     let finalWidth = pdfWidth;
                     let finalHeight = pdfWidth / canvasRatio;
-
                     if (finalHeight > pdfHeight) {
                         finalHeight = pdfHeight;
                         finalWidth = pdfHeight * canvasRatio;
@@ -2145,7 +2126,6 @@
                 }
 
                 pdf.save(`Relatorio_${match.myTeamName}_vs_${match.opponentName}.pdf`);
-
             } catch (e) {
                 showErrorMessage("Erro ao gerar o arquivo PDF. Tente novamente. Se o erro persistir, verifique o console para mais detalhes.", e);
                 console.error("Falha na exportação para PDF:", e);
@@ -2158,7 +2138,6 @@
             }
         }
         window.exportReportToPDF = exportReportToPDF;
-        
         async function showHalftimeReport() {
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
             if (!match) {
@@ -2167,10 +2146,8 @@
             }
             
             destroyCharts();
-            
             const contentContainer = document.getElementById('halftime-report-content');
             const eventsForPeriod = match.events.filter(e => e.period == 1);
-
             if (eventsForPeriod.length === 0) {
                 contentContainer.innerHTML = `<div class="p-8 text-center text-gray-500">Nenhum dado registrado para o 1º tempo.</div>`;
             } else {
@@ -2178,16 +2155,13 @@
             }
             
             openModal('halftime-report-modal');
-
             if (eventsForPeriod.length > 0) {
                 await new Promise(resolve => setTimeout(resolve, 200));
-                
                 const possession1T = match.possession1T || {myTeam: 0, opponent: 0, stopped: 0};
                 renderPossessionChart(match, `possessionChart_1T`, possession1T);
             }
         }
         window.showHalftimeReport = showHalftimeReport;
-
         function downloadFile(content, fileName) {
             const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
@@ -2216,30 +2190,28 @@
             appState.players.forEach(p => {
                 performances[p.id] = { name: p.name, position: p.position, matchPerformances: [] };
             });
-
             const finishedMatches = appState.matches.filter(m => m.status === 'finished' && m.ratings);
             finishedMatches.forEach(match => {
                  const matchEvents = match.events || [];
                  const matchMinutes = calculateMinutesPlayed(match);
                  Object.entries(match.ratings).forEach(([playerId, rates]) => {
                      if (performances[playerId] && rates.played) {
-                        const playerEvents = matchEvents.filter(e => e.playerId === playerId);
+                         const playerEvents = matchEvents.filter(e => e.playerId === playerId);
 
                         const avg = (parseFloat(rates.tecnico) + parseFloat(rates.tatico) + parseFloat(rates.fisico) + parseFloat(rates.comportamental)) / 4;
                         
-                        performances[playerId].matchPerformances.push({
+                         performances[playerId].matchPerformances.push({
                             overall: avg,
                             minutesPlayed: matchMinutes[playerId] || 0,
                             goals: playerEvents.filter(e => e.action === 'gol').length,
                             assists: matchEvents.filter(e => e.assistId === playerId).length,
                             shots: playerEvents.filter(e => e.action === 'finalizacao').length,
-                            duelsWon: playerEvents.filter(e => e.action === 'duelo' && e.detail === 'ganhou').length,
-                            duelsLost: playerEvents.filter(e => e.action === 'duelo' && e.detail === 'perdeu').length,
+                            duelsWon: playerEvents.filter(e => e.action === 'duelo' && e.detail.includes('ganhou')).length,
+                            duelsLost: playerEvents.filter(e => e.action === 'duelo' && e.detail.includes('perdeu')).length,
                         });
-                     }
+                    }
                  });
             });
-
             const aggregatedPerformances = Object.values(performances).map(p => {
                 const overallScores = p.matchPerformances.map(mp => mp.overall);
                 const overallAvg = overallScores.length > 0 ? (overallScores.reduce((a, b) => a + b, 0) / overallScores.length) : 0;
@@ -2272,13 +2244,54 @@
                      txtContent += row.join("\t") + "\r\n";
                 }
             });
-            
             downloadFile(txtContent, 'historico_desempenho_jogadores.txt');
         }
+
+       // --- INÍCIO DO NOVO CÓDIGO PARA LISTA DE JOGADORES E LÓGICA DE EVENTOS ---
+
+        /**
+         * Renderiza os botões para cada jogador atualmente em campo.
+         */
+        function renderOnFieldPlayers() {
+            const match = appState.matches.find(m => m.id === appState.activeMatchId);
+            const container = document.getElementById('on-field-players');
+            if (!match || !container) return;
+    
+            container.innerHTML = ''; // Limpa a lista atual
+    
+            const { onField } = getPlayersOnFieldAndBench(match);
+            const playersOnField = onField.map(pid => appState.players.find(p => p.id === pid)).filter(Boolean);
+    
+            playersOnField.sort((a, b) => a.name.localeCompare(b.name)).forEach(player => {
+                const btn = document.createElement('button');
+                btn.className = 'action-btn bg-indigo-600 hover:bg-indigo-700 text-sm p-1';
+                btn.textContent = player.name;
+                btn.onclick = () => selectPlayerForEventLive(player.id);
+                container.appendChild(btn);
+            });
+        }
+
+        /**
+         * Lida com a seleção de um jogador na lista ao vivo para registrar um evento.
+         */
+        window.selectPlayerForEventLive = function(playerId) {
+            // Verifica se alguma ação está aguardando a seleção de um jogador
+            if (!liveState.awaitingPlayerSelection) return;
+
+            const { zone, action, detail } = liveState.awaitingPlayerSelection;
+            
+            // Finaliza o registro do evento com o ID do jogador selecionado
+            finalizeEvent(zone, action, detail, playerId);
+
+            // Limpa o estado e a interface
+            liveState.awaitingPlayerSelection = null;
+            document.querySelectorAll('.action-btn.waiting').forEach(b => b.classList.remove('waiting'));
+        }
+
+        // --- FIM DO NOVO CÓDIGO ---
+
 
         window.addEventListener('DOMContentLoaded', firebaseAuth);
     </script>
 </body>
 </html>
-
-
