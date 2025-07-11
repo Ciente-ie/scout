@@ -79,9 +79,9 @@
         input, select { background-color: #1f2937; color: white; border-color: #4b5563; border-radius: 0.375rem; }
         input:focus, select:focus { background-color: #374151; border-color: #60a5fa; box-shadow: none; outline: none;}
         #report-content-wrapper, #pdf-temp-container { background-color: #ffffff; color: #111827; }
-        .report-page { page-break-after: always; position: relative; padding: 60px 40px 30px 40px; }
+        .report-page { page-break-after: always; position: relative; padding: 60px 20px 30px 20px; }
         .report-page:last-child { page-break-after: auto; }
-        .report-header { position: absolute; top: 15px; left: 40px; right: 40px; display: flex; justify-content: space-between; align-items: center; }
+        .report-header { position: absolute; top: 10px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: center; }
         .report-logo { max-height: 40px; max-width: 150px; }
         .report-section { page-break-inside: avoid; }
         .dashboard-card { background-color: #1f2937; border: 1px solid #374151; position: relative;}
@@ -1081,8 +1081,8 @@ function setupUIMode() {
             finalizacao_adv: { title: "Finalização Adv.", player: false, sub: [{label: "Dentro da Área", value: "dentro_area"},{label: "Fora da Área", value: "fora_area"},{label: "Cabeceio", value: "cabeceio"}] },
             chance_clara: { title: "Chance Clara", player: false },
             chance_clara_adv: { title: "Chance Adv.", player: false },
-            duelo_ganho: { title: "Duelo Ganho", player: true, sub: [{label: "Por Baixo", value: "baixo"},{label: "No Alto", value: "alto"}] },
-            duelo_perdido: { title: "Duelo Perdido", player: true, sub: [{label: "Por Baixo", value: "baixo"},{label: "No Alto", value: "alto"}] },
+            duelo_ganho: { title: "Duelo Ganho", player: true, sub: [{label: "Por Baixo", value: "ganhou_baixo"},{label: "No Alto", value: "ganhou_alto"}] },
+            duelo_perdido: { title: "Duelo Perdido", player: true, sub: [{label: "Por Baixo", value: "perdeu_baixo"},{label: "No Alto", value: "perdeu_alto"}] },
             falta: { title: "Falta", player: false, sub: [{label: "Sofrida", value: "falta_sofrida"}, {label:"Cometida", value:"falta_cometida"}] },
             cruzamento: { title: "Cruzamento", player: false, sub: [{label: "Direita", value: "cruzamento_dir"}, {label:"Esquerda", value:"cruzamento_esq"}] },
             passe_certo: { title: "Passe Certo", player: false },
@@ -1675,26 +1675,20 @@ window.undoLastAction = async function() {
                     stopped: Math.max(0, totalPossession.stopped - possession1T.stopped),
                 };
 
-                // Page 1
                 renderPossessionChart(match, `possessionChart`, totalPossession);
                 renderActionMapChart(match, `actionMapChart`, null);
-                document.getElementById('sector-details-total').innerHTML = getDetailedSectorActionListHTML(match, null);
-                renderReportSummaryTable(match, 'report-summary-table', null);
-                renderManOfTheMatch(match);
-                renderTopStatsTable(match);
-                document.getElementById('report-formation').innerHTML = renderFormation(match);
                 
-                // Page 2
                 renderActionMapChart(match, 'actionMapChart_1T', 1);
                 renderPossessionChart(match, 'possessionChart_1T_report', possession1T);
-                document.getElementById('sector-details-1T').innerHTML = getDetailedSectorActionListHTML(match, 1);
-                renderReportSummaryTable(match, 'report-summary-table-1T', 1);
-
                 renderActionMapChart(match, 'actionMapChart_2T', 2);
                 renderPossessionChart(match, 'possessionChart_2T_report', possession2T);
-                document.getElementById('sector-details-2T').innerHTML = getDetailedSectorActionListHTML(match, 2);
-                renderReportSummaryTable(match, 'report-summary-table-2T', 2);
 
+                renderReportSummaryTable(match, 'report-summary-table', null);
+                renderReportSummaryTable(match, 'report-summary-table-1T', 1);
+                renderReportSummaryTable(match, 'report-summary-table-2T', 2);
+                renderManOfTheMatch(match);
+                renderTopStatsTable(match);
+                renderFormation(match);
             }
         }
         
@@ -1708,41 +1702,90 @@ window.undoLastAction = async function() {
             const myEvents = allEvents.filter(e => e.scoringTeam !== 'opponent' && !e.action.endsWith('_adv'));
             const oppEvents = allEvents.filter(e => e.scoringTeam === 'opponent' || e.action.endsWith('_adv'));
             const count = (arr, action, detail) => arr.filter(e => e.action === action && (detail ? e.detail === detail : true)).length;
+            const calculateChancesBreakdown = (eventsToAnalyze) => {
+                const breakdown = {
+                    myTeam: { '0-15': 0, '15-30': 0, '30+': 0 },
+                    opponent: { '0-15': 0, '15-30': 0, '30+': 0 }
+                };
+                const chanceEvents = eventsToAnalyze.filter(e => e.action === 'chance_clara' || e.action === 'chance_clara_adv');
+                chanceEvents.forEach(e => {
+                    const team = e.action === 'chance_clara' ? 'myTeam' : 'opponent';
+                    let timeInPeriod = e.time;
+                    if (e.period === 2 && match.secondHalfStartSeconds > -1) {
+                        timeInPeriod -= match.secondHalfStartSeconds;
+                    }
+                    const minute = timeInPeriod / 60;
+                    let bucket;
+                    if (minute <= 15) bucket = '0-15';
+                    else if (minute <= 30) bucket = '15-30';
+                    else bucket = '30+';
+                    breakdown[team][bucket]++;
+                });
+                return breakdown;
+            };
             
+            const chancesBreakdown = calculateChancesBreakdown(allEvents);
+
+            const passesCerto = count(myEvents, 'passe_certo'); const passesErrado = count(myEvents, 'passe_errado');
+            const totalPasses = passesCerto + passesErrado;
+            const percCerto = totalPasses > 0 ? `(${(passesCerto/totalPasses*100).toFixed(0)}%)` : '';
+            const percErrado = totalPasses > 0 ? `(${(passesErrado/totalPasses*100).toFixed(0)}%)` : '';
             const duelosGanhos = count(myEvents, 'duelo_ganho');
             const duelosPerdidos = count(myEvents, 'duelo_perdido');
             const duelosTotais = duelosGanhos + duelosPerdidos;
 
             let tableHTML = `<table class="w-full text-sm"><tbody>`;
             const statsConfig = [
-                { label: 'Finalizações', my: count(myEvents, 'finalizacao'), opp: count(oppEvents, 'finalizacao_adv') },
-                { label: '• Dentro da Área', my: count(myEvents, 'finalizacao', 'dentro_area'), opp: count(oppEvents, 'finalizacao_adv', 'dentro_area'), isSub: true },
-                { label: '• Fora da Área', my: count(myEvents, 'finalizacao', 'fora_area'), opp: count(oppEvents, 'finalizacao_adv', 'fora_area'), isSub: true },
-                { label: '• Cabeceio', my: count(myEvents, 'finalizacao', 'cabeceio'), opp: count(oppEvents, 'finalizacao_adv', 'cabeceio'), isSub: true },
-                { label: 'Chances Claras', my: count(myEvents, 'chance_clara'), opp: count(oppEvents, 'chance_clara_adv') },
+                { label: 'Finalizações', action: 'finalizacao', oppAction: 'finalizacao_adv' },
+                { label: '• Dentro da Área', action: 'finalizacao', detail: 'dentro_area', oppAction: 'finalizacao_adv', oppDetail: 'dentro_area', isSub: true },
+                { label: '• Fora da Área', action: 'finalizacao', detail: 'fora_area', oppAction: 'finalizacao_adv', oppDetail: 'fora_area', isSub: true },
+                { label: '• Cabeceio', action: 'finalizacao', detail: 'cabeceio', oppAction: 'finalizacao_adv', oppDetail: 'cabeceio', isSub: true },
+                { label: 'Chances Claras', action: 'chance_clara', oppAction: 'chance_clara_adv', hasBreakdown: true },
                 { label: 'Total de Duelos', my: duelosTotais, opp: duelosTotais },
-                { label: 'Duelos Ganhos', my: duelosGanhos, opp: duelosPerdidos, isHeader: true },
-                { label: '• No Alto', my: count(myEvents, 'duelo_ganho', 'alto'), opp: count(myEvents, 'duelo_perdido', 'alto'), isSub: true },
-                { label: '• Por Baixo', my: count(myEvents, 'duelo_ganho', 'baixo'), opp: count(myEvents, 'duelo_perdido', 'baixo'), isSub: true },
-                { label: 'Duelos Perdidos', my: duelosPerdidos, opp: duelosGanhos, isHeader: true },
-                { label: '• No Alto', my: count(myEvents, 'duelo_perdido', 'alto'), opp: count(myEvents, 'duelo_ganho', 'alto'), isSub: true },
-                { label: '• Por Baixo', my: count(myEvents, 'duelo_perdido', 'baixo'), opp: count(myEvents, 'duelo_ganho', 'baixo'), isSub: true },
-                { label: 'Faltas Cometidas', my: count(myEvents, 'falta_cometida'), opp: count(oppEvents, 'falta_sofrida')},
-                { label: 'Faltas Sofridas', my: count(myEvents, 'falta_sofrida'), opp: count(oppEvents, 'falta_cometida') },
+                { label: '• Duelos Ganhos', my: duelosGanhos, opp: duelosPerdidos, isSub: true },
+                { label: '• Duelos Perdidos', my: duelosPerdidos, opp: duelosGanhos, isSub: true },
+                { label: 'Total de Passes', my: totalPasses, opp: '–' },
+                { label: '• Passes Certos', my: `${passesCerto} <span class="text-xs">${percCerto}</span>`, opp: '–', isSub: true },
+                { label: '• Passes Errados', my: `${passesErrado} <span class="text-xs">${percErrado}</span>`, opp: '–', isSub: true },
+                { label: 'Faltas Cometidas', action: 'falta_cometida', oppAction: 'falta_sofrida'},
+                { label: 'Faltas Sofridas', action: 'falta_sofrida', oppAction: 'falta_cometida' },
+                { label: 'Cruzamentos (Dir)', action: 'cruzamento_dir', opp: '–' },
+                { label: 'Cruzamentos (Esq)', action: 'cruzamento_esq', opp: '–' },
             ];
 
             let mainRowIndex = 0;
             statsConfig.forEach(stat => {
-                const myVal = stat.my;
-                const oppVal = stat.opp;
+                const myVal = stat.my ?? count(myEvents, stat.action, stat.detail);
+                const oppVal = stat.opp ?? (stat.oppAction ? count(oppEvents, stat.oppAction, stat.oppDetail) : '–');
                 const rowClass = !stat.isSub && mainRowIndex++ % 2 === 0 ? 'bg-gray-50' : '';
-                const textClass = stat.isHeader ? 'font-bold text-gray-800' : (stat.isSub ? 'text-gray-600' : 'text-gray-700');
                 
                 tableHTML += `<tr class="${rowClass}">
-                                <td class="p-2 ${stat.isSub ? 'pl-6' : 'font-semibold'} ${textClass}">${stat.label}</td>
-                                <td class="p-2 text-center font-medium ${textClass}">${myVal}</td>
-                                <td class="p-2 text-center font-medium ${textClass}">${oppVal}</td>
+                                <td class="p-2 ${stat.isSub ? 'pl-6 text-gray-600' : 'font-semibold border-t border-gray-200'}">${stat.label}</td>
+                                <td class="p-2 text-center font-medium ${stat.isSub ? 'text-gray-600' : 'border-t border-gray-200'}">${myVal}</td>
+                                <td class="p-2 text-center font-medium ${stat.isSub ? 'text-gray-600' : 'border-t border-gray-200'}">${oppVal}</td>
                              </tr>`;
+                
+                if (stat.hasBreakdown) {
+                    const myChances = chancesBreakdown.myTeam;
+                    const oppChances = chancesBreakdown.opponent;
+                    const subRowClass = !stat.isSub && (mainRowIndex - 1) % 2 === 0 ? 'bg-gray-50' : '';
+                    tableHTML += `
+                        <tr class="${subRowClass}">
+                            <td class="pt-0 pb-1 px-2 pl-8 text-gray-500 text-xs font-normal">↳ Até 15'</td>
+                            <td class="pt-0 pb-1 px-2 text-center font-normal text-gray-500 text-xs">${myChances['0-15']}</td>
+                            <td class="pt-0 pb-1 px-2 text-center font-normal text-gray-500 text-xs">${oppChances['0-15']}</td>
+                        </tr>
+                        <tr class="${subRowClass}">
+                             <td class="pt-0 pb-1 px-2 pl-8 text-gray-500 text-xs font-normal">↳ 15' a 30'</td>
+                            <td class="pt-0 pb-1 px-2 text-center font-normal text-gray-500 text-xs">${myChances['15-30']}</td>
+                            <td class="pt-0 pb-1 px-2 text-center font-normal text-gray-500 text-xs">${oppChances['15-30']}</td>
+                         </tr>
+                        <tr class="${subRowClass}">
+                            <td class="pt-0 pb-1 px-2 pl-8 text-gray-500 text-xs font-normal">↳ Após 30'</td>
+                             <td class="pt-0 pb-1 px-2 text-center font-normal text-gray-500 text-xs">${myChances['30+']}</td>
+                            <td class="pt-0 pb-1 px-2 text-center font-normal text-gray-500 text-xs">${oppChances['30+']}</td>
+                        </tr>`;
+                }
             });
             tableHTML += `</tbody><thead class="text-xs text-gray-500"><tr><th class="p-2 text-left">Estatística</th><th class="p-2 text-center">${match.myTeamName}</th><th class="p-2 text-center">${match.opponentName}</th></tr></thead></table>`;
             return tableHTML;
@@ -1754,60 +1797,6 @@ window.undoLastAction = async function() {
             container.innerHTML = getReportSummaryTableHTML(match, period);
         }
         
-        function getActionLabel(actionKey) {
-            const labels = {
-                finalizacao: 'Finalizações',
-                chance_clara: 'Chances Claras',
-                duelo_ganho: 'Duelos Ganhos',
-                duelo_perdido: 'Duelos Perdidos',
-                falta_sofrida: 'Faltas Sofridas',
-                falta_cometida: 'Faltas Cometidas',
-                cruzamento_dir: 'Cruzamentos (Direita)',
-                cruzamento_esq: 'Cruzamentos (Esquerda)',
-                passe_certo: 'Passes Certos',
-                passe_errado: 'Passes Errados',
-                gol: 'Gols'
-            };
-            const label = labels[actionKey] || actionKey.replace(/_/g, ' ');
-            return label.charAt(0).toUpperCase() + label.slice(1);
-        }
-
-        function getDetailedSectorActionListHTML(match, period) {
-            const events = period ? match.events.filter(e => e.period == period) : match.events;
-            const myTeamEvents = events.filter(e => e.scoringTeam !== 'opponent' && !e.action.endsWith('_adv'));
-
-            const sectorData = { defesa: {}, meio: {}, ataque: {} };
-
-            myTeamEvents.forEach(event => {
-                if (sectorData[event.zone]) {
-                    sectorData[event.zone][event.action] = (sectorData[event.zone][event.action] || 0) + 1;
-                }
-            });
-
-            let html = '<div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs mt-3">';
-            const zoneTitles = { defesa: 'Setor Defensivo', meio: 'Meio-Campo', ataque: 'Setor Ofensivo' };
-
-            for (const zone of ['defesa', 'meio', 'ataque']) {
-                html += '<div>';
-                html += `<h5 class="font-bold border-b border-gray-300 pb-1 mb-1">${zoneTitles[zone]}</h5>`;
-                const actions = sectorData[zone];
-                const sortedActions = Object.entries(actions).sort(([, a], [, b]) => b - a);
-
-                if (sortedActions.length > 0) {
-                    html += '<ul class="space-y-1">';
-                    sortedActions.forEach(([action, count]) => {
-                        html += `<li class="flex justify-between"><span>${getActionLabel(action)}:</span> <strong>${count}</strong></li>`;
-                    });
-                    html += '</ul>';
-                } else {
-                    html += '<p class="text-gray-500 italic">Nenhuma ação</p>';
-                }
-                html += '</div>';
-            }
-            html += '</div>';
-            return html;
-        }
-
         function renderReportContentForPDF(match, specificPeriod = null) {
             const logoDataUrl = appState.settings.logoDataUrl;
             const logoImg = logoDataUrl ? `<img src="${logoDataUrl}" class="report-logo" crossorigin="anonymous" />` : '';
@@ -1837,7 +1826,7 @@ window.undoLastAction = async function() {
                     <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Destaque da Partida</h3><div id="report-motm"></div></div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 report-section">
-                    <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-4">Volume de Ações (Total)</h3><div class="chart-container" style="background-color: #166534; min-height: 240px; height: 240px;"><canvas id="actionMapChart"></canvas></div><div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div><div id="sector-details-total"></div></div>
+                    <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-4">Volume de Ações (Total)</h3><div class="chart-container" style="background-color: #166534; min-height: 240px; height: 240px;"><canvas id="actionMapChart"></canvas></div><div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div></div>
                     <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Destaques Individuais</h3><div id="report-top-stats"></div></div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 report-section">
@@ -1850,8 +1839,32 @@ window.undoLastAction = async function() {
                 ${reportHeader}
                 <div class="text-center mb-8 pt-8"><h1 class="text-3xl font-bold">Scout por Período</h1></div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 report-section">
-                    <div class="bg-gray-50 p-4 rounded-lg border"><h3 class="text-xl font-bold text-center mb-4">1º Tempo</h3><div class="chart-container" style="background-color: #166534; min-height: 240px;"><canvas id="actionMapChart_1T"></canvas></div><div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div><div id="sector-details-1T" class="mt-4"></div><div class="mt-4"><h4 class="font-bold text-center mb-2">Posse de Bola (1ºT)</h4><div class="chart-container h-20"><canvas id="possessionChart_1T_report"></canvas></div></div><div id="report-summary-table-1T" class="mt-4"></div></div>
-                    <div class="bg-gray-50 p-4 rounded-lg border"><h3 class="text-xl font-bold text-center mb-4">2º Tempo</h3><div class="chart-container" style="background-color: #166534; min-height: 240px;"><canvas id="actionMapChart_2T"></canvas></div><div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div><div id="sector-details-2T" class="mt-4"></div><div class="mt-4"><h4 class="font-bold text-center mb-2">Posse de Bola (2ºT)</h4><div class="chart-container h-20"><canvas id="possessionChart_2T_report"></canvas></div></div><div id="report-summary-table-2T" class="mt-4"></div></div>
+                    <div class="space-y-4">
+                        <h3 class="text-xl font-bold text-center mb-4">1º Tempo</h3>
+                        <div class="bg-gray-50 p-4 rounded-lg border">
+                             <h4 class="font-semibold text-center mb-2">Posse de Bola (1ºT)</h4>
+                             <div class="chart-container h-20"><canvas id="possessionChart_1T_report"></canvas></div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg border">
+                            <h4 class="font-semibold text-center mb-2">Volume de Ações (1ºT)</h4>
+                            <div class="chart-container" style="background-color: #166534; min-height: 240px;"><canvas id="actionMapChart_1T"></canvas></div>
+                            <div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div>
+                        </div>
+                        <div id="report-summary-table-1T" class="mt-4"></div>
+                    </div>
+                    <div class="space-y-4">
+                        <h3 class="text-xl font-bold text-center mb-4">2º Tempo</h3>
+                         <div class="bg-gray-50 p-4 rounded-lg border">
+                             <h4 class="font-semibold text-center mb-2">Posse de Bola (2ºT)</h4>
+                             <div class="chart-container h-20"><canvas id="possessionChart_2T_report"></canvas></div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg border">
+                            <h4 class="font-semibold text-center mb-2">Volume de Ações (2ºT)</h4>
+                            <div class="chart-container" style="background-color: #166534; min-height: 240px;"><canvas id="actionMapChart_2T"></canvas></div>
+                            <div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div>
+                        </div>
+                        <div id="report-summary-table-2T" class="mt-4"></div>
+                    </div>
                 </div>
                 ${reportFooter}
             </div>`;
@@ -1946,7 +1959,7 @@ window.undoLastAction = async function() {
             const player = appState.players.find(p => p.id === topPlayer.pid);
             if(player) {
                 const legendText = getRatingLegend(topPlayer.avg);
-                container.innerHTML = `<div class="flex flex-col items-center justify-center h-full p-3">
+                container.innerHTML = `<div class="flex flex-col items-center justify-center h-full bg-blue-50 rounded-lg p-3">
                     <svg class="h-10 w-10 text-yellow-400 mb-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
                     <p class="text-xl font-bold text-gray-800">${player.name}</p>
                      <p class="text-md text-gray-600">
@@ -1956,19 +1969,19 @@ window.undoLastAction = async function() {
                     <div class="w-full space-y-1 mt-2 pt-2 border-t border-gray-300 text-xs">
                          <div class="flex justify-between items-center">
                             <span class="font-semibold text-gray-500">Técnico:</span>
-                            <span class="font-bold text-gray-700 text-right">${topPlayer.rates.tecnico}</span>
+                            <span class="font-bold text-gray-700 text-right">${topPlayer.rates.tecnico} (${getRatingLegend(topPlayer.rates.tecnico)})</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="font-semibold text-gray-500">Tático:</span>
-                            <span class="font-bold text-gray-700 text-right">${topPlayer.rates.tatico}</span>
+                            <span class="font-bold text-gray-700 text-right">${topPlayer.rates.tatico} (${getRatingLegend(topPlayer.rates.tatico)})</span>
                         </div>
                         <div class="flex justify-between items-center">
                              <span class="font-semibold text-gray-500">Físico:</span>
-                            <span class="font-bold text-gray-700 text-right">${topPlayer.rates.fisico}</span>
+                            <span class="font-bold text-gray-700 text-right">${topPlayer.rates.fisico} (${getRatingLegend(topPlayer.rates.fisico)})</span>
                         </div>
                         <div class="flex justify-between items-center">
                              <span class="font-semibold text-gray-500">Comport.:</span>
-                            <span class="font-bold text-gray-700 text-right">${topPlayer.rates.comportamental}</span>
+                            <span class="font-bold text-gray-700 text-right">${topPlayer.rates.comportamental} (${getRatingLegend(topPlayer.rates.comportamental)})</span>
                         </div>
                     </div>
                 </div>`;
@@ -1980,6 +1993,39 @@ window.undoLastAction = async function() {
             if (!container) return;
 
             const myEvents = match.events.filter(e => e.scoringTeam !== 'opponent' && !e.action.endsWith('_adv'));
+            const opponentGoalEvents = match.events.filter(e => e.action === 'gol_contra').sort((a,b) => a.time - b.time);
+            const goalEvents = myEvents.filter(e => e.action === 'gol').sort((a,b) => a.time - b.time);
+            let teamGoalsHTML = '';
+            if (goalEvents.length > 0) {
+                 teamGoalsHTML = goalEvents.map(goal => {
+                    const player = appState.players.find(p => p.id === goal.playerId);
+                    let minute;
+                    if(goal.period === 2 && match.secondHalfStartSeconds > -1) {
+                        minute = Math.floor((goal.time - match.secondHalfStartSeconds) / 60);
+                    } else {
+                        minute = Math.floor(goal.time / 60);
+                    }
+                    return `<li class="flex justify-between"><span>${player?.name || 'Desconhecido'}</span> <strong>${goal.period}T - ${minute}'</strong></li>`;
+                }).join('');
+            } else {
+                teamGoalsHTML = '<li>Nenhum gol marcado.</li>';
+            }
+
+            let opponentGoalsHTML = '';
+            if (opponentGoalEvents.length > 0) {
+                 opponentGoalsHTML = opponentGoalEvents.map(goal => {
+                    let minute;
+                     if(goal.period === 2 && match.secondHalfStartSeconds > -1) {
+                        minute = Math.floor((goal.time - match.secondHalfStartSeconds) / 60);
+                    } else {
+                        minute = Math.floor(goal.time / 60);
+                    }
+                    return `<li class="flex justify-between"><span>Adversário</span> <strong>${goal.period}T - ${minute}'</strong></li>`;
+                }).join('');
+            } else {
+                opponentGoalsHTML = '<li>Nenhum gol sofrido.</li>';
+            }
+
             const getTopStats = (action, key) => { 
                 const counts = myEvents
                     .filter(e => e.action === action && e[key])
@@ -1989,32 +2035,47 @@ window.undoLastAction = async function() {
                     }, {});
                 return Object.entries(counts).sort(([,a],[,b]) => b-a); 
             };
-            const goals = getTopStats('gol', 'playerId');
             const assists = getTopStats('gol', 'assistId'); 
             const shots = getTopStats('finalizacao', 'playerId');
             const duelsWon = getTopStats('duelo_ganho', 'playerId');
 
-            const renderSingleStat = (title, data) => { 
-                const [playerId, count] = data.length > 0 ? data[0] : [null, 0]; 
-                const player = appState.players.find(p => p.id === playerId);
-                return `<li class="flex justify-between items-center py-1 border-b border-gray-200">
-                            <span class="text-gray-600">${title}:</span>
-                            <span class="font-bold text-gray-800">${player?.name || 'N/A'} (${count})</span>
-                        </li>`; 
-            };
-            
+            const renderList = (title, data, icon) => { let listHTML = `<div class="bg-white p-3 rounded-lg shadow-sm"><div class="flex items-center gap-3 mb-2"><span class="bg-gray-200 p-2 rounded-full">${icon}</span><h4 class="font-semibold text-gray-800 text-lg">${title}</h4></div><ul class="text-sm text-gray-600 space-y-1 pl-1">`;
+            if (data.length === 0) { listHTML += '<li>Nenhum registro.</li>'; } else { data.slice(0, 3).forEach(([id, count]) => { const player = appState.players.find(p => p.id === id); listHTML += `<li class="flex justify-between"><span>${player?.name || 'Desconhecido'}</span> <strong>${count}</strong></li>`; });
+            } listHTML += '</ul></div>'; return listHTML; };
+            const renderSingleStat = (title, data, icon) => { const [playerId, count] = data.length > 0 ? data[0] : [null, 0]; const player = appState.players.find(p => p.id === playerId);
+            return `<div class="bg-white p-3 rounded-lg shadow-sm flex items-center gap-3"><span class="bg-gray-200 p-2 rounded-full">${icon}</span><div><h4 class="font-semibold text-gray-500 text-sm">${title}</h4><p class="font-bold text-gray-800 text-base">${player?.name || 'N/A'}</p></div><strong class="ml-auto text-xl font-black text-gray-800">${count > 0 ? count : '-'}</strong></div>`; };
+            const goalIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4c0-1.165.451-2.223 1.172-3.001L8.228 9z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18z" /></svg>`;
+            const assistIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" viewBox="0 0 24 24" fill="currentColor"><path d="M21.51,2.05A1.23,1.23,0,0,0,20.29,2L4.7,6.85a1.24,1.24,0,0,0-.7,2.2L9.45,11,7.21,14.49a1.24,1.24,0,0,0,.4,1.75l5.09,3.18a1.23,1.23,0,0,0,1.75-.4L22,3.76A1.24,1.24,0,0,0,21.51,2.05Z"/></svg>`;
+            const shotIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>`;
+            const duelIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>`;
             container.innerHTML = `
-                <ul class="text-sm">
-                    ${renderSingleStat('Mais Gols', goals)}
-                    ${renderSingleStat('Mais Assistências', assists)}
-                    ${renderSingleStat('Mais Finalizações', shots)}
-                    ${renderSingleStat('Mais Duelos Ganhos', duelsWon)}
-                </ul>`;
+                <div class="space-y-3">
+                    <div class="bg-white p-3 rounded-lg shadow-sm">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="bg-gray-200 p-2 rounded-full">${goalIcon}</span>
+                            <h4 class="font-semibold text-gray-800 text-lg">Gols da Equipe</h4>
+                        </div>
+                        <ul class="text-sm text-gray-600 space-y-1 pl-1">${teamGoalsHTML}</ul>
+                    </div>
+                     <div class="bg-white p-3 rounded-lg shadow-sm">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="bg-gray-200 p-2 rounded-full">${goalIcon}</span>
+                            <h4 class="font-semibold text-gray-800 text-lg">Gols do Adversário</h4>
+                        </div>
+                        <ul class="text-sm text-gray-600 space-y-1 pl-1">${opponentGoalsHTML}</ul>
+                    </div>
+                    ${renderList('Assistências', assists, assistIcon)}
+                    ${renderSingleStat('Mais Finalizações', shots, shotIcon)}
+                    ${renderSingleStat('Mais Duelos Ganhos', duelsWon, duelIcon)}
+                </div>`;
         }
         
         function renderFormation(match) {
             const container = document.getElementById('report-formation');
-            if (!container) return;
+            if (!container || !match.lineup || !match.squadPlayerIds) {
+                if (container) container.innerHTML = '<p class="text-gray-500 text-center p-4">Escalação não definida.</p>';
+                return;
+            }
 
             const shirtNumbers = {
                 gk: 1, rb: 2, rcb: 3, lcb: 4, dm: 5, lb: 6, rw: 7, rcm: 8, st: 9, lcm: 10, lw: 11
@@ -2036,11 +2097,14 @@ window.undoLastAction = async function() {
             startersList.sort((a, b) => a.shirtNumber - b.shirtNumber);
             let startersHTML = startersList.map(starter => {
                 const player = appState.players.find(p => p.id === starter.playerId);
-                return `<tr class="border-b border-gray-200">
-                    <td class="p-1 font-bold text-center w-8">${starter.shirtNumber}</td>
-                    <td class="p-1">${player ? player.name : 'Vazio'}</td>
+                return `<tr class="border-b border-white/20">
+                    <td class="p-1.5 font-bold text-center w-8">${starter.shirtNumber}</td>
+                    <td class="p-1.5">${player ? player.name : '<i class="opacity-50">Vazio</i>'}</td>
                  </tr>`;
             }).join('');
+            if (startersList.length === 0) {
+                 startersHTML = '<tr><td colspan="2" class="text-center p-2 opacity-50">Nenhum titular definido.</td></tr>';
+            }
 
             const substitutes = (match.squadPlayerIds || [])
                 .filter(pid => !lineupPlayerIds.has(pid))
@@ -2048,38 +2112,28 @@ window.undoLastAction = async function() {
                 .filter(Boolean)
                 .sort((a, b) => a.name.localeCompare(b.name));
             let reservesHTML = '';
-            substitutes.forEach((player, i) => {
-                reservesHTML += `<tr class="border-b border-gray-200">
-                    <td class="p-1">${player.name}</td>
+            for (let i = 0; i < 10; i++) {
+                const player = substitutes[i];
+                reservesHTML += `<tr class="border-b border-white/20">
+                    <td class="p-1.5 font-bold text-center w-8">${i + 12}</td>
+                    <td class="p-1.5">${player ? player.name : '<i class="opacity-50">Vazio</i>'}</td>
                 </tr>`;
-            });
-            if (!reservesHTML) reservesHTML = '<tr><td class="p-1 italic text-gray-500">Nenhum reserva.</td></tr>';
-
-            const subEvents = (match.events || []).filter(e => e.action === 'substituicao').sort((a,b) => a.time - b.time);
-            let subsHTML = '';
-            if (subEvents.length > 0) {
-                subsHTML += `<div class="mt-4 pt-2 border-t border-gray-300">
-                                <h5 class="font-bold text-center mb-2">Substituições</h5>
-                                <ul class="text-xs space-y-1">`;
-                subEvents.forEach(sub => {
-                    const detail = sub.detail.replace('Sai', '<span class="text-red-500">↓</span>').replace('Entra', '<span class="text-green-500">↑</span>');
-                    subsHTML += `<li class="flex justify-between items-center"><span><strong>${formatTime(sub.time)}'</strong></span><span class="text-right">${detail}</span></li>`
-                });
-                subsHTML += '</ul></div>';
             }
 
-            container.innerHTML = `<h3 class="text-xl font-bold text-center mb-2">Escalação da Equipe</h3>
-                <div class="grid grid-cols-2 gap-x-4 text-sm">
-                    <div>
-                         <h4 class="font-bold text-center mb-1 pb-1 border-b-2 border-gray-200">Titulares</h4>
-                        <table class="w-full text-left">${startersHTML}</table>
+            const formationHTML = `<h4 class="text-center font-bold mb-3 text-xl">Escalação da Equipe</h4>
+                <div class="bg-green-800 p-3 rounded-lg text-white">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                        <div>
+                             <h5 class="font-bold text-center mb-2 pb-1 border-b border-white/30">TITULARES</h5>
+                            <table class="w-full text-left text-sm">${startersHTML}</table>
+                        </div>
+                         <div class="mt-4 sm:mt-0">
+                            <h5 class="font-bold text-center mb-2 pb-1 border-b border-white/30">RESERVAS</h5>
+                            <table class="w-full text-left text-sm">${reservesHTML}</table>
+                        </div>
                     </div>
-                     <div>
-                        <h4 class="font-bold text-center mb-1 pb-1 border-b-2 border-gray-200">Reservas</h4>
-                        <table class="w-full text-left">${reservesHTML}</table>
-                    </div>
-                </div>
-                ${subsHTML}`;
+                </div>`;
+            container.innerHTML = formationHTML;
         }
         
         async function exportReportToPDF() {
@@ -2090,63 +2144,65 @@ window.undoLastAction = async function() {
             text.classList.add('hidden');
             loader.classList.remove('hidden');
             button.disabled = true;
-            
+            console.log("Exportação para PDF: Iniciando...");
             const matchId = document.getElementById('report-match-select').value;
             const match = appState.matches.find(m => m.id === matchId);
             if (!match) {
                 showErrorMessage("Partida não encontrada para exportar.");
-                text.classList.remove('hidden'); loader.classList.add('hidden'); button.disabled = false;
+                text.classList.remove('hidden');
+                loader.classList.add('hidden');
+                button.disabled = false;
                 return;
             }
             
             generateReports(matchId);
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 300));
             
             const tempContainer = document.createElement('div');
             tempContainer.style.position = 'absolute';
             tempContainer.style.left = '-9999px';
-            tempContainer.style.width = '1240px'; // Fixed width for consistent aspect ratio
+            tempContainer.style.width = '1122px';
             document.body.appendChild(tempContainer);
-
             try {
                 const pdf = new jsPDF({ orientation: 'l', unit: 'mm', format: 'a4' });
                 const visiblePages = document.querySelectorAll('#report-content .report-page');
                 
                 for (let i = 0; i < visiblePages.length; i++) {
                     const originalPage = visiblePages[i];
-                    
-                    tempContainer.innerHTML = '';
                     const pageClone = originalPage.cloneNode(true);
+                    tempContainer.innerHTML = '';
                     tempContainer.appendChild(pageClone);
                     
                     const originalCanvases = originalPage.querySelectorAll('canvas');
                     const clonedCanvases = pageClone.querySelectorAll('canvas');
-                    clonedCanvases.forEach((canvas, j) => {
+                    for (let j = 0; j < clonedCanvases.length; j++) {
+                        const canvasToReplace = clonedCanvases[j];
                         const chartId = originalCanvases[j].id;
                         if (charts[chartId] && charts[chartId].ctx) {
-                            const imgData = charts[chartId].toBase64Image('image/png', 1.0);
+                            const imgData = charts[chartId].toBase64Image();
                             const img = document.createElement('img');
                             img.src = imgData;
-                            img.style.width = canvas.style.width || '100%';
+                            img.style.width = '100%';
                             img.style.height = 'auto';
                             img.style.display = 'block';
-                            canvas.parentNode.replaceChild(img, canvas);
+                            canvasToReplace.parentNode.replaceChild(img, canvasToReplace);
                         }
-                    });
-                    
-                    await new Promise(resolve => setTimeout(resolve, 200));
+                    }
 
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    console.log(`Exportação para PDF: Capturando página ${i + 1}...`);
                     const pageCanvas = await html2canvas(pageClone, {
-                        scale: 4, // Increased scale for much better resolution
+                        scale: 2,
                         useCORS: true,
                         backgroundColor: '#ffffff'
                     });
                     
-                    const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.95);
-                    if (i > 0) pdf.addPage();
+                    const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.92);
+                    if (i > 0) {
+                        pdf.addPage();
+                    }
 
-                    const pdfWidth = pdf.internal.pageSize.getWidth
-();
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
                     const pdfHeight = pdf.internal.pageSize.getHeight();
                     
                     const canvasWidth = pageCanvas.width;
@@ -2171,13 +2227,13 @@ window.undoLastAction = async function() {
                 console.error("Falha na exportação para PDF:", e);
             } finally {
                 document.body.removeChild(tempContainer);
+                console.log("Exportação para PDF: Finalizando e resetando UI.");
                 text.classList.remove('hidden');
                 loader.classList.add('hidden');
                 button.disabled = false;
             }
         }
         window.exportReportToPDF = exportReportToPDF;
-
         async function showHalftimeReport() {
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
             if (!match) {
@@ -2188,15 +2244,21 @@ window.undoLastAction = async function() {
             
             destroyCharts();
             const contentContainer = document.getElementById('halftime-report-content');
-            contentContainer.innerHTML = renderReportContentForPDF(match, 1);
+            const eventsForPeriod = match.events.filter(e => e.period == 1);
+            if (eventsForPeriod.length === 0) {
+                contentContainer.innerHTML = `<div class="p-8 text-center text-gray-500">Nenhum dado registrado para o 1º tempo.</div>`;
+            } else {
+                contentContainer.innerHTML = renderReportContentForPDF(match, 1);
+            }
             
             openModal('halftime-report-modal');
-
-            await new Promise(resolve => setTimeout(resolve, 200));
-            renderChartsForReport(match, 1);
+            if (eventsForPeriod.length > 0) {
+                await new Promise(resolve => setTimeout(resolve, 200));
+                const possession1T = match.possession1T || {myTeam: 0, opponent: 0, stopped: 0};
+                renderChartsForReport(match, 1);
+            }
         }
         window.showHalftimeReport = showHalftimeReport;
-
         function downloadFile(content, fileName) {
             const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
