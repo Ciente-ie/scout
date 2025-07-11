@@ -454,10 +454,9 @@
                         
                         zoneElements.reverse().forEach(el => fieldContainer.appendChild(el));
                         
-                        // Temporarily map original IDs to new positions
-                        const originalIds = zoneElements.map(el => el.id);
+                        const currentOrder = liveState.isFieldInverted ? zones.slice().reverse() : zones;
                         zoneElements.forEach((el, index) => {
-                            const newZoneName = liveState.isFieldInverted ? zones.slice().reverse()[index] : zones[index];
+                            const newZoneName = currentOrder[index];
                             el.id = `field-zone-${newZoneName}`;
                             const labelEl = el.querySelector('.label');
                             if(labelEl) labelEl.textContent = newZoneName.charAt(0).toUpperCase() + newZoneName.slice(1);
@@ -1080,14 +1079,14 @@ function setupUIMode() {
         const eventConfig = {
             finalizacao: { title: "Finalização", player: true, sub: [{label: "Dentro da área", value: "dentro_area"},{label: "Fora da área", value: "fora_area"},{label: "Cabeceio", value: "cabeceio"}] },
             finalizacao_adv: { title: "Finalização Adv.", player: false, sub: [{label: "Dentro da Área", value: "dentro_area"},{label: "Fora da Área", value: "fora_area"},{label: "Cabeceio", value: "cabeceio"}] },
-            chance_clara: { title: "Chance Clara", player: true },
+            chance_clara: { title: "Chance Clara", player: false },
             chance_clara_adv: { title: "Chance Adv.", player: false },
-            duelo_ganho: { title: "Duelo Ganho", player: true },
-            duelo_perdido: { title: "Duelo Perdido", player: true },
-            falta: { title: "Tipo de Falta", player: true, sub: [{label: "Sofrida", value: "falta_sofrida"}, {label:"Cometida", value:"falta_cometida"}] },
-            cruzamento: { title: "Lado do Cruzamento", player: true, sub: [{label: "Direita", value: "cruzamento_dir"}, {label:"Esquerda", value:"cruzamento_esq"}] },
-            passe_certo: { title: "Passe Certo", player: true },
-            passe_errado: { title: "Passe Errado", player: true }
+            duelo_ganho: { title: "Duelo Ganho", player: true, sub: [{label: "Por Baixo", value: "ganhou_baixo"},{label: "No Alto", value: "ganhou_alto"}] },
+            duelo_perdido: { title: "Duelo Perdido", player: true, sub: [{label: "Por Baixo", value: "perdeu_baixo"},{label: "No Alto", value: "perdeu_alto"}] },
+            falta: { title: "Falta", player: false, sub: [{label: "Sofrida", value: "falta_sofrida"}, {label:"Cometida", value:"falta_cometida"}] },
+            cruzamento: { title: "Cruzamento", player: false, sub: [{label: "Direita", value: "cruzamento_dir"}, {label:"Esquerda", value:"cruzamento_esq"}] },
+            passe_certo: { title: "Passe Certo", player: false },
+            passe_errado: { title: "Passe Errado", player: false }
         };
 
         function flashButton(btn) {
@@ -1139,13 +1138,12 @@ function setupUIMode() {
             const { zone, action, config } = liveState.activeSubAction;
             ui.liveMatch.subActionContainer.innerHTML = ''; 
 
-            const isComplexAction = action === 'falta' || action === 'cruzamento';
-            const finalAction = isComplexAction ? value : action;
-            const finalDetail = isComplexAction ? 'N/A' : value;
-            const finalConfig = eventConfig[finalAction] || config;
-
-            if (finalConfig.player) {
-                liveState.awaitingPlayerSelection = { zone, action: finalAction, detail: finalDetail, config: finalConfig };
+            const isSimpleSubAction = config.sub.some(s => s.value === value);
+            const finalAction = isSimpleSubAction ? action : value;
+            const finalDetail = isSimpleSubAction ? value : 'N/A';
+            
+            if (config.player) {
+                liveState.awaitingPlayerSelection = { zone, action: finalAction, detail: finalDetail, config };
                 showPlayerSelection();
             } else { 
                 finalizeEvent(zone, finalAction, finalDetail, null);
@@ -1169,9 +1167,13 @@ function setupUIMode() {
 
         function showPlayerSelection() {
             if (!ui.liveMatch.playerListContainer || !liveState.awaitingPlayerSelection) return;
-            const { config } = liveState.awaitingPlayerSelection;
+            const { config, detail } = liveState.awaitingPlayerSelection;
             const labelEl = document.getElementById('awaiting-action-label');
-            if(labelEl) labelEl.textContent = `AÇÃO: ${config.title}`;
+            if(labelEl) {
+                const subAction = config.sub?.find(s => s.value === detail);
+                const detailLabel = subAction ? ` - ${subAction.label}` : '';
+                labelEl.textContent = `AÇÃO: ${config.title}${detailLabel}`;
+            }
             ui.liveMatch.playerListContainer.classList.add('awaiting-selection');
             ui.liveMatch.playerListContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
@@ -1193,8 +1195,11 @@ function setupUIMode() {
             const eventsToShow = match.events;
             eventsToShow.forEach(ev => {
                 const row = ui.liveMatch.logBody.insertRow();
-                const detailText = (ev.detail && ev.detail !== 'N/A') ? ev.detail.replace(/_/g, ' ') : '';
-                row.innerHTML = `<td class="p-1 text-xs">${formatTime(ev.time)}</td><td class="p-1 text-xs">${ev.period}ºT</td><td class="p-1 text-xs">${ev.zone}</td><td class="p-1 text-xs">${(ev.action || '').replace(/_/g, ' ')}</td><td class="p-1 text-xs">${detailText}</td><td class="p-1 text-xs">${ev.playerName}</td>`;
+                let detailText = (ev.detail && ev.detail !== 'N/A') ? ev.detail.replace(/_/g, ' ') : '';
+                if(ev.action.includes('duelo')){
+                    detailText = ev.detail.replace(/ganhou_|perdeu_/, '');
+                }
+                row.innerHTML = `<td class="p-1 text-xs">${formatTime(ev.time)}</td><td class="p-1 text-xs">${ev.period}ºT</td><td class="p-1 text-xs">${ev.zone}</td><td class="p-1 text-xs">${(ev.action || '').replace(/_/g, ' ')}</td><td class="p-1 text-xs capitalize">${detailText}</td><td class="p-1 text-xs">${ev.playerName}</td>`;
             });
         }
 window.undoLastAction = async function() {
@@ -1658,11 +1663,26 @@ window.undoLastAction = async function() {
         function renderChartsForReport(match, period = null) {
             const suffix = period ? `_${period}T` : '';
             const possessionData = period == 1 ? match.possession1T : match.possession;
-            renderPossessionChart(match, `possessionChart${suffix}`, possessionData);
-            renderActionMapChart(match, `actionMapChart${suffix}`, period);
-            if (!period) {
+
+            if (period) { // For halftime report modal
+                renderPossessionChart(match, `possessionChart${suffix}`, possessionData);
+            } else { // For main PDF report
+                const possession1T = match.possession1T || { myTeam: 0, opponent: 0, stopped: 0 };
+                const totalPossession = match.possession || { myTeam: 0, opponent: 0, stopped: 0 };
+                const possession2T = {
+                    myTeam: Math.max(0, totalPossession.myTeam - possession1T.myTeam),
+                    opponent: Math.max(0, totalPossession.opponent - possession1T.opponent),
+                    stopped: Math.max(0, totalPossession.stopped - possession1T.stopped),
+                };
+
+                renderPossessionChart(match, `possessionChart`, totalPossession);
+                renderActionMapChart(match, `actionMapChart`, null);
+                
                 renderActionMapChart(match, 'actionMapChart_1T', 1);
+                renderPossessionChart(match, 'possessionChart_1T_report', possession1T);
                 renderActionMapChart(match, 'actionMapChart_2T', 2);
+                renderPossessionChart(match, 'possessionChart_2T_report', possession2T);
+
                 renderReportSummaryTable(match, 'report-summary-table', null);
                 renderReportSummaryTable(match, 'report-summary-table-1T', 1);
                 renderReportSummaryTable(match, 'report-summary-table-2T', 2);
@@ -1819,8 +1839,32 @@ window.undoLastAction = async function() {
                 ${reportHeader}
                 <div class="text-center mb-8 pt-8"><h1 class="text-3xl font-bold">Scout por Período</h1></div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 report-section">
-                    <div class="bg-gray-50 p-4 rounded-lg border"><h3 class="text-xl font-bold text-center mb-4">1º Tempo</h3><div class="chart-container" style="background-color: #166534; min-height: 240px;"><canvas id="actionMapChart_1T"></canvas></div><div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div><div id="report-summary-table-1T" class="mt-4"></div></div>
-                    <div class="bg-gray-50 p-4 rounded-lg border"><h3 class="text-xl font-bold text-center mb-4">2º Tempo</h3><div class="chart-container" style="background-color: #166534; min-height: 240px;"><canvas id="actionMapChart_2T"></canvas></div><div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div><div id="report-summary-table-2T" class="mt-4"></div></div>
+                    <div class="space-y-4">
+                        <h3 class="text-xl font-bold text-center mb-4">1º Tempo</h3>
+                        <div class="bg-gray-50 p-4 rounded-lg border">
+                             <h4 class="font-semibold text-center mb-2">Posse de Bola (1ºT)</h4>
+                             <div class="chart-container h-20"><canvas id="possessionChart_1T_report"></canvas></div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg border">
+                            <h4 class="font-semibold text-center mb-2">Volume de Ações (1ºT)</h4>
+                            <div class="chart-container" style="background-color: #166534; min-height: 240px;"><canvas id="actionMapChart_1T"></canvas></div>
+                            <div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div>
+                        </div>
+                        <div id="report-summary-table-1T" class="mt-4"></div>
+                    </div>
+                    <div class="space-y-4">
+                        <h3 class="text-xl font-bold text-center mb-4">2º Tempo</h3>
+                         <div class="bg-gray-50 p-4 rounded-lg border">
+                             <h4 class="font-semibold text-center mb-2">Posse de Bola (2ºT)</h4>
+                             <div class="chart-container h-20"><canvas id="possessionChart_2T_report"></canvas></div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg border">
+                            <h4 class="font-semibold text-center mb-2">Volume de Ações (2ºT)</h4>
+                            <div class="chart-container" style="background-color: #166534; min-height: 240px;"><canvas id="actionMapChart_2T"></canvas></div>
+                            <div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div>
+                        </div>
+                        <div id="report-summary-table-2T" class="mt-4"></div>
+                    </div>
                 </div>
                 ${reportFooter}
             </div>`;
@@ -2211,7 +2255,7 @@ window.undoLastAction = async function() {
             if (eventsForPeriod.length > 0) {
                 await new Promise(resolve => setTimeout(resolve, 200));
                 const possession1T = match.possession1T || {myTeam: 0, opponent: 0, stopped: 0};
-                renderPossessionChart(match, `possessionChart_1T`, possession1T);
+                renderChartsForReport(match, 1);
             }
         }
         window.showHalftimeReport = showHalftimeReport;
