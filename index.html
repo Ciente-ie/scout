@@ -1701,7 +1701,21 @@ window.undoLastAction = async function() {
 
             const myEvents = allEvents.filter(e => e.scoringTeam !== 'opponent' && !e.action.endsWith('_adv'));
             const oppEvents = allEvents.filter(e => e.scoringTeam === 'opponent' || e.action.endsWith('_adv'));
-            const count = (arr, action, detail) => arr.filter(e => e.action === action && (detail ? e.detail === detail : true)).length;
+            
+            // FIX: This function now handles both old and new data formats for actions.
+            const count = (arr, action, detail) => {
+                // Handle actions that were refactored (falta, cruzamento) to support old data.
+                if (action === 'falta' || action === 'cruzamento') {
+                    return arr.filter(e =>
+                        // New format: { action: 'falta', detail: 'falta_cometida' }
+                        (e.action === action && e.detail === detail) ||
+                        // Old format: { action: 'falta_cometida' }
+                        (e.action === detail)
+                    ).length;
+                }
+                // Handle all other standard actions
+                return arr.filter(e => e.action === action && (detail ? e.detail === detail : true)).length;
+            };
             
             const duelosGanhosTotal = count(myEvents, 'duelo_ganho');
             const duelosGanhosBaixo = count(myEvents, 'duelo_ganho', 'ganhou_baixo');
