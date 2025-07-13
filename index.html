@@ -1703,7 +1703,6 @@ window.undoLastAction = async function() {
             const oppEvents = allEvents.filter(e => e.scoringTeam === 'opponent' || e.action.endsWith('_adv'));
             const count = (arr, action, detail) => arr.filter(e => e.action === action && (detail ? e.detail === detail : true)).length;
             
-            // --- NOVAS CONTAGENS DE DUELOS ---
             const duelosGanhosTotal = count(myEvents, 'duelo_ganho');
             const duelosGanhosBaixo = count(myEvents, 'duelo_ganho', 'ganhou_baixo');
             const duelosGanhosAlto = count(myEvents, 'duelo_ganho', 'ganhou_alto');
@@ -1751,21 +1750,19 @@ window.undoLastAction = async function() {
                 { label: '• Cabeceio', action: 'finalizacao', detail: 'cabeceio', oppAction: 'finalizacao_adv', oppDetail: 'cabeceio', isSub: true },
                 { label: 'Chances Claras', action: 'chance_clara', oppAction: 'chance_clara_adv', hasBreakdown: true },
                 { label: 'Total de Duelos', my: duelosTotais, opp: duelosTotais },
-                // --- LINHAS DE DUELOS MODIFICADAS ---
                 { label: '• Duelos Ganhos (Total)', my: duelosGanhosTotal, opp: duelosPerdidosTotal, isSub: true },
                 { label: '↳ por Baixo', my: duelosGanhosBaixo, opp: duelosPerdidosBaixo, isSub: true, isSubSub: true },
                 { label: '↳ no Alto', my: duelosGanhosAlto, opp: duelosPerdidosAlto, isSub: true, isSubSub: true },
                 { label: '• Duelos Perdidos (Total)', my: duelosPerdidosTotal, opp: duelosGanhosTotal, isSub: true },
                 { label: '↳ por Baixo', my: duelosPerdidosBaixo, opp: duelosGanhosBaixo, isSub: true, isSubSub: true },
                 { label: '↳ no Alto', my: duelosPerdidosAlto, opp: duelosGanhosAlto, isSub: true, isSubSub: true },
-                // --- FIM DAS MODIFICAÇÕES ---
                 { label: 'Total de Passes', my: totalPasses, opp: '–' },
                 { label: '• Passes Certos', my: `${passesCerto} <span class="text-xs">${percCerto}</span>`, opp: '–', isSub: true },
                 { label: '• Passes Errados', my: `${passesErrado} <span class="text-xs">${percErrado}</span>`, opp: '–', isSub: true },
-                { label: 'Faltas Cometidas', action: 'falta_cometida', oppAction: 'falta_sofrida'},
-                { label: 'Faltas Sofridas', action: 'falta_sofrida', oppAction: 'falta_cometida' },
-                { label: 'Cruzamentos (Dir)', action: 'cruzamento_dir', opp: '–' },
-                { label: 'Cruzamentos (Esq)', action: 'cruzamento_esq', opp: '–' },
+                { label: 'Faltas Cometidas', action: 'falta', detail: 'falta_cometida', oppAction: 'falta', oppDetail: 'falta_sofrida'},
+                { label: 'Faltas Sofridas', action: 'falta', detail: 'falta_sofrida', oppAction: 'falta', oppDetail: 'falta_cometida' },
+                { label: 'Cruzamentos (Dir)', action: 'cruzamento', detail: 'cruzamento_dir', opp: '–' },
+                { label: 'Cruzamentos (Esq)', action: 'cruzamento', detail: 'cruzamento_esq', opp: '–' },
             ];
 
             let mainRowIndex = 0;
@@ -1819,50 +1816,47 @@ window.undoLastAction = async function() {
             container.innerHTML = getReportSummaryTableHTML(match, period);
         }
         
-        function renderActionListBySectorHTML(events) {
-            // 1. Define a ordem padrão e os rótulos corretos para as ações.
-            const standardActionOrder = [
-                { key: 'finalizacao', label: 'Finalizações' },
-                { key: 'chance_clara', label: 'Chances Claras' },
-                { key: 'duelo_ganho', label: 'Duelos Ganhos' },
-                { key: 'duelo_perdido', label: 'Duelos Perdidos' },
+        function renderActionListBySectorHTML(events, period) {
+            const passActionOrder = [
                 { key: 'passe_certo', label: 'Passes Certos' },
                 { key: 'passe_errado', label: 'Passes Errados' },
-                { key: 'cruzamento_dir', label: 'Cruzamentos Dir.' },
-                { key: 'cruzamento_esq', label: 'Cruzamentos Esq.' },
-                { key: 'falta_sofrida', label: 'Faltas Sofridas' },
-                { key: 'falta_cometida', label: 'Faltas Cometidas' }
             ];
 
-            // 2. Filtra apenas os eventos da sua equipe para a contagem.
-            const myTeamEvents = events.filter(e => e.scoringTeam !== 'opponent' && !e.action.endsWith('_adv'));
+            const relevantEvents = period ? events.filter(e => e.period == period) : events;
+            const myTeamEvents = relevantEvents.filter(e => e.scoringTeam !== 'opponent' && !e.action.endsWith('_adv'));
 
             const actionsBySector = { defesa: {}, meio: {}, ataque: {} };
 
-            // 3. Agrega e conta as ações que ocorreram.
             myTeamEvents.forEach(e => {
                 if (actionsBySector.hasOwnProperty(e.zone)) {
-                    let actionKey = e.action;
-                    if (e.action === 'falta' || e.action === 'cruzamento') {
-                        actionKey = e.detail;
+                    if (e.action === 'passe_certo' || e.action === 'passe_errado') {
+                         const sectorCounts = actionsBySector[e.zone];
+                         sectorCounts[e.action] = (sectorCounts[e.action] || 0) + 1;
                     }
-                    const sectorCounts = actionsBySector[e.zone];
-                    sectorCounts[actionKey] = (sectorCounts[actionKey] || 0) + 1;
                 }
             });
 
-            // 4. Constrói o HTML final.
+            const totalPasses = Object.values(actionsBySector).reduce((total, sector) => {
+                return total + (sector.passe_certo || 0) + (sector.passe_errado || 0);
+            }, 0);
+
+            if (totalPasses === 0 && period) {
+                 return `<div class="mt-3 p-2 border-t border-gray-200 text-xs text-gray-600 report-section"><h4 class="font-semibold text-center text-sm text-gray-800 mb-2">Resumo de Passes por Setor</h4><p class="text-center text-gray-500 p-4">Nenhum passe registrado neste período.</p></div>`;
+            }
+            if (totalPasses === 0) {
+                return '';
+            }
+
             return `
                 <div class="mt-3 p-2 border-t border-gray-200 text-xs text-gray-600 report-section">
-                    <h4 class="font-semibold text-center text-sm text-gray-800 mb-2">Resumo de Ações por Setor</h4>
+                    <h4 class="font-semibold text-center text-sm text-gray-800 mb-2">Resumo de Passes por Setor</h4>
                     <div class="grid grid-cols-3 gap-3">
                         ${['defesa', 'meio', 'ataque'].map(sector => {
                             const counts = actionsBySector[sector];
                             
-                            // 5. Gera a lista de ações na ordem padrão, mostrando 0 se não houver contagem.
-                            let listHTML = standardActionOrder.map(action => {
+                            let listHTML = passActionOrder.map(action => {
                                 const count = counts[action.key] || 0;
-                                return `<li>${action.label} - <strong>${count}</strong></li>`;
+                                return `<li>${action.label}: <strong>${count}</strong></li>`;
                             }).join('');
 
                             return `
@@ -1911,7 +1905,7 @@ window.undoLastAction = async function() {
                         <h3 class="text-xl font-bold text-center mb-4">Volume de Ações (Total)</h3>
                         <div class="chart-container" style="background-color: #166534; min-height: 240px; height: 240px;"><canvas id="actionMapChart"></canvas></div>
                         <div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div>
-                        ${renderActionListBySectorHTML(match.events)}
+                        ${renderActionListBySectorHTML(match.events, null)}
                     </div>
                     <div class="bg-gray-50 p-3 rounded-lg border"><h3 class="text-xl font-bold text-center mb-2">Destaques Individuais</h3><div id="report-top-stats"></div></div>
                 </div>
@@ -1935,7 +1929,7 @@ window.undoLastAction = async function() {
                             <h4 class="font-semibold text-center mb-2">Volume de Ações (1ºT)</h4>
                             <div class="chart-container" style="background-color: #166534; min-height: 240px;"><canvas id="actionMapChart_1T"></canvas></div>
                             <div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div>
-                            ${renderActionListBySectorHTML(match.events.filter(e => e.period == 1))}
+                            ${renderActionListBySectorHTML(match.events, 1)}
                         </div>
                         <div id="report-summary-table-1T" class="mt-4"></div>
                     </div>
@@ -1949,7 +1943,7 @@ window.undoLastAction = async function() {
                             <h4 class="font-semibold text-center mb-2">Volume de Ações (2ºT)</h4>
                             <div class="chart-container" style="background-color: #166534; min-height: 240px;"><canvas id="actionMapChart_2T"></canvas></div>
                             <div class="flex justify-between items-center mt-2 px-4"><span class="font-semibold text-gray-700">Defesa</span><svg class="w-full h-8 text-gray-500" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 h100 l-10,-4 m10,4 l-10,4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg><span class="font-semibold text-gray-700">Ataque</span></div>
-                            ${renderActionListBySectorHTML(match.events.filter(e => e.period == 2))}
+                            ${renderActionListBySectorHTML(match.events, 2)}
                         </div>
                         <div id="report-summary-table-2T" class="mt-4"></div>
                     </div>
