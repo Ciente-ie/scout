@@ -1702,31 +1702,34 @@ window.undoLastAction = async function() {
             const myEvents = allEvents.filter(e => e.scoringTeam !== 'opponent' && !e.action.endsWith('_adv'));
             const oppEvents = allEvents.filter(e => e.scoringTeam === 'opponent' || e.action.endsWith('_adv'));
             
-            // FIX: This function now handles both old and new data formats for actions.
             const count = (arr, action, detail) => {
-                // Handle actions that were refactored (falta, cruzamento) to support old data.
-                if (action === 'falta' || action === 'cruzamento') {
-                    return arr.filter(e =>
-                        // New format: { action: 'falta', detail: 'falta_cometida' }
-                        (e.action === action && e.detail === detail) ||
-                        // Old format: { action: 'falta_cometida' }
-                        (e.action === detail)
-                    ).length;
-                }
-                // Handle all other standard actions
-                return arr.filter(e => e.action === action && (detail ? e.detail === detail : true)).length;
+                return arr.filter(e => {
+                    const isOldFormat = (action === 'falta' || action === 'cruzamento') && e.action === detail;
+                    const isNewFormat = e.action === action && (detail ? e.detail === detail : true);
+                    return isNewFormat || isOldFormat;
+                }).length;
             };
-            
-            const duelosGanhosTotal = count(myEvents, 'duelo_ganho');
-            const duelosGanhosBaixo = count(myEvents, 'duelo_ganho', 'ganhou_baixo');
-            const duelosGanhosAlto = count(myEvents, 'duelo_ganho', 'ganhou_alto');
-            
-            const duelosPerdidosTotal = count(myEvents, 'duelo_perdido');
-            const duelosPerdidosBaixo = count(myEvents, 'duelo_perdido', 'perdeu_baixo');
-            const duelosPerdidosAlto = count(myEvents, 'duelo_perdido', 'perdeu_alto');
-            
-            const duelosTotais = duelosGanhosTotal + duelosPerdidosTotal;
 
+            // Duel Calculations
+            const duelosGanhosTotal = myEvents.filter(e => e.action === 'duelo_ganho').length;
+            const duelosGanhosBaixo = myEvents.filter(e => e.action === 'duelo_ganho' && e.detail === 'ganhou_baixo').length;
+            const duelosGanhosAlto = myEvents.filter(e => e.action === 'duelo_ganho' && e.detail === 'ganhou_alto').length;
+            
+            const duelosPerdidosTotal = myEvents.filter(e => e.action === 'duelo_perdido').length;
+            const duelosPerdidosBaixo = myEvents.filter(e => e.action === 'duelo_perdido' && e.detail === 'perdeu_baixo').length;
+            const duelosPerdidosAlto = myEvents.filter(e => e.action === 'duelo_perdido' && e.detail === 'perdeu_alto').length;
+            
+            // Opponent's duels are the inverse of my team's
+            const oppDuelosGanhosTotal = duelosPerdidosTotal;
+            const oppDuelosPerdidosTotal = duelosGanhosTotal;
+            const oppDuelosGanhosBaixo = duelosPerdidosBaixo;
+            const oppDuelosGanhosAlto = duelosPerdidosAlto;
+            const oppDuelosPerdidosBaixo = duelosGanhosBaixo;
+            const oppDuelosPerdidosAlto = duelosGanhosAlto;
+
+            // Check if any detailed duel data exists to decide on the report format
+            const hasDuelDetails = (duelosGanhosBaixo + duelosGanhosAlto + duelosPerdidosBaixo + duelosPerdidosAlto) > 0;
+            
             const calculateChancesBreakdown = (eventsToAnalyze) => {
                 const breakdown = {
                     myTeam: { '0-15': 0, '15-30': 0, '30+': 0 },
@@ -1751,34 +1754,49 @@ window.undoLastAction = async function() {
             
             const chancesBreakdown = calculateChancesBreakdown(allEvents);
 
-            const passesCerto = count(myEvents, 'passe_certo'); const passesErrado = count(myEvents, 'passe_errado');
+            const passesCerto = count(myEvents, 'passe_certo');
+            const passesErrado = count(myEvents, 'passe_errado');
             const totalPasses = passesCerto + passesErrado;
             const percCerto = totalPasses > 0 ? `(${(passesCerto/totalPasses*100).toFixed(0)}%)` : '';
             const percErrado = totalPasses > 0 ? `(${(passesErrado/totalPasses*100).toFixed(0)}%)` : '';
 
-            let tableHTML = `<table class="w-full text-sm"><tbody>`;
+            // Build the stats configuration array dynamically
             const statsConfig = [
                 { label: 'Finalizações', action: 'finalizacao', oppAction: 'finalizacao_adv' },
                 { label: '• Dentro da Área', action: 'finalizacao', detail: 'dentro_area', oppAction: 'finalizacao_adv', oppDetail: 'dentro_area', isSub: true },
                 { label: '• Fora da Área', action: 'finalizacao', detail: 'fora_area', oppAction: 'finalizacao_adv', oppDetail: 'fora_area', isSub: true },
                 { label: '• Cabeceio', action: 'finalizacao', detail: 'cabeceio', oppAction: 'finalizacao_adv', oppDetail: 'cabeceio', isSub: true },
                 { label: 'Chances Claras', action: 'chance_clara', oppAction: 'chance_clara_adv', hasBreakdown: true },
-                { label: 'Total de Duelos', my: duelosTotais, opp: duelosTotais },
-                { label: '• Duelos Ganhos (Total)', my: duelosGanhosTotal, opp: duelosPerdidosTotal, isSub: true },
-                { label: '↳ por Baixo', my: duelosGanhosBaixo, opp: duelosPerdidosBaixo, isSub: true, isSubSub: true },
-                { label: '↳ no Alto', my: duelosGanhosAlto, opp: duelosPerdidosAlto, isSub: true, isSubSub: true },
-                { label: '• Duelos Perdidos (Total)', my: duelosPerdidosTotal, opp: duelosGanhosTotal, isSub: true },
-                { label: '↳ por Baixo', my: duelosPerdidosBaixo, opp: duelosGanhosBaixo, isSub: true, isSubSub: true },
-                { label: '↳ no Alto', my: duelosPerdidosAlto, opp: duelosGanhosAlto, isSub: true, isSubSub: true },
+            ];
+
+            if (hasDuelDetails) {
+                statsConfig.push(
+                    { label: 'Total de Duelos', my: duelosGanhosTotal + duelosPerdidosTotal, opp: oppDuelosGanhosTotal + oppDuelosPerdidosTotal },
+                    { label: '• Duelos Ganhos', my: duelosGanhosTotal, opp: oppDuelosGanhosTotal, isSub: true },
+                    { label: '↳ por Baixo', my: duelosGanhosBaixo, opp: oppDuelosGanhosBaixo, isSub: true, isSubSub: true },
+                    { label: '↳ no Alto', my: duelosGanhosAlto, opp: oppDuelosGanhosAlto, isSub: true, isSubSub: true },
+                    { label: '• Duelos Perdidos', my: duelosPerdidosTotal, opp: oppDuelosPerdidosTotal, isSub: true },
+                    { label: '↳ por Baixo', my: duelosPerdidosBaixo, opp: oppDuelosPerdidosBaixo, isSub: true, isSubSub: true },
+                    { label: '↳ no Alto', my: duelosPerdidosAlto, opp: oppDuelosPerdidosAlto, isSub: true, isSubSub: true }
+                );
+            } else {
+                 statsConfig.push(
+                    { label: 'Duelos Ganhos', my: duelosGanhosTotal, opp: oppDuelosGanhosTotal },
+                    { label: 'Duelos Perdidos', my: duelosPerdidosTotal, opp: oppDuelosPerdidosTotal }
+                );
+            }
+
+            statsConfig.push(
                 { label: 'Total de Passes', my: totalPasses, opp: '–' },
                 { label: '• Passes Certos', my: `${passesCerto} <span class="text-xs">${percCerto}</span>`, opp: '–', isSub: true },
                 { label: '• Passes Errados', my: `${passesErrado} <span class="text-xs">${percErrado}</span>`, opp: '–', isSub: true },
                 { label: 'Faltas Cometidas', action: 'falta', detail: 'falta_cometida', oppAction: 'falta', oppDetail: 'falta_sofrida'},
                 { label: 'Faltas Sofridas', action: 'falta', detail: 'falta_sofrida', oppAction: 'falta', oppDetail: 'falta_cometida' },
                 { label: 'Cruzamentos (Dir)', action: 'cruzamento', detail: 'cruzamento_dir', opp: '–' },
-                { label: 'Cruzamentos (Esq)', action: 'cruzamento', detail: 'cruzamento_esq', opp: '–' },
-            ];
+                { label: 'Cruzamentos (Esq)', action: 'cruzamento', detail: 'cruzamento_esq', opp: '–' }
+            );
 
+            let tableHTML = `<table class="w-full text-sm"><tbody>`;
             let mainRowIndex = 0;
             statsConfig.forEach(stat => {
                 const myVal = stat.my ?? count(myEvents, stat.action, stat.detail);
