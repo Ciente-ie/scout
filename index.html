@@ -958,10 +958,11 @@ function setupUIMode() {
                 playerInId: playerInId,
                 playerName: `Sai: ${playerOut?.name} / Entra: ${playerIn?.name}`
             };
+            
+            closeModal('substitution-modal');
+
             try {
                 await updateMatchData(appState.activeMatchId, { events: [newEvent, ...(match.events || [])] });
-                closeModal('substitution-modal');
-                renderOnFieldPlayers();
             } catch (error) {
                 showErrorMessage("Não foi possível salvar a substituição.", error);
             }
@@ -1241,6 +1242,43 @@ window.undoLastAction = async function() {
             }
         };
         
+        // FIX: Use event delegation for the goal form to avoid attaching multiple listeners.
+        document.getElementById('modal-container').addEventListener('submit', async (e) => {
+            if (e.target.id === 'goal-form') {
+                e.preventDefault();
+                const match = appState.matches.find(m => m.id === appState.activeMatchId);
+                if(!match) return;
+
+                const data = { 
+                    goalPlayerId: e.target.elements['goal-player'].value, 
+                    assistPlayerId: e.target.elements['goal-assist'].value, 
+                    goalType: e.target.elements['goal-type'].value 
+                };
+                const goalPlayer = appState.players.find(p => p.id === data.goalPlayerId);
+                const assistPlayer = data.assistPlayerId ? appState.players.find(p => p.id === data.assistPlayerId) : null;
+                const newEvent = { 
+                    time: liveState.seconds, 
+                    period: liveState.currentPeriod, 
+                    zone: 'ataque', 
+                    action: 'gol', 
+                    detail: data.goalType, 
+                    playerId: data.goalPlayerId, 
+                    playerName: goalPlayer?.name || 'N/A', 
+                    assistId: data.assistPlayerId || null, 
+                    assistName: assistPlayer?.name || null, 
+                    scoringTeam: 'myTeam' 
+                };
+                
+                closeModal('goal-modal');
+
+                try {
+                    await updateMatchData(appState.activeMatchId, { events: [newEvent, ...(match.events || [])], myTeamScore: match.myTeamScore + 1 });
+                } catch(err) {
+                    showErrorMessage("Não foi possível registrar o gol.", err);
+                }
+            }
+        });
+
         window.prepareGoalModal = (teamType) => {
             const match = appState.matches.find(m => m.id === appState.activeMatchId);
             if(!match || liveState.currentPeriod === 0) return showErrorMessage("Inicie o cronômetro.");
@@ -1251,16 +1289,6 @@ window.undoLastAction = async function() {
             const playerOptions = [...players].sort((a,b) => a.name.localeCompare(b.name)).map(p => `<option value="${p.id}">${p.name}</option>`).join('');
             modal.innerHTML = `<h3 class="text-2xl font-bold mb-4">Registrar Gol</h3><form id="goal-form"><div><label class="block mb-1">Jogador:</label><select id="goal-player" class="w-full p-2 rounded mb-2">${playerOptions}</select></div><div><label class="block mb-1">Assistência:</label><select id="goal-assist" class="w-full p-2 rounded mb-2"><option value="">Nenhuma</option>${playerOptions}</select></div><div><label class="block mb-1">Tipo de Gol:</label><select id="goal-type" class="w-full p-2 rounded mb-2"><option>Dentro da Área</option><option>Bola Parada</option><option>Pênalti</option><option>Cabeça</option><option>Chute Fora da Área</option></select></div><button type="submit" class="w-full bg-green-600 p-2.5 rounded mt-4">Confirmar Gol</button></form>`;
             openModal('goal-modal');
-            document.getElementById('goal-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const data = { goalPlayerId: e.target.elements['goal-player'].value, assistPlayerId: e.target.elements['goal-assist'].value, goalType: e.target.elements['goal-type'].value };
-                const goalPlayer = appState.players.find(p => p.id === data.goalPlayerId);
-                const assistPlayer = data.assistPlayerId ? appState.players.find(p => p.id === data.assistPlayerId) : null;
-   
-                const newEvent = { time: liveState.seconds, period: liveState.currentPeriod, zone: 'ataque', action: 'gol', detail: data.goalType, playerId: data.goalPlayerId, playerName: goalPlayer?.name || 'N/A', assistId: data.assistPlayerId || null, assistName: assistPlayer?.name || null, scoringTeam: 'myTeam' };
-                await updateMatchData(appState.activeMatchId, { events: [newEvent, ...(match.events || [])], myTeamScore: match.myTeamScore + 1 });
-                closeModal('goal-modal');
-            });
         };
 
         window.updateRatingValue = function(slider) { const valueSpan = document.getElementById(slider.id.replace('rating-', 'rating-value-')); if (valueSpan) { valueSpan.textContent = slider.value; } }
@@ -1344,12 +1372,17 @@ window.undoLastAction = async function() {
                     };
                 }
             });
-            await updateMatchData(appState.activeMatchId, { status: 'finished', ratings: ratings });
-            
+
             closeModal('rating-modal'); 
             navigateTo('matches');
             if (document.fullscreenElement) {
                 document.exitFullscreen();
+            }
+
+            try {
+                await updateMatchData(appState.activeMatchId, { status: 'finished', ratings: ratings });
+            } catch (e) {
+                showErrorMessage("Falha ao salvar as avaliações.", e);
             }
         }
 
