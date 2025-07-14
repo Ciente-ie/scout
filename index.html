@@ -2222,7 +2222,7 @@ window.undoLastAction = async function() {
                 </div>`;
         }
         
-        function renderFormation(match) {
+                function renderFormation(match) {
             const container = document.getElementById('report-formation');
             if (!container || !match.lineup || !match.squadPlayerIds) {
                 if (container) container.innerHTML = '<p class="text-gray-500 text-center p-4">Escalação não definida.</p>';
@@ -2279,15 +2279,28 @@ window.undoLastAction = async function() {
                     <div class="mt-4">
                         <h5 class="font-bold text-center mb-2 pb-1 border-b border-white/30">SUBSTITUIÇÕES</h5>
                         <table class="w-full text-left text-sm">
-                            ${subEvents.map(sub => `
+                            ${subEvents.map(sub => {
+                                let minute = 0;
+                                let periodText = `${sub.period}T`;
+                                
+                                // Se for 2º tempo e o tempo de início do 2T foi salvo, calcula o minuto relativo.
+                                if (sub.period === 2 && match.secondHalfStartSeconds > -1) {
+                                    minute = Math.floor((sub.time - match.secondHalfStartSeconds) / 60);
+                                } else {
+                                    // Para o 1º tempo, o cálculo é direto.
+                                    minute = Math.floor(sub.time / 60);
+                                }
+                                const displayTime = `${periodText} - ${minute}'`;
+
+                                return `
                                 <tr class="border-b border-white/20">
-                                    <td class="p-1.5 font-bold text-center w-12">${formatTime(sub.time)}'</td>
+                                    <td class="p-1.5 font-bold text-center w-16">${displayTime}</td>
                                     <td class="p-1.5">
                                         <span class="text-red-300">↓ ${appState.players.find(p => p.id === sub.playerOutId)?.name || ''}</span><br>
                                         <span class="text-green-300">↑ ${appState.players.find(p => p.id === sub.playerInId)?.name || ''}</span>
                                     </td>
                                 </tr>
-                            `).join('')}
+                            `}).join('')}
                         </table>
                     </div>
                 `;
@@ -2309,6 +2322,7 @@ window.undoLastAction = async function() {
                 </div>`;
             container.innerHTML = formationHTML;
         }
+
         
         async function exportReportToPDF() {
             const button = document.getElementById('pdf-export-button');
