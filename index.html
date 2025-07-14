@@ -1942,17 +1942,6 @@ window.undoLastAction = async function() {
                 </div>
             `;
         }
-```
-
-**Como fazer a alteração:**
-
-1.  **Copie** o bloco de código acima.
-2.  No seu arquivo `index.html`, procure pela função `function renderActionListBySectorHTML(events, period)`.
-3.  **Selecione e apague** a função inteira, desde `function...` até a chave de fechamento `}`.
-4.  **Cole** o novo código que você copiou no lugar.
-
-Depois disso, os relatórios gerados exibirão os totais de passes e suas respectivas porcentagens por set
-
         function renderReportContentForPDF(match, specificPeriod = null) {
             const logoDataUrl = appState.settings.logoDataUrl;
             const logoImg = logoDataUrl ? `<img src="${logoDataUrl}" class="report-logo" crossorigin="anonymous" />` : '';
