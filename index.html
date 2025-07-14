@@ -1885,7 +1885,7 @@ window.undoLastAction = async function() {
             container.innerHTML = getReportSummaryTableHTML(match, period);
         }
         
-        function renderActionListBySectorHTML(events, period) {
+                function renderActionListBySectorHTML(events, period) {
             const passActionOrder = [
                 { key: 'passe_certo', label: 'Passes Certos' },
                 { key: 'passe_errado', label: 'Passes Errados' },
@@ -1922,10 +1922,12 @@ window.undoLastAction = async function() {
                     <div class="grid grid-cols-3 gap-3">
                         ${['defesa', 'meio', 'ataque'].map(sector => {
                             const counts = actionsBySector[sector];
+                            const totalPassesNoSetor = (counts.passe_certo || 0) + (counts.passe_errado || 0);
                             
                             let listHTML = passActionOrder.map(action => {
                                 const count = counts[action.key] || 0;
-                                return `<li>${action.label}: <strong>${count}</strong></li>`;
+                                const percentage = totalPassesNoSetor > 0 ? `(${(count / totalPassesNoSetor * 100).toFixed(0)}%)` : '';
+                                return `<li>${action.label}: <strong>${count} ${percentage}</strong></li>`;
                             }).join('');
 
                             return `
@@ -1940,6 +1942,16 @@ window.undoLastAction = async function() {
                 </div>
             `;
         }
+```
+
+**Como fazer a alteração:**
+
+1.  **Copie** o bloco de código acima.
+2.  No seu arquivo `index.html`, procure pela função `function renderActionListBySectorHTML(events, period)`.
+3.  **Selecione e apague** a função inteira, desde `function...` até a chave de fechamento `}`.
+4.  **Cole** o novo código que você copiou no lugar.
+
+Depois disso, os relatórios gerados exibirão os totais de passes e suas respectivas porcentagens por set
 
         function renderReportContentForPDF(match, specificPeriod = null) {
             const logoDataUrl = appState.settings.logoDataUrl;
