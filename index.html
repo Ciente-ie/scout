@@ -2036,61 +2036,175 @@ window.undoLastAction = async function() {
         }
 
         function renderActionMapChart(match, canvasId, period) {
-            const ctx = document.getElementById(canvasId)?.getContext('2d');
-            if(!ctx) return;
-            const events = period ? match.events.filter(e => e.period == period) : match.events;
-            if (events.length === 0) {
-                const chartContainer = ctx.canvas.parentElement;
-                if(chartContainer) chartContainer.innerHTML = '<p class="text-center text-gray-500 p-8 h-full flex items-center justify-center">Nenhuma ação registrada neste período.</p>';
-                return;
-            }
-            const sectorCounts = { defesa: 0, meio: 0, ataque: 0 };
-            events.forEach(e => { if (sectorCounts.hasOwnProperty(e.zone)) sectorCounts[e.zone]++; });
-            const totalActions = Object.values(sectorCounts).reduce((a, b) => a + b, 0);
-            const maxActions = Math.max(...Object.values(sectorCounts), 1);
-            const getColor = (count) => `rgba(220, 38, 38, ${Math.min(0.2 + (count / maxActions) * 0.8, 1)})`;
-            const getRadius = (count) => 10 + Math.sqrt(count) * 4;
-            charts[canvasId] = new Chart(ctx, { 
-                type: 'bubble', 
-                plugins: [fieldLinesPlugin], 
-                data: { 
-                    datasets: [{ 
-                        label: 'Volume', 
-                        data: [
-                            { x: 0.5, y: 5, r: getRadius(sectorCounts.defesa) }, 
-                            { x: 1.5, y: 5, r: getRadius(sectorCounts.meio) }, 
-                            { x: 2.5, y: 5, r: getRadius(sectorCounts.ataque) }
-                        ], 
-                        backgroundColor: [getColor(sectorCounts.defesa), getColor(sectorCounts.meio), getColor(sectorCounts.ataque)], 
-                        borderColor: 'rgba(153, 27, 27, 1)', 
-                        borderWidth: 1 
-                    }] 
-                }, 
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    layout: { padding: 10 }, 
-                    scales: { 
-                        x: { min: 0, max: 3, grid: { display: false }, ticks: { display: false } }, 
-                        y: { display: false, min: 0, max: 10 } 
-                    }, 
-                    plugins: { 
-                        legend: { display: false }, 
-                        datalabels: { 
-                            color: 'white', 
-                            textAlign: 'center',
-                            font: { weight: 'bold', size: 14 },
-                            formatter: (value, context) => {
-                                const count = Object.values(sectorCounts)[context.dataIndex];
-                                if (totalActions === 0) return '0\n(0%)';
-                                const percentage = ((count / totalActions) * 100).toFixed(0);
-                                return `${count}\n(${percentage}%)`;
-                            }
-                        }
-                    }
-                }
+    try {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        // --- Responsive size inside the box ---
+        const cssW = Math.max(540, canvas.clientWidth || 720);
+        const cssH = Math.max(260, canvas.clientHeight || 320);
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width  = Math.round(cssW * dpr);
+        canvas.height = Math.round(cssH * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, cssW, cssH);
+
+        // --- Data (filter by period) ---
+        const all = Array.isArray(match?.events) ? match.events : [];
+        const events = period ? all.filter(e => e.period == period) : all;
+
+        // ---- América only for heat intensity ----
+        const isOpp = (e) => String(e?.action||'').endsWith('_adv');
+        const zoneCount = { defesa:0, meio:0, ataque:0 };
+        events.forEach(e => { if (!isOpp(e)) { const z = String(e.zone||'').toLowerCase(); if (zoneCount[z] !== undefined) zoneCount[z]++; } });
+        const total = Math.max(1, zoneCount.defesa + zoneCount.meio + zoneCount.ataque);
+        const pct = {
+            defesa: (zoneCount.defesa / total) * 100,
+            meio:   (zoneCount.meio   / total) * 100,
+            ataque: (zoneCount.ataque / total) * 100
+        };
+
+        // --- Pitch layout ---
+        const padX = Math.max(18, cssW * 0.06);
+        let padY = Math.max(18, cssH * 0.12);
+        if (canvasId === 'actionMapChart') { padY = Math.max(padY, cssH * 0.16); } // more room for legends
+        const field = { x: (cssW - (cssW - 2*padX)) / 2, y: padY, w: cssW - 2*padX, h: cssH - 2*padY };
+        const midX = field.x + field.w/2;
+        const midY = field.y + field.h/2;
+
+        // Grass base (let existing background show; draw only lines)
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        // Outer
+        ctx.strokeRect(field.x, field.y, field.w, field.h);
+        // Halfway line
+        ctx.beginPath(); ctx.moveTo(midX, field.y); ctx.lineTo(midX, field.y + field.h); ctx.stroke();
+        // Center circle
+        const centerR = field.h * 0.0915;
+        ctx.beginPath(); ctx.arc(midX, midY, centerR, 0, Math.PI*2); ctx.stroke();
+        // Penalty & goal areas (both sides)
+        const areaW = field.w * 0.18, areaH = field.h * 0.40, areaY = field.y + field.h*0.30;
+        const saW   = field.w * 0.06, saH   = field.h * 0.20, saY   = field.y + field.h*0.40;
+        // Left
+        ctx.strokeRect(field.x,           areaY, areaW, areaH);
+        ctx.strokeRect(field.x,           saY,   saW,   saH);
+        // Right
+        ctx.strokeRect(field.x+field.w-areaW, areaY, areaW, areaH);
+        ctx.strokeRect(field.x+field.w-saW,   saY,   saW,   saH);
+
+        // --- Teardrop heat blobs (elliptical with blue halo) ---
+        function lerp(a,b,t){ return a + (b-a)*t; }
+        function mix(c1,c2,t){ return [ Math.round(lerp(c1[0],c2[0],t)), Math.round(lerp(c1[1],c2[1],t)), Math.round(lerp(c1[2],c2[2],t)) ]; }
+        const C_RED=[255,60,60], C_YEL=[255,215,64], C_GRN=[60,220,150], C_CYAN=[64,198,255];
+        function rgb(a){ return `rgba(${a[0]},${a[1]},${a[2]}`; }
+        function teardrop(cx, cy, baseR, p){
+            // color core according to p (0-20 green, 21-39 yellow, 40-100 red) with continuous blend
+            let core;
+            if (p <= 20) core = C_GRN;
+            else if (p <= 39) { core = mix(C_GRN, C_YEL, (p-20)/19); }
+            else { core = mix(C_YEL, C_RED, Math.min(1,(p-40)/60)); }
+            // draw with vertical scale to create "drop" look and slight upward stretch
+            const scaleX = 1.45; const scaleY = 1.0;           // horizontal teardrop
+            const tailShift = baseR*0.25; // move core a bit para baixo para alongar "rastro" para cima
+            ctx.save();
+            ctx.translate(cx, cy + tailShift);
+            ctx.scale(scaleX, scaleY);
+            const grad = ctx.createRadialGradient(0, 0, 1, 0, 0, baseR);
+            grad.addColorStop(0.00, `${rgb(core)},0.95)`);
+            grad.addColorStop(0.30, `${rgb(core)},0.65)`);
+            const mid = mix(core, C_GRN, 0.35);
+            grad.addColorStop(0.58, `${rgb(mid)},0.35)`);
+            grad.addColorStop(0.80, `${rgb(C_CYAN)},0.22)`);
+            grad.addColorStop(1.00, `${rgb(C_CYAN)},0.00)`);
+            ctx.fillStyle = grad;
+            ctx.beginPath(); ctx.arc(0, 0, baseR, 0, Math.PI*2); ctx.fill();
+            ctx.restore();
+        }
+
+        // Centers for DEFESA, MEIO, ATAQUE (aligned)
+        const thirdW = field.w/3;
+        const R = Math.min(thirdW, field.h) * 0.33;
+        teardrop(field.x + thirdW*0.5, midY, R, pct.defesa);
+        teardrop(field.x + thirdW*1.5, midY, R, pct.meio);
+        teardrop(field.x + thirdW*2.5, midY, R, pct.ataque);
+
+        // Top numbers per sector
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '600 12px system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif';
+        ctx.textAlign = 'center';
+        const fmt = v => Math.round(v).toString() + '%';
+        ctx.fillText(`${zoneCount.defesa} ações • ${fmt(pct.defesa)}`, field.x + thirdW*0.5, field.y - 6);
+        ctx.fillText(`${zoneCount.meio} ações • ${fmt(pct.meio)}`,   field.x + thirdW*1.5, field.y - 6);
+        ctx.fillText(`${zoneCount.ataque} ações • ${fmt(pct.ataque)}`, field.x + thirdW*2.5, field.y - 6);
+
+        // Finalizações (América = ataque; Adversário = defesa)
+        const myFin = events.filter(e => !isOpp(e) && String(e.action||'').startsWith('finalizacao'));
+        const opFin = events.filter(e =>  isOpp(e) && String(e.action||'').startsWith('finalizacao'));
+        function isHeader(e){ return String(e?.detail||'').toLowerCase().includes('cabe'); }
+        function isInside(e){ return String(e?.detail||'').toLowerCase().includes('dentro'); }
+        function isOutside(e){ return String(e?.detail||'').toLowerCase().includes('fora'); }
+        function plot(finishes, side){
+            const opponent = side === 'opp';
+            const color = opponent ? 'rgba(59,130,246,0.95)' : 'rgba(239,68,68,0.95)';
+            const bx = opponent ? (field.x + thirdW*0.25) : (field.x + thirdW*2.75);
+            finishes.forEach((e, idx) => {
+                const jx = ((idx % 8) - 4) * 3 + (Math.random()*1.2-0.6);
+                let y = midY + (((idx % 6) - 3) * 3) + (Math.random()*1.2-0.6);
+                if (isOutside(e)) y -= field.h*0.20;
+                if (isInside(e))  y += 0;
+                ctx.beginPath(); ctx.fillStyle = color; ctx.arc(bx + jx, y, 3.6, 0, Math.PI*2); ctx.fill();
+                if (isHeader(e)) { ctx.beginPath(); ctx.fillStyle = '#111827'; ctx.arc(bx + jx, y, 1.2, 0, Math.PI*2); ctx.fill(); }
             });
         }
+        plot(myFin, 'my'); plot(opFin, 'opp');
+
+        // Export shim
+        if (typeof charts === 'object') { charts[canvasId] = { ctx, toBase64Image: () => ctx.canvas.toDataURL('image/png') }; }
+
+        // Legends (kept from previous v2)
+        const holder = canvas.parentElement;
+        if (holder) {
+            const legendId = canvasId + '_legend';
+            let legend = holder.querySelector('#' + legendId);
+            if (!legend) {
+                legend = document.createElement('div');
+                legend.id = legendId;
+                legend.style.display = 'flex';
+                legend.style.flexWrap = 'wrap';
+                legend.style.alignItems = 'center';
+                legend.style.gap = '12px';
+                legend.style.marginTop = '6px';
+                legend.style.font = '12px system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif';
+                legend.style.color = '#374151';
+                holder.appendChild(legend);
+            }
+            legend.innerHTML = '';
+            const scale = document.createElement('div'); scale.style.display='flex'; scale.style.alignItems='center'; scale.style.gap='6px';
+            const bar = document.createElement('div'); bar.style.width='180px'; bar.style.height='10px'; bar.style.borderRadius='12px'; bar.style.border='1px solid #e5e7eb';
+            bar.style.background='linear-gradient(90deg, rgb(60,220,150) 0%, rgb(234,179,8) 40%, rgb(255,60,60) 100%)';
+            scale.appendChild(bar);
+            const ticks = document.createElement('div'); ticks.style.display='flex'; ticks.style.justifyContent='space-between'; ticks.style.width='180px'; ticks.style.fontSize='10px'; ticks.style.color='#6b7280';
+            ticks.innerHTML='<span>0%</span><span>20%</span><span>39%</span><span>100%</span>';
+            const scaleWrap = document.createElement('div'); scaleWrap.appendChild(scale); scaleWrap.appendChild(ticks);
+            const shotsLegend = document.createElement('div');
+            shotsLegend.innerHTML = (
+                '<span style="margin-right:8px;">Finalizações: </span>' +
+                '<span style="display:inline-flex;align-items:center;margin-right:10px;"><span style="width:10px;height:10px;border-radius:50%;background:#ef4444;display:inline-block;margin-right:6px;"></span>América</span>' +
+                '<span style="display:inline-flex;align-items:center;"><span style="width:10px;height:10px;border-radius:50%;background:#3b82f6;display:inline-block;margin-right:6px;"></span>Adversário <small style="margin-left:6px;color:#6b7280;">(cabeceio: ponto preto)</small></span>'
+            );
+            legend.appendChild(scaleWrap);
+            legend.appendChild(shotsLegend);
+        }
+    } catch (err) {
+        console.error('renderActionMapChart (TV Heatmap) error:', err);
+    }
+
+}
+
+
+
         
         function getRatingLegend(score) {
             const s = parseFloat(score);
