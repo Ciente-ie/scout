@@ -178,6 +178,10 @@
         }
 
     </style>
+<style>
+/* heatmap responsive */
+#actionMapChart, #actionMapChart_1T, #actionMapChart_2T { width: 100% !important; height: auto !important; display: block; }
+</style>
 </head>
 <body class="flex flex-col h-screen antialiased">
 
@@ -2043,8 +2047,10 @@ window.undoLastAction = async function() {
         if (!ctx) return;
 
         // --- Responsive size inside the box ---
-        const cssW = canvas.clientWidth || canvas.parentElement.clientWidth || 360;
-       const cssH = Math.round(cssW * 0.55);
+        let cssW = (canvas.clientWidth || (canvas.parentElement ? canvas.parentElement.clientWidth : 600) || 600);
+       cssW = Math.min(900, Math.max(320, cssW)); // min 320, max 900
+       let cssH = Math.round(cssW * 0.55);
+       cssH = Math.min(500, Math.max(200, cssH)); // min 180, max 500
         const dpr = window.devicePixelRatio || 1;
         canvas.width  = Math.round(cssW * dpr);
         canvas.height = Math.round(cssH * dpr);
@@ -2073,6 +2079,7 @@ window.undoLastAction = async function() {
         const field = { x: (cssW - (cssW - 2*padX)) / 2, y: padY, w: cssW - 2*padX, h: cssH - 2*padY };
         const midX = field.x + field.w/2;
         const midY = field.y + field.h/2;
+        if (canvasId==='actionMapChart') { field.h = field.h * 0.90; }
 
         // Grass base (let existing background show; draw only lines)
         ctx.strokeStyle = '#ffffff';
@@ -2159,13 +2166,30 @@ window.undoLastAction = async function() {
             });
         }
         plot(myFin, 'my'); plot(opFin, 'opp');
+        // In-canvas legend for general chart only
+        if (canvasId === 'actionMapChart') {
+            const legendY = field.y + field.h - 16;
+            ctx.textAlign = 'center';
+            const baseFont = Math.max(9, Math.min(13, Math.round(cssW*0.018)));
+            ctx.font = `600 ${baseFont}px system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif`;
+            // América (vermelho)
+            ctx.beginPath(); ctx.fillStyle = '#ef4444'; ctx.arc(field.x + field.w*0.40, legendY-4, 4, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#e5e7eb'; ctx.fillText('América', field.x + field.w*0.44, legendY);
+            // Adversário (azul)
+            ctx.beginPath(); ctx.fillStyle = '#3b82f6'; ctx.arc(field.x + field.w*0.55, legendY-4, 4, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#e5e7eb'; ctx.fillText('Adversário', field.x + field.w*0.60, legendY);
+            // Cabeceio marcador
+            ctx.beginPath(); ctx.fillStyle = '#3b82f6'; ctx.arc(field.x + field.w*0.70, legendY-4, 4, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.fillStyle = '#111827'; ctx.arc(field.x + field.w*0.70, legendY-3, 1.5, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#e5e7eb'; ctx.fillText('Cabeceio', field.x + field.w*0.75, legendY);
+        }
 
         // Export shim
         if (typeof charts === 'object') { charts[canvasId] = { ctx, toBase64Image: () => ctx.canvas.toDataURL('image/png') }; }
 
         // Legends (kept from previous v2)
         const holder = canvas.parentElement;
-        if (holder) {
+        if (holder && canvasId !== 'actionMapChart') {
             const legendId = canvasId + '_legend';
             let legend = holder.querySelector('#' + legendId);
             if (!legend) {
@@ -2678,3 +2702,158 @@ window.undoLastAction = async function() {
 
 </body>
 </html>
+
+<!-- Failsafe patch: robust renderActionMapChart override -->
+<script>
+(function(){
+  function safeHeatmap(match, canvasId, period){
+    try{
+      var canvas = document.getElementById(canvasId);
+      if(!canvas) return;
+      var ctx = canvas.getContext('2d'); if(!ctx) return;
+
+      // Responsive bounds
+      var cssW = (canvas.clientWidth || (canvas.parentElement ? canvas.parentElement.clientWidth : 600) || 600);
+      cssW = Math.min(900, Math.max(320, cssW));
+      var cssH = Math.round(cssW * 0.55);
+      cssH = Math.min(500, Math.max(200, cssH));
+
+      var dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.round(cssW * dpr);
+      canvas.height = Math.round(cssH * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0,0,cssW,cssH);
+
+      // Data
+      var all = (match && Array.isArray(match.events)) ? match.events : [];
+      var events = period ? all.filter(function(e){return e && e.period==period;}) : all;
+      var isOpp = function(e){ return String(e && e.action || '').slice(-4)==='_adv'; };
+      var zc = {defesa:0,meio:0,ataque:0};
+      events.forEach(function(e){
+        if(!isOpp(e)){
+          var z = String(e && e.zone || '').toLowerCase();
+          if(zc.hasOwnProperty(z)) zc[z]++;
+        }
+      });
+      var tot = Math.max(1, zc.defesa+zc.meio+zc.ataque);
+      var pct = {defesa: zc.defesa/tot*100, meio: zc.meio/tot*100, ataque: zc.ataque/tot*100};
+
+      // Field box (asymmetric for general chart to fit legend)
+      var padX = Math.max(18, cssW*0.06);
+      var padTop = Math.max(18, cssH*0.08);
+      var padBot = Math.max(18, cssH*0.14);
+      if (canvasId==='actionMapChart') { padTop = Math.max(20, cssH*0.08); padBot = Math.max(50, cssH*0.28); }
+      var field = {x:padX, y:padTop, w:cssW-2*padX, h:cssH-padTop-padBot};
+      var midX = field.x + field.w/2, midY = field.y + field.h/2;
+      if(canvasId==='actionMapChart'){ field.h = field.h * 0.90; }
+
+      // Pitch lines
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2;
+      ctx.strokeRect(field.x, field.y, field.w, field.h);
+      ctx.beginPath(); ctx.moveTo(midX, field.y); ctx.lineTo(midX, field.y+field.h); ctx.stroke();
+      var centerR = field.h*0.0915; ctx.beginPath(); ctx.arc(midX, midY, centerR, 0, Math.PI*2); ctx.stroke();
+      var areaW = field.w*0.18, areaH=field.h*0.40, areaY=field.y+field.h*0.30;
+      var saW = field.w*0.06, saH=field.h*0.20, saY=field.y+field.h*0.40;
+      ctx.strokeRect(field.x, areaY, areaW, areaH);
+      ctx.strokeRect(field.x, saY, saW, saH);
+      ctx.strokeRect(field.x+field.w-areaW, areaY, areaW, areaH);
+      ctx.strokeRect(field.x+field.w-saW, saY, saW, saH);
+
+      // Teardrop (horizontal)
+      function lerp(a,b,t){return a+(b-a)*t;}
+      function mix(c1,c2,t){return [Math.round(lerp(c1[0],c2[0],t)),Math.round(lerp(c1[1],c2[1],t)),Math.round(lerp(c1[2],c2[2],t))];}
+      var C_RED=[255,60,60], C_YEL=[255,215,64], C_GRN=[60,220,150], C_CYAN=[64,198,255];
+      function rgb(a){return 'rgba('+a[0]+','+a[1]+','+a[2];}
+      function smoothRGB(p){
+        if(p<=20) return C_GRN;
+        if(p<=39) return mix(C_GRN,C_YEL,(p-20)/19);
+        return mix(C_YEL,C_RED,Math.min(1,(p-40)/60));
+      }
+      function teardrop(cx, cy, baseR, p){
+        var core = smoothRGB(p);
+        ctx.save();
+        ctx.translate(cx, cy + baseR*0.12);
+        var scaleX = 1.45, scaleY = 1.0;
+        ctx.scale(scaleX, scaleY);
+        var grad = ctx.createRadialGradient(0,0,1,0,0,baseR);
+        grad.addColorStop(0.00, rgb(core)+',0.95)');
+        grad.addColorStop(0.30, rgb(core)+',0.65)');
+        var mid = mix(core, C_GRN, 0.35);
+        grad.addColorStop(0.60, rgb(mid)+',0.35)');
+        grad.addColorStop(0.82, rgb(C_CYAN)+',0.22)');
+        grad.addColorStop(1.00, rgb(C_CYAN)+',0.00)');
+        ctx.fillStyle = grad;
+        ctx.beginPath(); ctx.arc(0,0,baseR,0,Math.PI*2); ctx.fill();
+        ctx.restore();
+      }
+      var thirdW = field.w/3, R = Math.min(thirdW, field.h)*0.33;
+      teardrop(field.x+thirdW*0.5, midY, R, pct.defesa);
+      teardrop(field.x+thirdW*1.5, midY, R, pct.meio);
+      teardrop(field.x+thirdW*2.5, midY, R, pct.ataque);
+
+      // Sector labels inside top
+      ctx.fillStyle = '#f9fafb'; ctx.textAlign='center';
+      var baseFont = Math.max(9, Math.min(13, Math.round(cssW*0.018)));
+      ctx.font = '600 '+baseFont+'px system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif';
+      ctx.fillText(zc.defesa+' • '+Math.round(pct.defesa)+'%', field.x+thirdW*0.5, field.y+14);
+      ctx.fillText(zc.meio+' • '+Math.round(pct.meio)+'%',   field.x+thirdW*1.5, field.y+14);
+      ctx.fillText(zc.ataque+' • '+Math.round(pct.ataque)+'%', field.x+thirdW*2.5, field.y+14);
+
+      // Finishing markers
+      function isHeader(e){return String(e&&e.detail||'').toLowerCase().indexOf('cabe')>=0;}
+      function isInside(e){return String(e&&e.detail||'').toLowerCase().indexOf('dentro')>=0;}
+      function isOutside(e){return String(e&&e.detail||'').toLowerCase().indexOf('fora')>=0;}
+      var myFin = events.filter(function(e){return !isOpp(e) && String(e&&e.action||'').indexOf('finalizacao')===0;});
+      var opFin = events.filter(function(e){return  isOpp(e) && String(e&&e.action||'').indexOf('finalizacao')===0;});
+      function plot(fin, opp){
+        var color = opp ? 'rgba(59,130,246,0.95)' : 'rgba(239,68,68,0.95)';
+        var bx = opp ? (field.x+thirdW*0.25) : (field.x+thirdW*2.75);
+        fin.forEach(function(e, i){
+          var jx = ((i%8)-4)*3 + (Math.random()*1.2-0.6);
+          var y = midY + (((i%6)-3)*3) + (Math.random()*1.2-0.6);
+          if(isOutside(e)) y -= field.h*0.20;
+          if(isInside(e))  y += 0;
+          ctx.beginPath(); ctx.fillStyle=color; ctx.arc(bx+jx, y, 3.6, 0, Math.PI*2); ctx.fill();
+          if(isHeader(e)){ ctx.beginPath(); ctx.fillStyle='#111827'; ctx.arc(bx+jx, y, 1.2, 0, Math.PI*2); ctx.fill(); }
+        });
+      }
+      plot(myFin, false); plot(opFin, true);
+
+      // In-canvas legend only for general chart
+      if(canvasId==='actionMapChart'){
+        var legendY = field.y + field.h - 26;
+        ctx.textAlign='center'; ctx.font='600 '+Math.max(9,Math.min(13,Math.round(cssW*0.018)))+'px system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif';
+        ctx.beginPath(); ctx.fillStyle='#ef4444'; ctx.arc(field.x+field.w*0.40, legendY-4, 4, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle='#e5e7eb'; ctx.fillText('América', field.x+field.w*0.44, legendY);
+        ctx.beginPath(); ctx.fillStyle='#3b82f6'; ctx.arc(field.x+field.w*0.55, legendY-4, 4, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle='#e5e7eb'; ctx.fillText('Adversário', field.x+field.w*0.60, legendY);
+        ctx.beginPath(); ctx.fillStyle='#3b82f6'; ctx.arc(field.x+field.w*0.70, legendY-4, 4, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.fillStyle='#111827'; ctx.arc(field.x+field.w*0.70, legendY-3, 1.5, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle='#e5e7eb'; ctx.fillText('Cabeceio', field.x+field.w*0.75, legendY);
+      }
+
+      // Export shim (if needed)
+      if(typeof window.charts==='object'){ window.charts[canvasId] = { ctx: ctx, toBase64Image: function(){ return ctx.canvas.toDataURL('image/png'); } }; }
+    }catch(err){ console.error('safeHeatmap error', err); }
+  }
+
+  // If the app defines renderActionMapChart, override safely; otherwise set and also try draw by observer
+  var orig = window.renderActionMapChart;
+  window.renderActionMapChart = function(match, canvasId, period){
+    try{ safeHeatmap(match, canvasId, period); }catch(e){ console.error(e); }
+  };
+
+  // As a fallback, observe canvases and draw when they appear (if app never calls function)
+  var obs = new MutationObserver(function(){
+    var ids = ['actionMapChart','actionMapChart_1T','actionMapChart_2T'];
+    ids.forEach(function(id){
+      var c = document.getElementById(id);
+      if(c && !c.__heatmap_drawn){
+        var m = (window.currentMatch || window.match || window.reportMatch || {});
+        try{ safeHeatmap(m, id, (id.indexOf('_1T')>0? '1T' : (id.indexOf('_2T')>0? '2T' : null))); c.__heatmap_drawn = true; }catch(e){}
+      }
+    });
+  });
+  window.addEventListener('load', function(){ try{ obs.observe(document.body, {childList:true, subtree:true}); }catch(e){} });
+})();
+</script>
