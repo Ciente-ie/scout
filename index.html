@@ -2043,8 +2043,8 @@ window.undoLastAction = async function() {
         if (!ctx) return;
 
         // --- Responsive size inside the box ---
-        const cssW = Math.max(540, canvas.clientWidth || 720);
-        const cssH = Math.max(260, canvas.clientHeight || 320);
+        const cssW = canvas.clientWidth || canvas.parentElement.clientWidth || 360;
+       const cssH = Math.round(cssW * 0.55);
         const dpr = window.devicePixelRatio || 1;
         canvas.width  = Math.round(cssW * dpr);
         canvas.height = Math.round(cssH * dpr);
