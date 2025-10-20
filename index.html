@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <script>
+  // 🔒 Verifica se o acesso foi liberado na sessão
+  const acesso = sessionStorage.getItem("acessoCiente");
+  if (acesso !== "ok") {
+    window.location.href = "login.html";
+  }
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scout Free - Análise de Futebol</title>
@@ -2857,4 +2864,5 @@ window.undoLastAction = async function() {
   window.addEventListener('load', function(){ try{ obs.observe(document.body, {childList:true, subtree:true}); }catch(e){} });
 })();
 </script>
+
 
