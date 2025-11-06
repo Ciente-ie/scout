@@ -2,11 +2,7 @@
 <html lang="pt-BR">
 <head>
     <script>
-  // 🔒 Verifica se o acesso foi liberado na sessão
-  const acesso = sessionStorage.getItem("acessoCiente");
-  if (acesso !== "ok") {
-    window.location.href = "login.html";
-  }
+ 
 </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -577,16 +573,33 @@ function setupUIMode() {
                     showUserFacingError('reports', 'Não foi possível carregar os dados para os relatórios.');
                 }
             }, 5000);
-            onSnapshot(collection(db, "artifacts", appId, "users", userId, "players"), (snapshot) => {
-                if (timeoutTriggered) return;
-                console.log(`Players snapshot received. Found ${snapshot.docs.length} players.`);
-                dataLoaded.players = true;
-                appState.players = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                refreshCurrentView(); 
-            }, (error) => {
-                console.error("Erro ao carregar jogadores (verifique as regras de segurança do Firestore):", error);
-                showUserFacingError('dashboard', `Erro ao carregar dados: ${error.message}`);
-            });
+            // 🔄 Carregar atletas diretamente da coleção 'elenco'
+import { getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+async function carregarAtletasDoElenco() {
+  try {
+    console.log("🔍 Carregando atletas da coleção 'elenco'...");
+    const snapshot = await getDocs(collection(db, "elenco"));
+    dataLoaded.players = true;
+
+    appState.players = snapshot.docs.map(doc => ({
+      id: doc.id,
+      name: doc.data().nome_atleta || "",
+      position: doc.data().posicao_grupo || "",
+      equipe: doc.data().equipe_id || "",
+      dob: doc.data().data_nascimento || ""
+    }));
+
+    console.log(`✅ ${appState.players.length} atletas carregados do elenco`);
+    refreshCurrentView();
+  } catch (error) {
+    console.error("❌ Erro ao carregar elenco:", error);
+    showUserFacingError('dashboard', 'Erro ao carregar elenco: ' + error.message);
+  }
+}
+
+// 🔁 Chamar função no lugar do listener de players
+carregarAtletasDoElenco();
             onSnapshot(query(collection(db, "artifacts", appId, "users", userId, "matches")), (snapshot) => {
                 if (timeoutTriggered) return;
                 console.log(`Matches snapshot received. Found ${snapshot.docs.length} matches.`);
@@ -2864,5 +2877,6 @@ window.undoLastAction = async function() {
   window.addEventListener('load', function(){ try{ obs.observe(document.body, {childList:true, subtree:true}); }catch(e){} });
 })();
 </script>
+
 
 
